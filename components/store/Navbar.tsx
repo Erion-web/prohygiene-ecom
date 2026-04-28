@@ -78,8 +78,8 @@ export function Navbar({ categories = [] }: NavbarProps) {
   }, [mobileOpen])
 
   const navLinks = [
-    { href: '/shop',          label: lang === 'sq' ? 'Dyqani'  : 'Shop' },
-    { href: '/home-products', label: lang === 'sq' ? 'Shtëpi'  : 'Home' },
+    { href: '/shop',          label: tr.nav.shop },
+    { href: '/home-products', label: lang === 'sq' ? 'Shtëpi' : 'Home' },
     { href: '/business',      label: lang === 'sq' ? 'Biznese' : 'Business' },
   ]
 
@@ -122,7 +122,7 @@ export function Navbar({ categories = [] }: NavbarProps) {
                   onClick={() => setCatOpen(v => !v)}
                   className="flex items-center gap-1 px-3.5 py-2 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-muted transition-all duration-200"
                 >
-                  {lang === 'sq' ? 'Kategoritë' : 'Categories'}
+                  {tr.nav.categories}
                   <ChevronDown size={13} strokeWidth={2.5} className={cn('transition-transform duration-200', catOpen && 'rotate-180')} />
                 </button>
 
@@ -162,7 +162,7 @@ export function Navbar({ categories = [] }: NavbarProps) {
               >
                 <Search size={17} strokeWidth={2.2} />
                 <span className="hidden xl:inline text-text-muted text-sm font-normal">
-                  {lang === 'sq' ? 'Kërko...' : 'Search...'}
+                  {tr.nav.search}
                 </span>
               </button>
 
@@ -199,15 +199,15 @@ export function Navbar({ categories = [] }: NavbarProps) {
                         <p className="text-xs font-bold text-text-primary truncate">{userName}</p>
                       </div>
                       <Link href="/account" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-secondary hover:text-brand-600 hover:bg-brand-50 transition-colors">
-                        <User size={14} /> Llogaria ime
+                        <User size={14} /> {tr.nav.myAccount}
                       </Link>
                       <Link href="/account/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-secondary hover:text-brand-600 hover:bg-brand-50 transition-colors">
-                        <Settings size={14} /> Porositë
+                        <Settings size={14} /> {tr.nav.orders}
                       </Link>
                       <div className="h-px bg-surface-border mx-4 my-1" />
                       <form action="/auth/signout" method="post">
                         <button type="submit" className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">
-                          <LogOut size={14} /> Dil
+                          <LogOut size={14} /> {tr.nav.logout}
                         </button>
                       </form>
                     </div>
@@ -277,7 +277,7 @@ export function Navbar({ categories = [] }: NavbarProps) {
               className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-surface-soft border border-surface-border text-text-muted text-sm mb-3"
             >
               <Search size={15} />
-              {lang === 'sq' ? 'Kërko produkte...' : 'Search products...'}
+              {tr.nav.search}
             </button>
 
             {navLinks.map(link => (
@@ -296,7 +296,7 @@ export function Navbar({ categories = [] }: NavbarProps) {
             {categories.length > 0 && (
               <div className="pt-3">
                 <p className="px-4 text-[11px] font-bold uppercase tracking-widest text-text-muted mb-2">
-                  {lang === 'sq' ? 'Kategoritë' : 'Categories'}
+                  {tr.nav.categories}
                 </p>
                 {categories.map(cat => (
                   <Link

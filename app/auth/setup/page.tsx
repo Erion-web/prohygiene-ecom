@@ -12,7 +12,7 @@ export default async function SetupPage() {
   const initialName = (user.user_metadata?.full_name as string | undefined) ?? ''
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-brand-50 via-white to-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Link href="/" className="flex justify-center mb-8">
           <Logo size="md" />

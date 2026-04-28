@@ -125,7 +125,7 @@
 
   /* Section */
   .section {
-    @apply py-16 md:py-20;
+    @apply py-10 sm:py-14 lg:py-20;
   }
 
   .container-custom {
@@ -179,5 +179,10 @@
 
   .glass {
     @apply bg-white/80 backdrop-blur-md border border-white/50;
+  }
+
+  /* Safe area for sticky bottom bars (iPhone notch/home bar) */
+  .safe-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 }

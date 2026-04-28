@@ -7,6 +7,7 @@ import {
   ScrollText, Wind, Brush, Box, ShoppingBag,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { t } from '@/lib/i18n'
 import type { Category, Lang } from '@/types'
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
@@ -26,6 +27,7 @@ interface CategorySidebarNavProps {
 }
 
 export function CategorySidebarNav({ categories, lang }: CategorySidebarNavProps) {
+  const tr = t(lang)
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const activeSlug = searchParams.get('category')
@@ -35,7 +37,7 @@ export function CategorySidebarNav({ categories, lang }: CategorySidebarNavProps
   return (
     <nav className="w-full">
       <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted px-3 mb-2">
-        {lang === 'sq' ? 'Kategoritë' : 'Categories'}
+        {tr.nav.categories}
       </p>
 
       <Link
@@ -48,7 +50,7 @@ export function CategorySidebarNav({ categories, lang }: CategorySidebarNavProps
         )}
       >
         <ShoppingBag size={16} className="flex-shrink-0" />
-        <span className="flex-1 truncate">{lang === 'sq' ? 'Të Gjitha' : 'All Products'}</span>
+        <span className="flex-1 truncate">{tr.shop.allCategories}</span>
       </Link>
 
       {categories.map(cat => {

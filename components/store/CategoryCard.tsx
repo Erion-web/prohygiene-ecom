@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { t } from '@/lib/i18n'
 import type { Category } from '@/types'
 import type { Lang } from '@/types'
 
@@ -23,6 +24,7 @@ const categoryEmojis: Record<string, string> = {
 }
 
 export function CategoryCard({ category, lang, className }: CategoryCardProps) {
+  const tr = t(lang)
   const name = lang === 'sq' ? category.name_sq : category.name_en
 
   return (
@@ -57,12 +59,12 @@ export function CategoryCard({ category, lang, className }: CategoryCardProps) {
               </h3>
               {category.products_count != null && (
                 <p className="text-xs text-text-muted mt-0.5">
-                  {category.products_count} {lang === 'sq' ? 'produkte' : 'products'}
+                  {category.products_count} {tr.shop.products}
                 </p>
               )}
             </div>
             <div className="flex items-center gap-1 text-brand-500 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <span>{lang === 'sq' ? 'Shiko' : 'View'}</span>
+              <span>{tr.common.view}</span>
               <ArrowRight size={12} />
             </div>
           </div>

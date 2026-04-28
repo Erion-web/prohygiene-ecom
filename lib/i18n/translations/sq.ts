@@ -8,6 +8,9 @@ const sq = {
     campaigns: 'Kampanjat',
     cart: 'Shporta',
     account: 'Llogaria',
+    myAccount: 'Llogaria ime',
+    orders: 'Porositë',
+    logout: 'Dil',
     search: 'Kërko produkte...',
     categories: 'Kategoritë',
     contact: 'Kontakt',
@@ -109,7 +112,7 @@ const sq = {
     empty: 'Shporta juaj është bosh',
     emptyDesc: 'Shtoni produkte nga dyqani ynë',
     continueShopping: 'Vazhdo Blerjen',
-    checkout: 'Klaro Porosinë',
+    checkout: 'Vazhdo Porosinë',
     subtotal: 'Nëntotali',
     discount: 'Zbritja',
     shipping: 'Transporti',
@@ -118,8 +121,14 @@ const sq = {
     remove: 'Hiq',
     update: 'Përditëso',
     items: 'artikuj',
-    freeShipping: 'Transport falas mbi €50',
+    freeShipping: 'Transport falas mbi €30',
     vat: 'TVSH e përfshirë',
+    summary: 'Përmbledhja',
+    coupon: 'Kupon',
+    couponApplied: 'Kupon 5€ i aktivizua automatikisht',
+    addMore: 'Shto edhe',
+    forFreeShipping: 'për transport falas',
+    forCoupon: 'për kuponin 5€',
   },
 
   // Checkout
@@ -151,6 +160,11 @@ const sq = {
     termsOfService: 'Kushtet e Shërbimit',
     securePayment: 'Pagesa e sigurt dhe e enkriptuar',
     cities: ['Prishtinë', 'Ferizaj', 'Gjakovë', 'Gjilan', 'Mitrovicë', 'Pejë', 'Prizren', 'Vushtrri', 'Suharrekë', 'Rahovec', 'Dragash', 'Malishevë', 'Lipjan', 'Podujevë', 'Skenderaj'],
+    selectCity: 'Zgjedh qytetin...',
+    notesPlaceholder: 'Udhëzime të veçanta për dërgim...',
+    cardDesc: 'Visa, Mastercard — të sigurt',
+    cashDesc: 'Paguani kur produkti arrin',
+    fillRequired: 'Plotësoni të gjitha fushat e detyrueshme',
   },
 
   // Order Success
@@ -291,6 +305,7 @@ const sq = {
     newsletter: 'Abonohu në Lajmëtime',
     newsletterPlaceholder: 'Email-i juaj...',
     subscribe: 'Abonohu',
+    newsletterDesc: 'Merrni ofertat tona direkt në email.',
   },
 }
 

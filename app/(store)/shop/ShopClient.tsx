@@ -123,8 +123,8 @@ export function ShopClient({ categories, initialProducts, searchParams }: ShopCl
     <div className="animate-fade-in">
       {/* Page Header */}
       <div className="bg-surface-soft border-b border-surface-border">
-        <div className="container-custom py-8">
-          <h1 className="text-2xl font-extrabold text-text-primary mb-1">{tr.shop.title}</h1>
+        <div className="container-custom py-4 sm:py-8">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-text-primary mb-1">{tr.shop.title}</h1>
           <p className="text-text-secondary text-sm">{tr.shop.subtitle}</p>
           {filters.search && (
             <p className="text-sm text-brand-600 font-medium mt-2">
@@ -134,8 +134,8 @@ export function ShopClient({ categories, initialProducts, searchParams }: ShopCl
         </div>
       </div>
 
-      <div className="container-custom py-8">
-        <div className="flex gap-8">
+      <div className="container-custom py-4 sm:py-6">
+        <div className="flex gap-6 lg:gap-8">
           {/* Sidebar — desktop */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
             <div className="sticky top-20">

@@ -11,7 +11,6 @@ const BUNDLES = [
     desc:  'Gjithçka për pastrim dhe higjienë personale në shtëpi.',
     items: ['Detergjentë për rrobalarëse', 'Dezinfektues sipërfaqesh', 'Letra higjienike', 'Sapun dhe gel dush'],
     gradient: 'from-sky-500 to-brand-600',
-    badge: 'bg-white/20 text-white',
     cta:  'Shfleto Paketën',
   },
   {
@@ -23,7 +22,6 @@ const BUNDLES = [
     desc:  'Produkte profesionale për pastrim dhe higjienë në ambiente zyrtare.',
     items: ['Dezinfektues duarsh', 'Letër WC & peshqir letre', 'Produkte pastrimi dysheme', 'Shporta hedhurinash'],
     gradient: 'from-slate-700 to-slate-900',
-    badge: 'bg-white/20 text-white',
     cta:  'Shfleto Paketën',
   },
   {
@@ -35,7 +33,6 @@ const BUNDLES = [
     desc:  'Furnizim profesional për industrinë e hotelerisë dhe restoranteve.',
     items: ['Kimikate profesionale', 'Produkte sanitare industri', 'Letër & aksesore WC', 'Çmime shumice'],
     gradient: 'from-brand-600 to-teal-600',
-    badge: 'bg-white/20 text-white',
     cta:  'Kontakto për Çmime',
   },
 ]
@@ -44,7 +41,7 @@ export function BundlesSection() {
   return (
     <section className="section">
       <div className="container-custom">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-5">
           <div className="w-1 h-8 bg-brand-400 rounded-full" />
           <div>
             <h2 className="text-xl font-extrabold text-text-primary">Paketa Gati për Ju</h2>
@@ -52,36 +49,37 @@ export function BundlesSection() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
+        {/* Mobile: horizontal scroll · Desktop: 3-col grid */}
+        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 md:pb-0 md:grid md:grid-cols-3">
           {BUNDLES.map(({ key, href, icon: Icon, label, tag, desc, items, gradient, cta }) => (
             <Link
               key={key}
               href={href}
-              className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-6 text-white flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl`}
+              className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-5 sm:p-6 text-white flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex-shrink-0 w-[78vw] sm:w-[55vw] md:w-auto`}
             >
               {/* Background orb */}
               <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10 blur-xl" />
 
               {/* Tag */}
-              <span className="inline-flex items-center self-start text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/20 mb-4">
+              <span className="inline-flex items-center self-start text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/20 mb-3">
                 {tag}
               </span>
 
               {/* Icon + title */}
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                  <Icon size={22} />
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                  <Icon size={20} />
                 </div>
-                <h3 className="text-lg font-extrabold leading-tight">{label}</h3>
+                <h3 className="text-base font-extrabold leading-tight">{label}</h3>
               </div>
 
               <p className="text-white/80 text-sm mb-4 leading-relaxed">{desc}</p>
 
               {/* Items */}
-              <ul className="space-y-1.5 mb-6 flex-1">
+              <ul className="space-y-1.5 mb-5 flex-1">
                 {items.map(item => (
                   <li key={item} className="flex items-center gap-2 text-xs text-white/90">
-                    <CheckCircle2 size={12} className="text-white/60 flex-shrink-0" />
+                    <CheckCircle2 size={11} className="text-white/60 flex-shrink-0" />
                     {item}
                   </li>
                 ))}
@@ -90,7 +88,7 @@ export function BundlesSection() {
               {/* CTA */}
               <div className="flex items-center gap-2 text-sm font-bold group-hover:gap-3 transition-all">
                 {cta}
-                <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
+                <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
               </div>
             </Link>
           ))}

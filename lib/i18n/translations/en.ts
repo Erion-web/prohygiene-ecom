@@ -9,6 +9,9 @@ const en: Translations = {
     campaigns: 'Campaigns',
     cart: 'Cart',
     account: 'Account',
+    myAccount: 'My Account',
+    orders: 'Orders',
+    logout: 'Log Out',
     search: 'Search products...',
     categories: 'Categories',
     contact: 'Contact',
@@ -102,7 +105,7 @@ const en: Translations = {
     empty: 'Your cart is empty',
     emptyDesc: 'Add products from our shop',
     continueShopping: 'Continue Shopping',
-    checkout: 'Checkout',
+    checkout: 'Continue to Order',
     subtotal: 'Subtotal',
     discount: 'Discount',
     shipping: 'Shipping',
@@ -111,8 +114,14 @@ const en: Translations = {
     remove: 'Remove',
     update: 'Update',
     items: 'items',
-    freeShipping: 'Free shipping over €50',
+    freeShipping: 'Free shipping over €30',
     vat: 'VAT included',
+    summary: 'Summary',
+    coupon: 'Coupon',
+    couponApplied: '€5 coupon auto-applied',
+    addMore: 'Add',
+    forFreeShipping: 'more for free shipping',
+    forCoupon: 'more for €5 coupon',
   },
 
   checkout: {
@@ -143,6 +152,11 @@ const en: Translations = {
     termsOfService: 'Terms of Service',
     securePayment: 'Secure and encrypted payment',
     cities: ['Prishtinë', 'Ferizaj', 'Gjakovë', 'Gjilan', 'Mitrovicë', 'Pejë', 'Prizren', 'Vushtrri', 'Suharrekë', 'Rahovec', 'Dragash', 'Malishevë', 'Lipjan', 'Podujevë', 'Skenderaj'],
+    selectCity: 'Select city...',
+    notesPlaceholder: 'Special delivery instructions...',
+    cardDesc: 'Visa, Mastercard — secure',
+    cashDesc: 'Pay when product arrives',
+    fillRequired: 'Please fill all required fields',
   },
 
   orderSuccess: {
@@ -276,6 +290,7 @@ const en: Translations = {
     newsletter: 'Subscribe to Newsletter',
     newsletterPlaceholder: 'Your email...',
     subscribe: 'Subscribe',
+    newsletterDesc: 'Get our latest offers directly to your inbox.',
   },
 }
 

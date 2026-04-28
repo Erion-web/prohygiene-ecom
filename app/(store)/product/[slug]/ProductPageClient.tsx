@@ -75,7 +75,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
         </div>
       </div>
 
-      <div className="container-custom py-10">
+      <div className="container-custom py-5 sm:py-8 md:py-10">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
           {/* Images */}
           <div className="space-y-4">
@@ -232,7 +232,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
         </div>
 
         {/* ── MOBILE STICKY ADD-TO-CART BAR ── */}
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-surface-border px-4 py-3 flex items-center gap-3 shadow-elevated">
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-surface-border px-4 pt-3 safe-bottom flex items-center gap-3 shadow-elevated">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setQty(q => Math.max(1, q - 1))}

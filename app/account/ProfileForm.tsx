@@ -169,7 +169,7 @@ export function ProfileForm({ profile, email }: Props) {
       <button
         onClick={handleSave}
         disabled={loading}
-        className="btn-primary py-3 px-8 gap-2"
+        className="btn-primary py-3 px-8 gap-2 w-full sm:w-auto"
       >
         {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
         Ruaj Ndryshimet

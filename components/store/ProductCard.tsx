@@ -63,12 +63,12 @@ export function ProductCard({ product, className }: ProductCardProps) {
             {product.is_best_seller && (
               <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-400 text-white shadow-sm">
                 <Star size={9} fill="currentColor" />
-                Best Seller
+                {tr.common.bestSeller}
               </span>
             )}
             {product.is_featured && !product.is_best_seller && (
               <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-brand-600 text-white shadow-sm">
-                {lang === 'sq' ? 'I Zgjedhur' : 'Featured'}
+                {tr.common.featured}
               </span>
             )}
           </div>

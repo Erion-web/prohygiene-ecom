@@ -70,11 +70,11 @@ export default async function HomePage() {
     <div className="animate-fade-in">
       {/* ── TRUST BAR ── */}
       <div className="bg-brand-600 text-white">
-        <div className="container-custom">
-          <div className="flex items-center justify-center gap-6 md:gap-12 py-2.5 overflow-x-auto no-scrollbar">
+        <div className="container-custom py-2.5">
+          <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-1.5">
             {trustItems.map(({ icon: Icon, label, sub }) => (
-              <div key={label} className="flex items-center gap-2 flex-shrink-0">
-                <Icon size={15} className="text-brand-200 flex-shrink-0" />
+              <div key={label} className="flex items-center gap-1.5 flex-shrink-0">
+                <Icon size={13} className="text-brand-200 flex-shrink-0" />
                 <span className="text-xs font-semibold whitespace-nowrap">{label}</span>
                 <span className="hidden sm:inline text-brand-200 text-xs">— {sub}</span>
               </div>
@@ -110,7 +110,7 @@ export default async function HomePage() {
           <div className="flex-1 min-w-0">
             {/* Hero Carousel */}
             <Suspense fallback={
-              <div className="rounded-2xl bg-gradient-to-br from-brand-700 to-brand-900 animate-pulse" style={{ aspectRatio: '16/7', minHeight: 240 }} />
+              <div className="rounded-2xl bg-gradient-to-br from-brand-700 to-brand-900 animate-pulse aspect-[4/3] sm:aspect-[16/9] lg:aspect-[16/7]" />
             }>
               <HeroCarousel banners={banners} />
             </Suspense>
@@ -231,7 +231,7 @@ export default async function HomePage() {
       {/* ── BUSINESS CTA BANNER ── */}
       <section className="section bg-surface-soft">
         <div className="container-custom">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b3346] via-[#175269] to-[#0e95bd] p-8 md:p-12">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b3346] via-[#175269] to-[#0e95bd] p-6 sm:p-8 md:p-12">
             <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/5 blur-2xl" />
             <div className="absolute -bottom-12 -left-12 w-56 h-56 rounded-full bg-brand-400/10 blur-2xl" />
 

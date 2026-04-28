@@ -20,9 +20,11 @@ export default function CartPage() {
   const discount = getDiscount()
   const total = getTotal()
   const itemCount = getItemCount()
-  const freeShippingThreshold = 50
+  const freeShippingThreshold = 30
+  const couponThreshold = 50
   const shippingCost = total >= freeShippingThreshold ? 0 : 3
-  const finalTotal = total + shippingCost
+  const couponDiscount = total >= couponThreshold ? 5 : 0
+  const finalTotal = total + shippingCost - couponDiscount
 
   if (items.length === 0) {
     return (
@@ -65,9 +67,9 @@ export default function CartPage() {
               const isOnSale = effectivePrice < product.price
 
               return (
-                <div key={product.id} className="card p-4 flex gap-4 animate-fade-in">
+                <div key={product.id} className="card p-3 sm:p-4 flex gap-3 sm:gap-4 animate-fade-in">
                   {/* Image */}
-                  <Link href={`/product/${product.slug}`} className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden bg-surface-soft">
+                  <Link href={`/product/${product.slug}`} className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-xl overflow-hidden bg-surface-soft">
                     {product.image_url ? (
                       <Image
                         src={product.image_url}
@@ -143,7 +145,7 @@ export default function CartPage() {
           </div>
 
           {/* Mobile sticky checkout bar */}
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-surface-border px-4 py-3 shadow-elevated">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-surface-border px-4 pt-3 safe-bottom shadow-elevated">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs text-text-muted">{tr.cart.total}</p>
@@ -159,7 +161,7 @@ export default function CartPage() {
           <div className="hidden lg:block lg:col-span-1">
             <div className="card p-6 sticky top-20">
               <h2 className="font-bold text-text-primary mb-5">
-                {lang === 'sq' ? 'Përmbledhja' : 'Summary'}
+                {tr.cart.summary}
               </h2>
 
               <div className="space-y-3 mb-5">
@@ -182,18 +184,41 @@ export default function CartPage() {
                     {shippingCost === 0 ? tr.cart.free : formatPrice(shippingCost)}
                   </span>
                 </div>
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-emerald-600 flex items-center gap-1">
+                      <Tag size={13} />
+                      {tr.cart.coupon}
+                    </span>
+                    <span className="text-emerald-600 font-semibold">-{formatPrice(couponDiscount)}</span>
+                  </div>
+                )}
 
                 {total < freeShippingThreshold && (
                   <div className="bg-brand-50 border border-brand-100 rounded-xl p-3 text-xs text-brand-700">
-                    {lang === 'sq'
-                      ? `Shto edhe ${formatPrice(freeShippingThreshold - total)} për transport falas!`
-                      : `Add ${formatPrice(freeShippingThreshold - total)} more for free shipping!`}
+                    {tr.cart.addMore} {formatPrice(freeShippingThreshold - total)} {tr.cart.forFreeShipping}!
                     <div className="mt-2 bg-brand-100 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-brand-500 h-full rounded-full transition-all duration-300"
                         style={{ width: `${Math.min(100, (total / freeShippingThreshold) * 100)}%` }}
                       />
                     </div>
+                  </div>
+                )}
+                {total >= freeShippingThreshold && total < couponThreshold && (
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs text-emerald-700">
+                    {tr.cart.addMore} {formatPrice(couponThreshold - total)} {tr.cart.forCoupon}!
+                    <div className="mt-2 bg-emerald-100 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, ((total - freeShippingThreshold) / (couponThreshold - freeShippingThreshold)) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {couponDiscount > 0 && (
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-xs text-emerald-700 font-medium">
+                    ✓ {tr.cart.couponApplied}
                   </div>
                 )}
 

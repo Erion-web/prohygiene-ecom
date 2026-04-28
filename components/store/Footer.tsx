@@ -5,6 +5,7 @@ import { Phone, Mail, MapPin, Facebook, Instagram, Linkedin, Send } from 'lucide
 import { useLanguageStore } from '@/store/language'
 import { t } from '@/lib/i18n'
 import { useState } from 'react'
+import { Logo } from '@/components/ui/Logo'
 
 export function Footer() {
   const { lang } = useLanguageStore()
@@ -31,50 +32,44 @@ export function Footer() {
 
   return (
     <footer className="bg-slate-950 text-white">
-      {/* Main footer */}
-      <div className="container-custom py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-          {/* Brand */}
-          <div className="lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center">
-                <span className="text-white font-black text-base">P</span>
+      <div className="container-custom py-10 md:py-14">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+
+          {/* Brand — full width on mobile */}
+          <div className="col-span-2 lg:col-span-1">
+            <Link href="/" className="flex items-center mb-4">
+              <div style={{ filter: 'brightness(0) invert(1)' }}>
+                <Logo size="md" />
               </div>
-              <span className="font-black text-xl tracking-tight">
-                Pro<span className="text-brand-400">Hygiene</span>
-              </span>
             </Link>
-            <p className="text-slate-400 text-sm leading-relaxed mb-6">
+            <p className="text-slate-400 text-sm leading-relaxed mb-5 max-w-xs">
               {tr.footer.description}
             </p>
-            <div className="space-y-3">
-              <a href="tel:+38344000000" className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-sm">
-                <Phone size={15} className="text-brand-400" />
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-x-5">
+              <a href="tel:+38344000000" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
+                <Phone size={14} className="text-brand-400 flex-shrink-0" />
                 +383 44 000 000
               </a>
-              <a href="mailto:info@prohygiene.com" className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors text-sm">
-                <Mail size={15} className="text-brand-400" />
-                info@prohygiene.com
+              <a href="mailto:info@prohygiene.shop" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
+                <Mail size={14} className="text-brand-400 flex-shrink-0" />
+                info@prohygiene.shop
               </a>
-              <div className="flex items-start gap-3 text-slate-400 text-sm">
-                <MapPin size={15} className="text-brand-400 mt-0.5 flex-shrink-0" />
-                Rruga Nënë Tereza, Prishtinë, Kosovë
+              <div className="flex items-start gap-2 text-slate-400 text-sm">
+                <MapPin size={14} className="text-brand-400 mt-0.5 flex-shrink-0" />
+                Rruga Nënë Tereza, Prishtinë
               </div>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-bold text-sm uppercase tracking-wider text-slate-300 mb-5">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-300 mb-4">
               {tr.footer.quickLinks}
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               {quickLinks.map(link => (
                 <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-slate-400 hover:text-white text-sm transition-colors duration-200"
-                  >
+                  <Link href={link.href} className="text-slate-400 hover:text-white text-sm transition-colors duration-200">
                     {link.label}
                   </Link>
                 </li>
@@ -84,16 +79,13 @@ export function Footer() {
 
           {/* Service */}
           <div>
-            <h4 className="font-bold text-sm uppercase tracking-wider text-slate-300 mb-5">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-300 mb-4">
               {tr.footer.customerService}
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               {serviceLinks.map(link => (
                 <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-slate-400 hover:text-white text-sm transition-colors duration-200"
-                  >
+                  <Link href={link.href} className="text-slate-400 hover:text-white text-sm transition-colors duration-200">
                     {link.label}
                   </Link>
                 </li>
@@ -101,41 +93,30 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter */}
-          <div>
-            <h4 className="font-bold text-sm uppercase tracking-wider text-slate-300 mb-5">
+          {/* Newsletter + Social — full width on mobile */}
+          <div className="col-span-2 md:col-span-1 lg:col-span-1">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-300 mb-4">
               {tr.footer.newsletter}
             </h4>
-            <p className="text-slate-400 text-sm mb-4">
-              {lang === 'sq'
-                ? 'Merrni ofertat tona direkt në email.'
-                : 'Get our latest offers directly to your inbox.'}
+            <p className="text-slate-400 text-sm mb-3">
+              {tr.footer.newsletterDesc}
             </p>
-            <form
-              onSubmit={e => { e.preventDefault(); setEmail('') }}
-              className="flex gap-2"
-            >
+            <form onSubmit={e => { e.preventDefault(); setEmail('') }} className="flex gap-2">
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder={tr.footer.newsletterPlaceholder}
-                className="flex-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500"
+                className="flex-1 min-w-0 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500"
               />
-              <button
-                type="submit"
-                className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors duration-200 flex items-center"
-              >
-                <Send size={16} />
+              <button type="submit" className="px-3.5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors flex items-center flex-shrink-0">
+                <Send size={15} />
               </button>
             </form>
 
-            {/* Social */}
-            <div className="mt-6">
-              <p className="text-slate-300 text-xs font-semibold uppercase tracking-wider mb-3">
-                {tr.footer.followUs}
-              </p>
-              <div className="flex gap-3">
+            <div className="mt-5">
+              <p className="text-slate-300 text-xs font-semibold uppercase tracking-wider mb-3">{tr.footer.followUs}</p>
+              <div className="flex gap-2.5">
                 {[
                   { icon: Facebook, href: '#', label: 'Facebook' },
                   { icon: Instagram, href: '#', label: 'Instagram' },
@@ -156,19 +137,14 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Bottom bar */}
       <div className="border-t border-slate-800">
-        <div className="container-custom py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-slate-500 text-xs">
+        <div className="container-custom py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-slate-500 text-xs text-center sm:text-left">
             © {new Date().getFullYear()} ProHygiene. {tr.footer.rights}.
           </p>
           <div className="flex items-center gap-4">
-            <Link href="/privacy" className="text-slate-500 hover:text-slate-300 text-xs transition-colors">
-              {tr.footer.privacy}
-            </Link>
-            <Link href="/terms" className="text-slate-500 hover:text-slate-300 text-xs transition-colors">
-              {tr.footer.terms}
-            </Link>
+            <Link href="/privacy" className="text-slate-500 hover:text-slate-300 text-xs transition-colors">{tr.footer.privacy}</Link>
+            <Link href="/terms" className="text-slate-500 hover:text-slate-300 text-xs transition-colors">{tr.footer.terms}</Link>
           </div>
         </div>
       </div>

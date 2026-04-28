@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ShieldCheck, CreditCard, Truck, ChevronRight, Loader2, RefreshCw, X, Calendar } from 'lucide-react'
+import { ShieldCheck, CreditCard, Truck, ChevronRight, Loader2, RefreshCw, X, Calendar, Tag } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
@@ -177,10 +177,37 @@ export default function CheckoutPage() {
     payment_method: 'card',
   })
 
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      setForm(prev => ({ ...prev, customer_email: user.email ?? prev.customer_email }))
+      supabase
+        .from('profiles')
+        .select('full_name, phone, city, address, customer_type, business_name, fiscal_number')
+        .eq('id', user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (!profile) return
+          setForm(prev => ({
+            ...prev,
+            customer_name: profile.full_name ?? prev.customer_name,
+            customer_phone: profile.phone ?? prev.customer_phone,
+            city: profile.city ?? prev.city,
+            address: profile.address ?? prev.address,
+            customer_type: (profile.customer_type as CustomerType) ?? prev.customer_type,
+            business_name: profile.business_name ?? prev.business_name,
+            fiscal_number: profile.fiscal_number ?? prev.fiscal_number,
+          }))
+        })
+    })
+  }, [])
+
   const total = getTotal()
   const discount = getDiscount()
-  const shipping = total >= 50 ? 0 : 3
-  const finalTotal = total + shipping
+  const shipping = total >= 30 ? 0 : 3
+  const couponDiscount = total >= 50 ? 5 : 0
+  const finalTotal = total + shipping - couponDiscount
 
   const update = (key: keyof CheckoutFormData, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }))
@@ -206,7 +233,7 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) {
-      toast.error(lang === 'sq' ? 'Plotësoni të gjitha fushat e detyrueshme' : 'Please fill all required fields')
+      toast.error(tr.checkout.fillRequired)
       return
     }
 
@@ -236,7 +263,7 @@ export default function CheckoutPage() {
           address: form.address,
           notes: form.notes || null,
           subtotal: total + discount,
-          discount_amount: discount,
+          discount_amount: discount + couponDiscount,
           shipping_cost: shipping,
           vat_amount: finalTotal * 0.18,
           total: finalTotal,
@@ -302,7 +329,7 @@ export default function CheckoutPage() {
       }
     } catch (err) {
       console.error(err)
-      toast.error(lang === 'sq' ? 'Ndodhi një gabim. Ju lutem provoni përsëri.' : 'An error occurred. Please try again.')
+      toast.error(tr.common.error)
     } finally {
       setLoading(false)
     }
@@ -341,7 +368,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <div className="container-custom py-8">
+      <div className="container-custom py-4 sm:py-8">
         <form id="checkout-form" onSubmit={handleSubmit}>
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Form */}
@@ -451,7 +478,7 @@ export default function CheckoutPage() {
                       onChange={e => update('city', e.target.value)}
                       className={`input ${errors.city ? 'input-error' : ''}`}
                     >
-                      <option value="">{lang === 'sq' ? 'Zgjedh qytetin...' : 'Select city...'}</option>
+                      <option value="">{tr.checkout.selectCity}</option>
                       {CITIES.map(city => (
                         <option key={city} value={city}>{city}</option>
                       ))}
@@ -475,7 +502,7 @@ export default function CheckoutPage() {
                       value={form.notes}
                       onChange={e => update('notes', e.target.value)}
                       className="input resize-none h-20"
-                      placeholder={lang === 'sq' ? 'Udhëzime të veçanta për dërgim...' : 'Special delivery instructions...'}
+                      placeholder={tr.checkout.notesPlaceholder}
                     />
                   </div>
                 </div>
@@ -490,8 +517,8 @@ export default function CheckoutPage() {
 
                 <div className="grid sm:grid-cols-2 gap-4">
                   {([
-                    { value: 'card', icon: CreditCard, label: tr.checkout.cardPayment, desc: lang === 'sq' ? 'Visa, Mastercard — të sigurt' : 'Visa, Mastercard — secure' },
-                    { value: 'cash_on_delivery', icon: Truck, label: tr.checkout.cashOnDelivery, desc: lang === 'sq' ? 'Paguani kur produkti arrin' : 'Pay when product arrives' },
+                    { value: 'card', icon: CreditCard, label: tr.checkout.cardPayment, desc: tr.checkout.cardDesc },
+                    { value: 'cash_on_delivery', icon: Truck, label: tr.checkout.cashOnDelivery, desc: tr.checkout.cashDesc },
                   ] as const).map(({ value, icon: Icon, label, desc }) => (
                     <button
                       key={value}
@@ -572,6 +599,12 @@ export default function CheckoutPage() {
                       {shipping === 0 ? tr.cart.free : formatPrice(shipping)}
                     </span>
                   </div>
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-sm text-emerald-600">
+                      <span className="flex items-center gap-1"><Tag size={12} />{tr.cart.coupon}</span>
+                      <span>-{formatPrice(couponDiscount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-lg pt-2 border-t border-surface-border">
                     <span>{tr.cart.total}</span>
                     <span>{formatPrice(finalTotal)}</span>
@@ -595,7 +628,7 @@ export default function CheckoutPage() {
         </form>
 
         {/* Mobile sticky order button */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-surface-border px-4 py-3 shadow-elevated">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-surface-border px-4 pt-3 safe-bottom shadow-elevated">
           <div className="flex items-center gap-4">
             <div className="flex-1 min-w-0">
               <p className="text-xs text-text-muted">{tr.cart.total}</p>
