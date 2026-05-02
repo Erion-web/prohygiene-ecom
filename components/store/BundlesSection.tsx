@@ -1,39 +1,39 @@
 import Link from 'next/link'
-import { ArrowRight, Home, Building2, ChefHat, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, Home, Building2, ChefHat, Check } from 'lucide-react'
 
 const BUNDLES = [
   {
-    key:   'shtepie',
-    href:  '/shop?audience=home',
-    icon:  Home,
-    label: 'Paketa Shtëpie',
-    tag:   'Ideal për familje',
-    desc:  'Gjithçka për pastrim dhe higjienë personale në shtëpi.',
-    items: ['Detergjentë për rrobalarëse', 'Dezinfektues sipërfaqesh', 'Letra higjienike', 'Sapun dhe gel dush'],
-    gradient: 'from-sky-500 to-brand-600',
-    cta:  'Shfleto Paketën',
+    key:    'shtepie',
+    href:   '/shop?audience=home',
+    icon:   Home,
+    label:  'Paketa Shtëpie',
+    tag:    'Ideal për familje',
+    desc:   'Gjithçka për pastrim dhe higjienë personale në shtëpi.',
+    items:  ['Detergjentë rrobalarëse', 'Dezinfektues sipërfaqesh', 'Letra higjienike', 'Sapun & gel dush'],
+    accent: '#0e95bd',
+    cta:    'Shfleto Paketën',
   },
   {
-    key:   'zyra',
-    href:  '/shop?audience=business',
-    icon:  Building2,
-    label: 'Paketa Zyre',
-    tag:   'Për ambiente biznesi',
-    desc:  'Produkte profesionale për pastrim dhe higjienë në ambiente zyrtare.',
-    items: ['Dezinfektues duarsh', 'Letër WC & peshqir letre', 'Produkte pastrimi dysheme', 'Shporta hedhurinash'],
-    gradient: 'from-slate-700 to-slate-900',
-    cta:  'Shfleto Paketën',
+    key:    'zyra',
+    href:   '/shop?audience=business',
+    icon:   Building2,
+    label:  'Paketa Zyre',
+    tag:    'Për ambiente biznesi',
+    desc:   'Produkte profesionale për pastrim dhe higjienë zyrtare.',
+    items:  ['Dezinfektues duarsh', 'Letër WC & peshqir', 'Produkte dyshemeje', 'Shporta hedhurinash'],
+    accent: '#6366f1',
+    cta:    'Shfleto Paketën',
   },
   {
-    key:   'horeca',
-    href:  '/business',
-    icon:  ChefHat,
-    label: 'Paketa HORECA',
-    tag:   'Hotel · Restorant · Kafe',
-    desc:  'Furnizim profesional për industrinë e hotelerisë dhe restoranteve.',
-    items: ['Kimikate profesionale', 'Produkte sanitare industri', 'Letër & aksesore WC', 'Çmime shumice'],
-    gradient: 'from-brand-600 to-teal-600',
-    cta:  'Kontakto për Çmime',
+    key:    'horeca',
+    href:   '/business',
+    icon:   ChefHat,
+    label:  'Paketa HORECA',
+    tag:    'Hotel · Restorant · Kafe',
+    desc:   'Furnizim profesional për industrinë e hotelerisë.',
+    items:  ['Kimikate profesionale', 'Produkte sanitare', 'Letër & aksesore WC', 'Çmime shumice'],
+    accent: '#10b981',
+    cta:    'Kontakto për Çmime',
   },
 ]
 
@@ -41,7 +41,8 @@ export function BundlesSection() {
   return (
     <section className="section">
       <div className="container-custom">
-        <div className="flex items-center gap-3 mb-5">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
           <div className="w-1 h-8 bg-brand-400 rounded-full" />
           <div>
             <h2 className="text-xl font-extrabold text-text-primary">Paketa Gati për Ju</h2>
@@ -49,47 +50,89 @@ export function BundlesSection() {
           </div>
         </div>
 
-        {/* Mobile: horizontal scroll · Desktop: 3-col grid */}
-        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 md:pb-0 md:grid md:grid-cols-3">
-          {BUNDLES.map(({ key, href, icon: Icon, label, tag, desc, items, gradient, cta }) => (
+        {/* Cards */}
+        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 md:pb-0 md:grid md:grid-cols-3 md:gap-5">
+          {BUNDLES.map(({ key, href, icon: Icon, label, tag, desc, items, accent, cta }) => (
             <Link
               key={key}
               href={href}
-              className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-5 sm:p-6 text-white flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex-shrink-0 w-[78vw] sm:w-[55vw] md:w-auto`}
+              className="group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm
+                flex-shrink-0 w-[80vw] sm:w-[56vw] md:w-auto
+                transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl"
             >
-              {/* Background orb */}
-              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10 blur-xl" />
-
-              {/* Tag */}
-              <span className="inline-flex items-center self-start text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/20 mb-3">
-                {tag}
-              </span>
-
-              {/* Icon + title */}
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                  <Icon size={20} />
-                </div>
-                <h3 className="text-base font-extrabold leading-tight">{label}</h3>
+              {/* Top text */}
+              <div className="px-5 pt-5 pb-4">
+                <span
+                  className="inline-block text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-full mb-3"
+                  style={{ background: `${accent}15`, color: accent }}
+                >
+                  {tag}
+                </span>
+                <h3 className="text-lg font-extrabold text-gray-900 leading-snug mb-1">{label}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
               </div>
 
-              <p className="text-white/80 text-sm mb-4 leading-relaxed">{desc}</p>
+              {/* Visual area */}
+              <div
+                className="mx-4 rounded-xl overflow-hidden flex items-center justify-center relative"
+                style={{ background: `${accent}08`, height: 140 }}
+              >
+                {/* Glow */}
+                <div
+                  className="absolute inset-0 opacity-30 blur-2xl"
+                  style={{ background: `radial-gradient(circle at 50% 70%, ${accent}60, transparent 70%)` }}
+                />
+                {/* Rings */}
+                <div className="absolute w-28 h-28 rounded-full border border-gray-100" />
+                <div className="absolute w-20 h-20 rounded-full border border-gray-100" />
+                {/* Icon box */}
+                <div
+                  className="relative z-10 w-16 h-16 rounded-2xl flex items-center justify-center shadow-md"
+                  style={{ background: `${accent}18`, border: `1.5px solid ${accent}40` }}
+                >
+                  <Icon size={28} style={{ color: accent }} strokeWidth={1.6} />
+                </div>
+                {/* Dots */}
+                {[[-40, -16], [40, -22], [-46, 20], [46, 16]].map(([x, y], i) => (
+                  <div
+                    key={i}
+                    className="absolute w-2 h-2 rounded-full opacity-50"
+                    style={{ background: accent, left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)` }}
+                  />
+                ))}
+              </div>
 
-              {/* Items */}
-              <ul className="space-y-1.5 mb-5 flex-1">
+              {/* Feature list */}
+              <ul className="px-5 pt-4 pb-3 space-y-2 flex-1">
                 {items.map(item => (
-                  <li key={item} className="flex items-center gap-2 text-xs text-white/90">
-                    <CheckCircle2 size={11} className="text-white/60 flex-shrink-0" />
+                  <li key={item} className="flex items-center gap-2.5 text-sm text-gray-600">
+                    <span
+                      className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ background: `${accent}20` }}
+                    >
+                      <Check size={9} strokeWidth={3} style={{ color: accent }} />
+                    </span>
                     {item}
                   </li>
                 ))}
               </ul>
 
               {/* CTA */}
-              <div className="flex items-center gap-2 text-sm font-bold group-hover:gap-3 transition-all">
-                {cta}
-                <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+              <div className="px-4 pb-4 pt-2">
+                <span
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-white text-sm font-bold transition-all duration-200 group-hover:gap-3 group-hover:opacity-90"
+                  style={{ background: accent }}
+                >
+                  {cta}
+                  <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+                </span>
               </div>
+
+              {/* Bottom accent line */}
+              <div
+                className="absolute bottom-0 left-0 right-0 h-px"
+                style={{ background: `linear-gradient(90deg, transparent, ${accent}60, transparent)` }}
+              />
             </Link>
           ))}
         </div>

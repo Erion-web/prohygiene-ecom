@@ -29,7 +29,7 @@ async function getHomeData() {
         .order('sort_order'),
       supabase
         .from('banners')
-        .select('id, image_url')
+        .select('id, image_url, campaign:campaigns(slug, title_sq, title_en, ends_at)')
         .eq('is_active', true)
         .order('sort_order', { ascending: true }),
     ])
@@ -44,7 +44,10 @@ async function getHomeData() {
         ? products.filter(p => p.is_best_seller).slice(0, 8)
         : mockBestSellers,
       categories: categories.length > 0 ? categories : mockCategories,
-      banners: bannersRes.data ?? [],
+      banners: (bannersRes.data ?? []).map(b => ({
+        ...b,
+        campaign: Array.isArray(b.campaign) ? (b.campaign[0] ?? null) : (b.campaign ?? null),
+      })),
     }
   } catch {
     return {

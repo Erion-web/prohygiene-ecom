@@ -9,6 +9,12 @@ import { cn } from '@/lib/utils'
 export interface BannerSlide {
   id: string
   image_url: string
+  campaign?: {
+    slug: string
+    title_sq: string
+    title_en: string
+    ends_at: string
+  } | null
 }
 
 interface Slide {
@@ -89,24 +95,47 @@ export function HeroCarousel({ banners }: Props) {
     >
       {/* IMAGE BANNERS from DB */}
       {useImageMode ? (
-        banners.map((banner, i) => (
-          <div
-            key={banner.id}
-            className={cn(
-              'absolute inset-0 transition-opacity duration-700',
-              i === current ? 'opacity-100 z-10' : 'opacity-0 z-0'
-            )}
-          >
-            <Image
-              src={banner.image_url}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 1280px) 100vw, 1200px"
-              priority={i === 0}
-            />
-          </div>
-        ))
+        banners.map((banner, i) => {
+          const href = banner.campaign?.slug ? `/campaigns/${banner.campaign.slug}` : null
+          const inner = (
+            <>
+              <Image
+                src={banner.image_url}
+                alt={banner.campaign?.title_sq ?? ''}
+                fill
+                className={cn('object-cover transition-transform duration-500', href && 'group-hover:scale-[1.02]')}
+                sizes="(max-width: 640px) 100vw, (max-width: 1280px) 100vw, 1200px"
+                priority={i === 0}
+              />
+              {href && (
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-300 flex items-end justify-start p-5 sm:p-8">
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 inline-flex items-center gap-2 bg-white/90 text-text-primary text-sm font-bold px-4 py-2 rounded-xl shadow-md">
+                    {banner.campaign!.title_sq}
+                    <ArrowRight size={14} />
+                  </span>
+                </div>
+              )}
+            </>
+          )
+
+          return (
+            <div
+              key={banner.id}
+              className={cn(
+                'absolute inset-0 transition-opacity duration-700',
+                i === current ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              )}
+            >
+              {href ? (
+                <Link href={href} className="group block absolute inset-0">
+                  {inner}
+                </Link>
+              ) : (
+                <div className="absolute inset-0">{inner}</div>
+              )}
+            </div>
+          )
+        })
       ) : (
         /* FALLBACK: hardcoded text slides */
         slides.map((s, i) => (
