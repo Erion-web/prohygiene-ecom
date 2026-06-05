@@ -41,9 +41,30 @@ async function getRelatedProducts(product: Product): Promise<Product[]> {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProduct(params.slug)
   if (!product) return { title: 'Produkt i Pagjendur' }
+
+  const url = `https://prohygiene.shop/product/${product.slug}`
+  const title = `${product.name_sq} — Bli Online | ProHygiene`
+  const description = product.description_sq
+    ? product.description_sq.slice(0, 155)
+    : `Bli ${product.name_sq} online — dërgim 24h në tërë Kosovën. ${product.sale_price ? `Çmimi special: €${product.sale_price}` : `Çmimi: €${product.price}`}. Produkte origjinale, cilësi e garantuar.`
+
   return {
-    title: `${product.name_sq} | ProHygiene`,
-    description: product.description_sq?.slice(0, 160) ?? undefined,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'website',
+      images: product.image_url ? [{ url: product.image_url, alt: product.name_sq }] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: product.image_url ? [product.image_url] : [],
+    },
   }
 }
 
@@ -53,5 +74,34 @@ export default async function ProductPage({ params }: Props) {
 
   const related = await getRelatedProducts(product)
 
-  return <ProductPageClient product={product} relatedProducts={related} />
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name_sq,
+    description: product.description_sq ?? product.name_sq,
+    image: product.image_url ?? undefined,
+    sku: product.sku,
+    brand: product.brand ? { '@type': 'Brand', name: (product.brand as { name: string }).name } : undefined,
+    offers: {
+      '@type': 'Offer',
+      url: `https://prohygiene.shop/product/${product.slug}`,
+      priceCurrency: 'EUR',
+      price: product.sale_price ?? product.price,
+      availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      seller: { '@type': 'Organization', name: 'ProHygiene' },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingRate: { '@type': 'MonetaryAmount', value: product.price >= 30 ? '0' : '3', currency: 'EUR' },
+        deliveryTime: { '@type': 'ShippingDeliveryTime', businessDays: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2 } },
+        shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'XK' },
+      },
+    },
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <ProductPageClient product={product} relatedProducts={related} />
+    </>
+  )
 }

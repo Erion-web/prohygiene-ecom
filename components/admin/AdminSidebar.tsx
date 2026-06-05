@@ -41,7 +41,7 @@ export function AdminSidebar() {
 
   return (
     <aside className={cn(
-      'flex flex-col bg-slate-950 text-white transition-all duration-300 flex-shrink-0',
+      'hidden md:flex flex-col bg-slate-950 text-white transition-all duration-300 flex-shrink-0',
       collapsed ? 'w-16' : 'w-60'
     )}>
       {/* Logo */}

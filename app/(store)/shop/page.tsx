@@ -5,8 +5,9 @@ import { ShopClient } from './ShopClient'
 import type { Category } from '@/types'
 
 export const metadata: Metadata = {
-  title: 'Dyqani — ProHygiene',
-  description: 'Shfletoni gamën tonë të plotë të produkteve të higjienës dhe pastrimit',
+  title: 'Detergjente & Produkte Higjiene Online — Dyqani',
+  description: 'Shfleto mbi 200 detergjente, kimikate pastrimi, dezinfektues dhe produkte higjiene. Dërgim 24h në tërë Kosovën. Çmime nga €1.50 — shumicë dhe pakicë.',
+  alternates: { canonical: 'https://prohygiene.shop/shop' },
 }
 
 async function getShopData() {

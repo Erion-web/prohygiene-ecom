@@ -5,7 +5,12 @@ import { ProductCard } from '@/components/store/ProductCard'
 import { CategoryCard } from '@/components/store/CategoryCard'
 import { Building2, ArrowRight, Phone, CheckCircle } from 'lucide-react'
 
-export const metadata: Metadata = { title: 'HORECA & Biznese | ProHygiene' }
+export const metadata: Metadata = {
+  title: 'Furnizim HORECA & Biznes — Kimikate Profesionale Kosovë',
+  description: 'Furnizim profesional për hotele, restorante, kafene dhe biznese në Kosovë. Kimikate pastrimi, detergjente industriale dhe produkte sanitare me çmime shumice. Ofertë personale pa pagesë.',
+  alternates: { canonical: 'https://prohygiene.shop/business' },
+  keywords: ['HORECA Kosovë', 'furnizim hotel Kosovë', 'kimikate industriale', 'detergjent shumice', 'furnizim restorant Kosovë', 'pastrim profesional'],
+}
 
 export default async function BusinessPage() {
   const supabase = await createClient()

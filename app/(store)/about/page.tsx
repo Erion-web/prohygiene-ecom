@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import { CheckCircle, Users, Award, Globe } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Rreth Nesh | ProHygiene',
+  title: 'Rreth Nesh — Furnizues Detergjentesh & Higjiene në Kosovë',
+  description: 'ProHygiene — furnizues i besueshëm i detergjenteve dhe produkteve të higjienës në Kosovë që nga 2019. Mbi 500 klientë, produkte të certifikuara, dërgim 24h. Partner i Shtepiaku.',
+  alternates: { canonical: 'https://prohygiene.shop/about' },
 }
 
 export default function AboutPage() {

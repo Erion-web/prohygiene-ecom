@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Truck, ShieldCheck, Building2, FileText, Star, Tag, Home, ChefHat } from 'lucide-react'
@@ -9,6 +10,17 @@ import { BundlesSection } from '@/components/store/BundlesSection'
 import { ProductGridSkeleton } from '@/components/ui/Skeleton'
 import { mockCategories, mockFeaturedProducts, mockBestSellers } from '@/lib/data/mock'
 import type { Product, Category } from '@/types'
+
+export const metadata: Metadata = {
+  title: 'Detergjente & Produkte Higjiene Online | Dërgim 24h Kosovë',
+  description: 'Bli detergjente, kimikate pastrimi, dezinfektues dhe produkte higjiene online. Dërgim 24h në tërë Kosovën. Transport falas mbi €30. Çmime shumice për HORECA dhe biznese. Partner i Shtepiaku.',
+  alternates: { canonical: 'https://prohygiene.shop' },
+  keywords: [
+    'detergjent online Kosovë', 'kimikate pastrimi Kosovë', 'produkte higjiene online',
+    'dezinfektues Kosovë', 'detergjent me shumice', 'furnizim HORECA Kosovë',
+    'shtepiaku detergjente', 'letra higjienike', 'pastrim profesional Kosovë',
+  ],
+}
 
 const lang = 'sq' as const
 
@@ -69,7 +81,51 @@ const trustItems = [
 export default async function HomePage() {
   const { featured, bestSellers, categories, banners } = await getHomeData()
 
+  const localBusinessLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: 'ProHygiene',
+    url: 'https://prohygiene.shop',
+    telephone: '+38344000000',
+    email: 'info@prohygiene.shop',
+    address: { '@type': 'PostalAddress', addressLocality: 'Prishtinë', addressCountry: 'XK' },
+    priceRange: '€€',
+    openingHours: 'Mo-Fr 08:00-17:00',
+    sameAs: ['https://shtepiaku.com'],
+    description: 'Detergjente, kimikate pastrimi dhe produkte higjiene — dërgim 24h në tërë Kosovën.',
+  }
+
+  const faqLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'A bëni dërgim në tërë Kosovën?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Po, bëjmë dërgim në tërë Kosovën brenda 24-48 orëve. Dërgimi është falas për porosi mbi €30.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'A keni çmime shumice për biznese dhe HORECA?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Po. Ofrojmë çmime speciale shumice për hotele, restorante, kafene dhe biznese. Na kontaktoni në +383 44 000 000 për ofertë personale.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'Si mund të porosis detergjente online?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Shfleto dyqanin në prohygiene.shop, shto produktet në shportë dhe porosit online. Paguaj me kartë ose kesh kur arrin produkti.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'Cilat janë metodat e pagesës?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Pranojmë pagesë me kartë (Visa/Mastercard) dhe kesh pas dorëzimit (cash on delivery).' },
+      },
+    ],
+  }
+
   return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
     <div className="animate-fade-in">
       {/* ── TRUST BAR ── */}
       <div className="bg-brand-600 text-white">
@@ -272,5 +328,6 @@ export default async function HomePage() {
         </div>
       </section>
     </div>
+    </>
   )
 }
