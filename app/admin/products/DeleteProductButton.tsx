@@ -4,11 +4,11 @@ import { useState } from 'react'
 import { Trash2, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 
 export function DeleteProductButton({ productId, productName }: { productId: string; productName: string }) {
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const refresh = useScrollPreservingRefresh()
 
   const handleDelete = async () => {
     if (!confirm(`Jeni të sigurt që doni të fshini "${productName}"?`)) return
@@ -19,7 +19,7 @@ export function DeleteProductButton({ productId, productName }: { productId: str
       toast.error('Ndodhi një gabim gjatë fshirjes')
     } else {
       toast.success('Produkti u fshi')
-      router.refresh()
+      refresh()
     }
     setLoading(false)
   }

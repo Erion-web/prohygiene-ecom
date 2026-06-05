@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Loader2, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 import { statusLabel } from '@/lib/utils'
 import type { OrderStatus } from '@/types'
 
@@ -13,7 +13,7 @@ const STATUSES: OrderStatus[] = ['pending', 'confirmed', 'processing', 'shipped'
 export function OrderStatusUpdater({ orderId, currentStatus }: { orderId: string; currentStatus: OrderStatus }) {
   const [status, setStatus] = useState<OrderStatus>(currentStatus)
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const refresh = useScrollPreservingRefresh()
 
   const handleSave = async () => {
     if (status === currentStatus) return
@@ -28,7 +28,7 @@ export function OrderStatusUpdater({ orderId, currentStatus }: { orderId: string
       toast.error('Ndodhi një gabim')
     } else {
       toast.success('Statusi u përditësua')
-      router.refresh()
+      refresh()
     }
     setLoading(false)
   }

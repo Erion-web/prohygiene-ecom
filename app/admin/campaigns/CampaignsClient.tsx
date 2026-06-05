@@ -5,7 +5,7 @@ import { Plus, Edit, Trash2, Tag, Clock, Loader2, X, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { slugify, formatPrice } from '@/lib/utils'
-import { useRouter } from 'next/navigation'
+import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 import { Badge } from '@/components/ui/Badge'
 import type { Campaign, DiscountType, AudienceType } from '@/types'
 
@@ -35,7 +35,7 @@ export function CampaignsClient({ initialCampaigns, products }: { initialCampaig
   const [form, setForm] = useState(defaultForm)
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const refresh = useScrollPreservingRefresh()
 
   const update = (key: string, value: unknown) => {
     setForm(prev => {
@@ -90,7 +90,7 @@ export function CampaignsClient({ initialCampaigns, products }: { initialCampaig
     else {
       toast.success(editingId ? 'Kampanja u përditësua' : 'Kampanja u krijua')
       reset()
-      router.refresh()
+      refresh()
     }
   }
 
@@ -99,7 +99,7 @@ export function CampaignsClient({ initialCampaigns, products }: { initialCampaig
     const supabase = createClient()
     const { error } = await supabase.from('campaigns').delete().eq('id', id)
     if (error) toast.error(error.message)
-    else { toast.success('Kampanja u fshi'); router.refresh() }
+    else { toast.success('Kampanja u fshi'); refresh() }
   }
 
   const isActive = (c: Campaign) => c.is_active && new Date(c.starts_at) <= new Date() && new Date(c.ends_at) >= new Date()

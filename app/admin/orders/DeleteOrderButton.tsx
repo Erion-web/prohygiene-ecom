@@ -1,14 +1,14 @@
 'use client'
 
 import { Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
+import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 
 interface Props { id: string; orderNumber: string }
 
 export function DeleteOrderButton({ id, orderNumber }: Props) {
-  const router = useRouter()
+  const refresh = useScrollPreservingRefresh()
 
   const handleDelete = async () => {
     if (!confirm(`Fshi porosinë ${orderNumber} përgjithmonë? Ky veprim nuk mund të anulohet.`)) return
@@ -17,7 +17,7 @@ export function DeleteOrderButton({ id, orderNumber }: Props) {
     if (error) toast.error(error.message)
     else {
       toast.success(`Porosia ${orderNumber} u fshi`)
-      router.refresh()
+      refresh()
     }
   }
 

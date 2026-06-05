@@ -1,9 +1,9 @@
 'use client'
 
 import { Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
+import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 
 interface Props {
   id: string
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function DeleteBrandButton({ id, name, productCount }: Props) {
-  const router = useRouter()
+  const refresh = useScrollPreservingRefresh()
 
   const handleDelete = async () => {
     if (productCount > 0) {
@@ -27,7 +27,7 @@ export function DeleteBrandButton({ id, name, productCount }: Props) {
       toast.error(error.message)
     } else {
       toast.success('Brendi u fshi')
-      router.refresh()
+      refresh()
     }
   }
 

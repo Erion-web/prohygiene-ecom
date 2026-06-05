@@ -5,7 +5,7 @@ import { Plus, Edit, Trash2, Save, X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
-import { useRouter } from 'next/navigation'
+import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 import type { Category, AudienceType } from '@/types'
 
 interface CategoriesClientProps {
@@ -36,7 +36,7 @@ export function CategoriesClient({ initialCategories }: CategoriesClientProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<CategoryFormData>(defaultForm)
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const refresh = useScrollPreservingRefresh()
 
   const update = (key: string, value: string | boolean | number) => {
     setForm(prev => {
@@ -88,7 +88,7 @@ export function CategoriesClient({ initialCategories }: CategoriesClientProps) {
     } else {
       toast.success(editingId ? 'Kategoria u përditësua' : 'Kategoria u shtua')
       reset()
-      router.refresh()
+      refresh()
     }
     setLoading(false)
   }
@@ -100,7 +100,7 @@ export function CategoriesClient({ initialCategories }: CategoriesClientProps) {
     if (error) toast.error(error.message)
     else {
       toast.success('Kategoria u fshi')
-      router.refresh()
+      refresh()
     }
   }
 
