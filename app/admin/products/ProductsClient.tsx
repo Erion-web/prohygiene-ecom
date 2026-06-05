@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -29,6 +29,15 @@ const AUDIENCE_LABELS: Record<string, string> = {
 }
 
 export function ProductsClient({ products, categories, brands }: Props) {
+  useEffect(() => {
+    const saved = sessionStorage.getItem('admin-products-scroll')
+    if (!saved) return
+    sessionStorage.removeItem('admin-products-scroll')
+    const y = parseInt(saved, 10)
+    setTimeout(() => window.scrollTo(0, y), 50)
+    setTimeout(() => window.scrollTo(0, y), 200)
+  }, [])
+
   const [search, setSearch]           = useState('')
   const [categoryId, setCategoryId]   = useState('')
   const [brandId, setBrandId]         = useState('')
@@ -277,6 +286,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
                     <div className="flex items-center gap-1.5 justify-end">
                       <Link
                         href={`/admin/products/${product.id}/edit`}
+                        onClick={() => sessionStorage.setItem('admin-products-scroll', String(window.scrollY))}
                         className="p-1.5 text-text-muted hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all duration-200"
                         title="Modifiko"
                       >
