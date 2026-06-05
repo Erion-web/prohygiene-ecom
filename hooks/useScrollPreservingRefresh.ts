@@ -2,15 +2,30 @@
 
 import { useRouter } from 'next/navigation'
 
+function getScrollContainer(): Element | null {
+  if (typeof document === 'undefined') return null
+  return document.getElementById('admin-main')
+}
+
+function getScrollY(): number {
+  const el = getScrollContainer()
+  return el ? el.scrollTop : window.scrollY
+}
+
+function setScrollY(y: number) {
+  const el = getScrollContainer()
+  if (el) el.scrollTop = y
+  else window.scrollTo(0, y)
+}
+
 export function useScrollPreservingRefresh() {
   const router = useRouter()
 
   return () => {
-    const y = window.scrollY
+    const y = getScrollY()
     router.refresh()
-    // Restore scroll after Next.js re-renders (try at 50 / 150 / 400ms)
-    setTimeout(() => window.scrollTo(0, y), 50)
-    setTimeout(() => window.scrollTo(0, y), 150)
-    setTimeout(() => window.scrollTo(0, y), 400)
+    setTimeout(() => setScrollY(y), 50)
+    setTimeout(() => setScrollY(y), 200)
+    setTimeout(() => setScrollY(y), 400)
   }
 }

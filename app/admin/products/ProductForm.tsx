@@ -165,7 +165,6 @@ export function ProductForm({ categories, brands, product }: ProductFormProps) {
     } else {
       toast.success(product ? 'Produkti u përditësua' : 'Produkti u shtua')
       router.push('/admin/products')
-      router.refresh()
     }
   }
 

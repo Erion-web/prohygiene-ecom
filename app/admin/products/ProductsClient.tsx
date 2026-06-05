@@ -3,9 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import {
-  Edit, Package, AlertTriangle, Search, X, Star, Tag, TrendingUp,
-} from 'lucide-react'
+import { Edit, Package, AlertTriangle, Search, X, Star, Tag, TrendingUp, ChevronDown } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { DeleteProductButton } from './DeleteProductButton'
 import { formatPrice } from '@/lib/utils'
@@ -28,25 +26,35 @@ const AUDIENCE_LABELS: Record<string, string> = {
   both: '👥 Të Gjithë',
 }
 
+function getScrollEl() {
+  return typeof document !== 'undefined' ? document.getElementById('admin-main') : null
+}
+
 export function ProductsClient({ products, categories, brands }: Props) {
+  // Restore scroll when returning from edit page
   useEffect(() => {
     const saved = sessionStorage.getItem('admin-products-scroll')
     if (!saved) return
     sessionStorage.removeItem('admin-products-scroll')
     const y = parseInt(saved, 10)
-    setTimeout(() => window.scrollTo(0, y), 50)
-    setTimeout(() => window.scrollTo(0, y), 200)
+    const restore = () => {
+      const el = getScrollEl()
+      if (el) el.scrollTop = y
+      else window.scrollTo(0, y)
+    }
+    setTimeout(restore, 50)
+    setTimeout(restore, 200)
   }, [])
 
-  const [search, setSearch]           = useState('')
-  const [categoryId, setCategoryId]   = useState('')
-  const [brandId, setBrandId]         = useState('')
-  const [audience, setAudience]       = useState('')
-  const [status, setStatus]           = useState('')
-  const [stock, setStock]             = useState('')
-  const [onSale, setOnSale]           = useState(false)
-  const [featured, setFeatured]       = useState(false)
-  const [bestSeller, setBestSeller]   = useState(false)
+  const [search, setSearch]         = useState('')
+  const [categoryId, setCategoryId] = useState('')
+  const [brandId, setBrandId]       = useState('')
+  const [audience, setAudience]     = useState('')
+  const [status, setStatus]         = useState('')
+  const [stock, setStock]           = useState('')
+  const [onSale, setOnSale]         = useState(false)
+  const [featured, setFeatured]     = useState(false)
+  const [bestSeller, setBestSeller] = useState(false)
 
   const hasFilters = search || categoryId || brandId || audience || status || stock || onSale || featured || bestSeller
 
@@ -70,11 +78,11 @@ export function ProductsClient({ products, categories, brands }: Props) {
   }, [products, search, categoryId, brandId, audience, status, stock, onSale, featured, bestSeller])
 
   const stats = useMemo(() => ({
-    total: products.length,
-    active: products.filter(p => p.is_active).length,
+    total:      products.length,
+    active:     products.filter(p => p.is_active).length,
     outOfStock: products.filter(p => p.stock === 0).length,
-    onSale: products.filter(p => !!p.sale_price).length,
-    lowStock: products.filter(p => p.stock > 0 && p.stock <= 10).length,
+    lowStock:   products.filter(p => p.stock > 0 && p.stock <= 10).length,
+    onSale:     products.filter(p => !!p.sale_price).length,
   }), [products])
 
   const clearAll = () => {
@@ -82,118 +90,138 @@ export function ProductsClient({ products, categories, brands }: Props) {
     setStatus(''); setStock(''); setOnSale(false); setFeatured(false); setBestSeller(false)
   }
 
+  const saveScroll = () => {
+    const el = getScrollEl()
+    sessionStorage.setItem('admin-products-scroll', String(el ? el.scrollTop : window.scrollY))
+  }
+
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 space-y-3">
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {[
-          { label: 'Gjithsej', value: stats.total, color: 'text-text-primary' },
-          { label: 'Aktive', value: stats.active, color: 'text-emerald-600' },
-          { label: 'Pa Gjendje', value: stats.outOfStock, color: 'text-red-500' },
-          { label: 'Gjendje e Ulët', value: stats.lowStock, color: 'text-amber-500' },
-          { label: 'Me Zbritje', value: stats.onSale, color: 'text-brand-600' },
-        ].map(s => (
-          <div key={s.label} className="admin-card p-4 text-center">
-            <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-text-muted mt-0.5">{s.label}</p>
-          </div>
+      <div className="grid grid-cols-5 gap-2">
+        {([
+          { label: 'Gjithsej',       value: stats.total,      color: 'text-gray-900',    active: !hasFilters,         onClick: clearAll },
+          { label: 'Aktive',         value: stats.active,     color: 'text-emerald-600', active: status === 'active', onClick: () => setStatus(s => s === 'active' ? '' : 'active') },
+          { label: 'Pa Gjendje',     value: stats.outOfStock, color: 'text-red-500',     active: stock === 'out',     onClick: () => setStock(s => s === 'out' ? '' : 'out') },
+          { label: 'Gjendje e Ulët', value: stats.lowStock,   color: 'text-amber-500',   active: stock === 'low',     onClick: () => setStock(s => s === 'low' ? '' : 'low') },
+          { label: 'Me Zbritje',     value: stats.onSale,     color: 'text-brand-600',   active: onSale,              onClick: () => setOnSale(v => !v) },
+        ] as const).map(s => (
+          <button
+            key={s.label}
+            onClick={s.onClick}
+            className={`bg-white border rounded-xl px-3 py-2.5 text-center transition-all hover:shadow-sm ${
+              s.active ? 'border-brand-400 ring-1 ring-brand-300 bg-brand-50/30' : 'border-gray-100 hover:border-gray-200'
+            }`}
+          >
+            <p className={`text-xl font-black tabular-nums ${s.color}`}>{s.value}</p>
+            <p className="text-[11px] text-gray-400 mt-0.5 leading-none">{s.label}</p>
+          </button>
         ))}
       </div>
 
       {/* Filter bar */}
-      <div className="admin-card p-4 space-y-3">
-        {/* Row 1: search + dropdowns */}
-        <div className="flex flex-wrap gap-2">
+      <div className="bg-white border border-gray-100 rounded-xl p-3 space-y-2.5">
+        {/* Row 1 */}
+        <div className="flex gap-2 items-center">
           {/* Search */}
-          <div className="relative flex-1 min-w-[200px]">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+          <div className="relative flex-1">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Kërko sipas emrit ose SKU..."
+              placeholder="Emri ose SKU..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="input pl-9 text-sm w-full"
+              className="w-full pl-8 pr-7 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400 focus:border-brand-400 bg-gray-50/50"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary">
-                <X size={14} />
+              <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <X size={12} />
               </button>
             )}
           </div>
 
-          {/* Category */}
-          <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="input text-sm min-w-[140px]">
-            <option value="">Të gjitha kategoritë</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.name_sq}</option>)}
-          </select>
-
-          {/* Brand */}
-          {brands.length > 0 && (
-            <select value={brandId} onChange={e => setBrandId(e.target.value)} className="input text-sm min-w-[130px]">
-              <option value="">Të gjitha brendet</option>
-              {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          {/* Dropdowns */}
+          <div className="relative">
+            <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
+              className={`appearance-none pl-2.5 pr-6 py-1.5 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400 cursor-pointer ${categoryId ? 'border-brand-400 bg-brand-50 text-brand-700 font-semibold' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
+              <option value="">Kategoria</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name_sq}</option>)}
             </select>
+            <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+
+          {brands.length > 0 && (
+            <div className="relative">
+              <select value={brandId} onChange={e => setBrandId(e.target.value)}
+                className={`appearance-none pl-2.5 pr-6 py-1.5 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400 cursor-pointer ${brandId ? 'border-brand-400 bg-brand-50 text-brand-700 font-semibold' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
+                <option value="">Brendi</option>
+                {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+              <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
           )}
 
-          {/* Audience */}
-          <select value={audience} onChange={e => setAudience(e.target.value)} className="input text-sm min-w-[130px]">
-            <option value="">Të gjitha audiencat</option>
-            <option value="home">🏠 Shtëpi</option>
-            <option value="business">🏢 Biznes</option>
-            <option value="both">👥 Të Gjithë</option>
-          </select>
+          <div className="relative">
+            <select value={audience} onChange={e => setAudience(e.target.value)}
+              className={`appearance-none pl-2.5 pr-6 py-1.5 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400 cursor-pointer ${audience ? 'border-brand-400 bg-brand-50 text-brand-700 font-semibold' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
+              <option value="">Audienca</option>
+              <option value="home">🏠 Shtëpi</option>
+              <option value="business">🏢 Biznes</option>
+              <option value="both">👥 Të Gjithë</option>
+            </select>
+            <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
 
-          {/* Status */}
-          <select value={status} onChange={e => setStatus(e.target.value)} className="input text-sm min-w-[120px]">
-            <option value="">Të gjitha statuset</option>
-            <option value="active">✅ Aktive</option>
-            <option value="inactive">⛔ Joaktive</option>
-          </select>
+          <div className="relative">
+            <select value={status} onChange={e => setStatus(e.target.value)}
+              className={`appearance-none pl-2.5 pr-6 py-1.5 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400 cursor-pointer ${status ? 'border-brand-400 bg-brand-50 text-brand-700 font-semibold' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
+              <option value="">Statusi</option>
+              <option value="active">✅ Aktiv</option>
+              <option value="inactive">⛔ Joaktiv</option>
+            </select>
+            <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
 
-          {/* Stock */}
-          <select value={stock} onChange={e => setStock(e.target.value)} className="input text-sm min-w-[140px]">
-            <option value="">Të gjitha gjendje</option>
-            <option value="in">✅ Në gjendje</option>
-            <option value="low">⚠️ Gjendje e ulët</option>
-            <option value="out">❌ Pa gjendje</option>
-          </select>
+          <div className="relative">
+            <select value={stock} onChange={e => setStock(e.target.value)}
+              className={`appearance-none pl-2.5 pr-6 py-1.5 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400 cursor-pointer ${stock ? 'border-brand-400 bg-brand-50 text-brand-700 font-semibold' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
+              <option value="">Stoku</option>
+              <option value="in">✅ Në gjendje</option>
+              <option value="low">⚠️ I ulët</option>
+              <option value="out">❌ Pa gjendje</option>
+            </select>
+            <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
         </div>
 
-        {/* Row 2: quick chips + clear */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-text-muted font-medium">Shpejt:</span>
-
+        {/* Row 2: quick chips + count */}
+        <div className="flex items-center gap-1.5">
           {([
-            { label: '⭐ I Zgjedhur', state: featured, set: setFeatured },
+            { label: '⭐ I Zgjedhur', state: featured,    set: setFeatured },
             { label: '🔥 Best Seller', state: bestSeller, set: setBestSeller },
-            { label: '🏷️ Me Zbritje', state: onSale, set: setOnSale },
+            { label: '🏷️ Zbritje',    state: onSale,      set: setOnSale },
           ] as const).map(({ label, state, set }) => (
             <button
               key={label}
               onClick={() => set(!state)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 ${
-                state
-                  ? 'bg-brand-600 text-white border-brand-600'
-                  : 'bg-white text-text-secondary border-surface-border hover:border-brand-300 hover:text-brand-600'
+              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                state ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-gray-500 border-gray-200 hover:border-brand-300 hover:text-brand-600'
               }`}
             >
               {label}
             </button>
           ))}
 
-          <div className="ml-auto flex items-center gap-3">
-            <span className="text-sm text-text-muted">
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-gray-400">
               {hasFilters
-                ? <><span className="font-bold text-text-primary">{filtered.length}</span> / {products.length} produkte</>
-                : <><span className="font-bold text-text-primary">{products.length}</span> produkte</>
-              }
+                ? <><span className="font-bold text-gray-700">{filtered.length}</span> / {products.length}</>
+                : <span className="font-bold text-gray-700">{products.length}</span>
+              } produkte
             </span>
             {hasFilters && (
-              <button
-                onClick={clearAll}
-                className="flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
-              >
-                <X size={12} /> Pastro filtrat
+              <button onClick={clearAll} className="flex items-center gap-1 text-[11px] font-semibold text-red-500 hover:text-red-600 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+                <X size={11} /> Pastro
               </button>
             )}
           </div>
@@ -201,71 +229,67 @@ export function ProductsClient({ products, categories, brands }: Props) {
       </div>
 
       {/* Table */}
-      <div className="admin-card overflow-hidden p-0">
+      <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full admin-table">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="bg-surface-soft border-b border-surface-border">
-                <th className="text-left w-12">Foto</th>
-                <th className="text-left">Produkti</th>
-                <th className="text-left">Kategoria</th>
-                <th className="text-left">Brendi</th>
-                <th className="text-left">Çmimi</th>
-                <th className="text-left">Stoku</th>
-                <th className="text-left">Audienca</th>
-                <th className="text-left">Statusi</th>
-                <th className="text-right">Veprime</th>
+              <tr className="border-b border-gray-100 bg-gray-50/80">
+                <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-3 py-2.5 w-10">Foto</th>
+                <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-3 py-2.5">Produkti</th>
+                <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-3 py-2.5">Kategoria</th>
+                <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-3 py-2.5">Brendi</th>
+                <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-3 py-2.5">Çmimi</th>
+                <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-3 py-2.5">Stoku</th>
+                <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-3 py-2.5">Audienca</th>
+                <th className="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wide px-3 py-2.5">Statusi</th>
+                <th className="px-3 py-2.5 w-16" />
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-50">
               {filtered.map(product => (
-                <tr key={product.id} className="hover:bg-surface-soft transition-colors">
-                  <td>
-                    <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface-muted flex-shrink-0">
+                <tr key={product.id} className="hover:bg-gray-50/60 transition-colors group">
+                  <td className="px-3 py-2">
+                    <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                       {product.image_url ? (
-                        <Image src={product.image_url} alt="" fill className="object-cover" sizes="40px" />
+                        <Image src={product.image_url} alt="" fill className="object-cover" sizes="32px" />
                       ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-lg">🧴</div>
+                        <div className="absolute inset-0 flex items-center justify-center text-sm">🧴</div>
                       )}
                     </div>
                   </td>
-                  <td>
-                    <div>
-                      <p className="font-semibold text-text-primary text-sm">{product.name_sq}</p>
-                      <p className="text-text-muted text-xs font-mono">{product.sku}</p>
-                    </div>
+                  <td className="px-3 py-2">
+                    <p className="font-medium text-gray-900 text-sm leading-snug">{product.name_sq}</p>
+                    <p className="text-gray-400 text-[11px] font-mono">{product.sku}</p>
                   </td>
-                  <td className="text-sm text-text-secondary">
-                    {product.category?.name_sq ?? <span className="text-text-muted">—</span>}
+                  <td className="px-3 py-2 text-xs text-gray-500">
+                    {product.category?.name_sq ?? <span className="text-gray-300">—</span>}
                   </td>
-                  <td className="text-sm text-text-secondary">
-                    {product.brand?.name ?? <span className="text-text-muted">—</span>}
+                  <td className="px-3 py-2 text-xs text-gray-500">
+                    {product.brand?.name ?? <span className="text-gray-300">—</span>}
                   </td>
-                  <td>
-                    <div>
-                      <p className="font-semibold text-sm">{formatPrice(product.price)}</p>
-                      {product.sale_price && (
-                        <p className="text-xs text-red-500 font-medium flex items-center gap-1">
-                          <Tag size={10} /> {formatPrice(product.sale_price)}
-                        </p>
-                      )}
-                    </div>
+                  <td className="px-3 py-2">
+                    <p className="font-semibold text-sm text-gray-900">{formatPrice(product.price)}</p>
+                    {product.sale_price && (
+                      <p className="text-[11px] text-red-500 font-medium flex items-center gap-0.5">
+                        <Tag size={9} /> {formatPrice(product.sale_price)}
+                      </p>
+                    )}
                   </td>
-                  <td>
-                    <div className="flex items-center gap-1.5">
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-1">
                       {product.stock === 0 ? (
-                        <span className="badge badge-danger text-xs">Pa Gjendje</span>
+                        <span className="text-[11px] font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded">0</span>
                       ) : product.stock <= 10 ? (
-                        <span className="flex items-center gap-1 text-amber-600 text-xs font-semibold">
-                          <AlertTriangle size={12} /> {product.stock}
+                        <span className="flex items-center gap-0.5 text-[11px] font-semibold text-amber-600">
+                          <AlertTriangle size={10} /> {product.stock}
                         </span>
                       ) : (
-                        <span className="text-sm font-medium text-text-primary">{product.stock}</span>
+                        <span className="text-sm font-medium text-gray-700">{product.stock}</span>
                       )}
-                      <span className="text-xs text-text-muted">{product.unit}</span>
+                      <span className="text-[11px] text-gray-400">{product.unit}</span>
                     </div>
                   </td>
-                  <td>
+                  <td className="px-3 py-2">
                     <Badge
                       variant={product.audience_type === 'home' ? 'brand' : product.audience_type === 'business' ? 'warning' : 'neutral'}
                       size="sm"
@@ -273,24 +297,24 @@ export function ProductsClient({ products, categories, brands }: Props) {
                       {AUDIENCE_LABELS[product.audience_type]}
                     </Badge>
                   </td>
-                  <td>
-                    <div className="flex items-center gap-1.5">
-                      <span className={`badge border text-xs ${product.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-1">
+                      <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded ${product.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
                         {product.is_active ? 'Aktiv' : 'Joaktiv'}
                       </span>
-                      {product.is_featured && <span title="I Zgjedhur"><Star size={12} className="text-amber-500 flex-shrink-0" fill="currentColor" /></span>}
-                      {product.is_best_seller && <span title="Best Seller"><TrendingUp size={12} className="text-brand-500 flex-shrink-0" /></span>}
+                      {product.is_featured && <span title="I Zgjedhur"><Star size={10} className="text-amber-400" fill="currentColor" /></span>}
+                      {product.is_best_seller && <span title="Best Seller"><TrendingUp size={10} className="text-brand-400" /></span>}
                     </div>
                   </td>
-                  <td>
-                    <div className="flex items-center gap-1.5 justify-end">
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                       <Link
                         href={`/admin/products/${product.id}/edit`}
-                        onClick={() => sessionStorage.setItem('admin-products-scroll', String(window.scrollY))}
-                        className="p-1.5 text-text-muted hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all duration-200"
+                        onClick={saveScroll}
+                        className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all"
                         title="Modifiko"
                       >
-                        <Edit size={15} />
+                        <Edit size={14} />
                       </Link>
                       <DeleteProductButton productId={product.id} productName={product.name_sq} />
                     </div>
@@ -300,13 +324,13 @@ export function ProductsClient({ products, categories, brands }: Props) {
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="text-center py-14 text-text-muted">
-                    <Package size={32} className="mx-auto mb-3 opacity-40" />
-                    <p className="font-medium">
-                      {hasFilters ? 'Asnjë produkt nuk përputhet me filtrat' : 'Nuk ka produkte ende'}
+                  <td colSpan={9} className="text-center py-12 text-gray-400">
+                    <Package size={28} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-sm font-medium">
+                      {hasFilters ? 'Asnjë produkt nuk përputhet' : 'Nuk ka produkte ende'}
                     </p>
                     {hasFilters && (
-                      <button onClick={clearAll} className="mt-2 text-sm text-brand-600 hover:underline">
+                      <button onClick={clearAll} className="mt-1.5 text-xs text-brand-600 hover:underline">
                         Pastro filtrat
                       </button>
                     )}

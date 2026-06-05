@@ -68,7 +68,6 @@ export function BrandForm({ brand }: Props) {
     } else {
       toast.success(brand ? 'Brendi u përditësua' : 'Brendi u shtua')
       router.push('/admin/brands')
-      router.refresh()
     }
   }
 
