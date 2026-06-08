@@ -24,8 +24,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: orderError?.message ?? 'Failed to create order' }, { status: 500 })
     }
 
+    // Mock/seed products use non-UUID ids (e.g. "p-3"); product_id is a UUID FK,
+    // so coerce anything that isn't a valid UUID to null. The line snapshot
+    // (name, sku, price, qty) is preserved regardless.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     const orderItems = items.map((item: Record<string, unknown>) => ({
       ...item,
+      product_id: typeof item.product_id === 'string' && UUID_RE.test(item.product_id) ? item.product_id : null,
       order_id: created.id,
     }))
 
