@@ -245,40 +245,32 @@ export default function CheckoutPage() {
     setLoading(true)
 
     try {
+      // Get current user (optional — guest checkout works too)
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Create order
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user?.id ?? null,
-          customer_name: form.customer_name,
-          customer_email: form.customer_email,
-          customer_phone: form.customer_phone,
-          customer_type: form.customer_type,
-          business_name: form.business_name || null,
-          fiscal_number: form.fiscal_number || null,
-          city: form.city,
-          address: form.address,
-          notes: form.notes || null,
-          subtotal: total + discount,
-          discount_amount: discount + couponDiscount,
-          shipping_cost: shipping,
-          vat_amount: finalTotal * 0.18,
-          total: finalTotal,
-          status: 'pending',
-          payment_method: form.payment_method,
-          payment_status: 'pending',
-        })
-        .select()
-        .single()
+      const orderPayload = {
+        user_id: user?.id ?? null,
+        customer_name: form.customer_name,
+        customer_email: form.customer_email,
+        customer_phone: form.customer_phone,
+        customer_type: form.customer_type,
+        business_name: form.business_name || null,
+        fiscal_number: form.fiscal_number || null,
+        city: form.city,
+        address: form.address,
+        notes: form.notes || null,
+        subtotal: total + discount,
+        discount_amount: discount + couponDiscount,
+        shipping_cost: shipping,
+        vat_amount: finalTotal * 0.18,
+        total: finalTotal,
+        status: 'pending',
+        payment_method: form.payment_method,
+        payment_status: 'pending',
+      }
 
-      if (orderError || !order) throw new Error('Failed to create order')
-
-      // Create order items
       const orderItems = items.map(item => ({
-        order_id: order.id,
         product_id: item.product.id,
         product_name_sq: item.product.name_sq,
         product_name_en: item.product.name_en,
@@ -290,8 +282,15 @@ export default function CheckoutPage() {
         subtotal: item.effectivePrice * item.quantity,
       }))
 
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
-      if (itemsError) throw new Error('Failed to create order items')
+      // Create order via server API (uses service role — works for guests too)
+      const orderRes = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: orderPayload, items: orderItems }),
+      })
+      const orderData = await orderRes.json()
+      if (!orderRes.ok || orderData.error) throw new Error(orderData.error ?? 'Failed to create order')
+      const order = orderData.order
 
       let redirectUrl = `/order-success?order=${order.order_number}`
 
