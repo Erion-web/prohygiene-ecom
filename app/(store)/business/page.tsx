@@ -111,7 +111,7 @@ export default async function BusinessPage() {
         {categories.length > 0 && (
           <div className="mb-12">
             <h2 className="text-xl font-bold text-text-primary mb-5">Kategoritë Biznes</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {categories.map(cat => (
                 <CategoryCard key={cat.id} category={cat} lang="sq" />
               ))}
@@ -124,7 +124,7 @@ export default async function BusinessPage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-text-primary">Produktet Biznes ({products.length})</h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             {products.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}

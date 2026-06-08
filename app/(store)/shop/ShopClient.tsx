@@ -230,7 +230,7 @@ export function ShopClient({ categories, initialProducts, searchParams }: ShopCl
             ) : (
               <>
                 <div className={cn(
-                  'grid gap-4 md:gap-6',
+                  'grid gap-2',
                   view === 'grid'
                     ? 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4'
                     : 'grid-cols-1'

@@ -248,7 +248,7 @@ export default async function HomePage() {
           </div>
 
           <Suspense fallback={<ProductGridSkeleton count={8} />}>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2">
               {featured.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -276,7 +276,7 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {bestSellers.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}

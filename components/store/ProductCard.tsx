@@ -102,14 +102,11 @@ export function ProductCard({ product, className }: ProductCardProps) {
             {/* Prices */}
             <div>
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className={cn(
-                  'font-extrabold',
-                  isOnSale ? 'text-red-600 text-base' : 'text-text-primary text-base'
-                )}>
+                <span className="font-extrabold text-base text-text-primary">
                   {formatPrice(effectivePrice)}
                 </span>
                 {isOnSale && discountPercent && (
-                  <span className="text-[10px] font-extrabold bg-red-100 text-red-600 px-1.5 py-0.5 rounded-md">
+                  <span className="text-[10px] font-extrabold bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded-md">
                     -{discountPercent}%
                   </span>
                 )}
@@ -121,20 +118,19 @@ export function ProductCard({ product, className }: ProductCardProps) {
               )}
             </div>
 
-            {/* Add to cart */}
+            {/* Add to cart — icon only */}
             <button
               type="button"
               onClick={handleAddToCart}
               disabled={isOutOfStock}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 flex-shrink-0',
+                'p-2 rounded-xl transition-all duration-200 flex-shrink-0',
                 isOutOfStock
                   ? 'bg-surface-muted text-text-muted cursor-not-allowed'
                   : 'bg-brand-600 hover:bg-brand-700 active:scale-95 text-white'
               )}
             >
-              <ShoppingCart size={13} />
-              <span className="hidden sm:inline">{tr.product.addToCart}</span>
+              <ShoppingCart size={14} />
             </button>
           </div>
         </div>

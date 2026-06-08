@@ -74,7 +74,7 @@ export default async function CampaignPage({ params }: Props) {
         {products.length === 0 ? (
           <p className="text-text-muted text-center py-16">Nuk ka produkte në këtë kampanjë.</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {products.map((product: any) => (
               <ProductCard key={product.id} product={product} />

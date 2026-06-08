@@ -266,7 +266,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
             <h2 className="text-xl font-extrabold text-text-primary mb-6">
               {tr.product.relatedProducts}
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
               {relatedProducts.map(p => (
                 <ProductCard key={p.id} product={p} />
               ))}
