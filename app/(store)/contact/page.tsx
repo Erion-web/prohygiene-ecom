@@ -43,14 +43,14 @@ export default function ContactPage() {
                 {
                   icon: Phone,
                   title: lang === 'sq' ? 'Telefoni' : 'Phone',
-                  lines: ['+383 44 000 000', '+383 45 000 000'],
-                  href: 'tel:+38344000000',
+                  lines: ['046 10 80 40'],
+                  href: 'tel:+38346108040',
                 },
                 {
                   icon: Mail,
                   title: 'Email',
-                  lines: ['info@prohygiene.com', 'sales@prohygiene.com'],
-                  href: 'mailto:info@prohygiene.com',
+                  lines: ['info@prohygiene.shop'],
+                  href: 'mailto:info@prohygiene.shop',
                 },
                 {
                   icon: MapPin,
@@ -92,8 +92,8 @@ export default function ContactPage() {
                   <p className="font-bold text-text-primary text-sm">{tr.contact.businessInquiries}</p>
                 </div>
                 <p className="text-text-secondary text-xs leading-relaxed">{tr.contact.businessInquiriesDesc}</p>
-                <a href="mailto:business@prohygiene.com" className="text-brand-600 text-xs font-semibold mt-2 block hover:text-brand-700">
-                  business@prohygiene.com
+                <a href="mailto:info@prohygiene.shop" className="text-brand-600 text-xs font-semibold mt-2 block hover:text-brand-700">
+                  info@prohygiene.shop
                 </a>
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <label className="label">{tr.contact.phone}</label>
-                      <input type="tel" className="input" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+383 44 000 000" />
+                      <input type="tel" className="input" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="046 10 80 40" />
                     </div>
                     <div>
                       <label className="label">{tr.contact.subject} *</label>

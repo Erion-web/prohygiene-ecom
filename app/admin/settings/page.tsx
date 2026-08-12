@@ -42,7 +42,7 @@ export default async function SettingsAdminPage() {
             title: 'Njoftime',
             desc: 'Konfigurimet e njoftimeve me email',
             items: [
-              { label: 'Email njoftimesh', value: 'info@prohygiene.com' },
+              { label: 'Email njoftimesh', value: 'info@prohygiene.shop' },
               { label: 'Njoftim porosi të reja', value: '✓ Aktivuar' },
               { label: 'Njoftim gjendje të ulët', value: '✓ Aktivuar' },
               { label: 'Prag i ulët stoku', value: '10 cope' },

@@ -86,7 +86,7 @@ export default async function HomePage() {
     '@type': 'LocalBusiness',
     name: 'ProHygiene',
     url: 'https://prohygiene.shop',
-    telephone: '+38344000000',
+    telephone: '+38346108040',
     email: 'info@prohygiene.shop',
     address: { '@type': 'PostalAddress', addressLocality: 'Prishtinë', addressCountry: 'XK' },
     priceRange: '€€',
@@ -107,7 +107,7 @@ export default async function HomePage() {
       {
         '@type': 'Question',
         name: 'A keni çmime shumice për biznese dhe HORECA?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Po. Ofrojmë çmime speciale shumice për hotele, restorante, kafene dhe biznese. Na kontaktoni në +383 44 000 000 për ofertë personale.' },
+        acceptedAnswer: { '@type': 'Answer', text: 'Po. Ofrojmë çmime speciale shumice për hotele, restorante, kafene dhe biznese. Na kontaktoni në 046 10 80 40 për ofertë personale.' },
       },
       {
         '@type': 'Question',

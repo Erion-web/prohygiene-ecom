@@ -46,9 +46,9 @@ export function Footer() {
               {tr.footer.description}
             </p>
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-x-5">
-              <a href="tel:+38344000000" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
+              <a href="tel:+38346108040" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
                 <Phone size={14} className="text-brand-400 flex-shrink-0" />
-                +383 44 000 000
+                046 10 80 40
               </a>
               <a href="mailto:info@prohygiene.shop" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
                 <Mail size={14} className="text-brand-400 flex-shrink-0" />

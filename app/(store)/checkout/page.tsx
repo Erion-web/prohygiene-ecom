@@ -398,7 +398,7 @@ export default function CheckoutPage() {
                       value={form.customer_phone}
                       onChange={e => update('customer_phone', e.target.value)}
                       className={`input ${errors.customer_phone ? 'input-error' : ''}`}
-                      placeholder="+383 44 000 000"
+                      placeholder="046 10 80 40"
                     />
                     {errors.customer_phone && <p className="text-red-500 text-xs mt-1">{errors.customer_phone}</p>}
                   </div>
