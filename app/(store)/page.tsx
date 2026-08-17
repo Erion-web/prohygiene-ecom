@@ -232,57 +232,61 @@ export default async function HomePage() {
       </section>
 
       {/* ── FEATURED PRODUCTS ── */}
-      <section className="section bg-surface-soft">
-        <div className="container-custom">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-1 h-8 bg-brand-400 rounded-full" />
-              <div>
-                <h2 className="text-xl font-extrabold text-text-primary">Produktet e Zgjedhura</h2>
-                <p className="text-text-muted text-xs mt-0.5">Të selektuara me kujdes për ju</p>
+      {featured.length > 0 && (
+        <section className="section bg-surface-soft">
+          <div className="container-custom">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-8 bg-brand-400 rounded-full" />
+                <div>
+                  <h2 className="text-xl font-extrabold text-text-primary">Produktet e Zgjedhura</h2>
+                  <p className="text-text-muted text-xs mt-0.5">Të selektuara me kujdes për ju</p>
+                </div>
               </div>
+              <Link href="/shop?featured=true" className="flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors">
+                Shiko të gjitha <ArrowRight size={15} />
+              </Link>
             </div>
-            <Link href="/shop?featured=true" className="flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors">
-              Shiko të gjitha <ArrowRight size={15} />
-            </Link>
-          </div>
 
-          <Suspense fallback={<ProductGridSkeleton count={8} />}>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2">
-              {featured.map(product => (
+            <Suspense fallback={<ProductGridSkeleton count={8} />}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2">
+                {featured.map(product => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </Suspense>
+          </div>
+        </section>
+      )}
+
+      {/* ── BEST SELLERS ── */}
+      {bestSellers.length > 0 && (
+        <section className="section">
+          <div className="container-custom">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-8 bg-amber-400 rounded-full" />
+                <div className="flex items-center gap-2">
+                  <Star size={18} className="text-amber-500" fill="currentColor" />
+                  <div>
+                    <h2 className="text-xl font-extrabold text-text-primary">Më të Shitur</h2>
+                    <p className="text-text-muted text-xs mt-0.5">Zgjedhjet e klientëve tanë</p>
+                  </div>
+                </div>
+              </div>
+              <Link href="/shop?sort=best_sellers" className="flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors">
+                Shiko të gjitha <ArrowRight size={15} />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              {bestSellers.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          </Suspense>
-        </div>
-      </section>
-
-      {/* ── BEST SELLERS ── */}
-      <section className="section">
-        <div className="container-custom">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-1 h-8 bg-amber-400 rounded-full" />
-              <div className="flex items-center gap-2">
-                <Star size={18} className="text-amber-500" fill="currentColor" />
-                <div>
-                  <h2 className="text-xl font-extrabold text-text-primary">Më të Shitur</h2>
-                  <p className="text-text-muted text-xs mt-0.5">Zgjedhjet e klientëve tanë</p>
-                </div>
-              </div>
-            </div>
-            <Link href="/shop?sort=best_sellers" className="flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors">
-              Shiko të gjitha <ArrowRight size={15} />
-            </Link>
           </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-            {bestSellers.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── BUNDLES ── */}
       <BundlesSection />
