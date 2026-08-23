@@ -25,14 +25,17 @@ function nextDate(freq: Exclude<RepeatFreq, 'custom'>): string {
 
 interface RepeatModalProps {
   items: { productId: string; productName: string; quantity: number }[]
-  userId: string
+  userId: string | null
+  customerName: string
+  customerEmail: string
   redirectUrl: string
   onDone: (url: string) => void
 }
 
-function RepeatModal({ items, userId, redirectUrl, onDone }: RepeatModalProps) {
+function RepeatModal({ items, userId, customerName, customerEmail, redirectUrl, onDone }: RepeatModalProps) {
   const [freq, setFreq] = useState<RepeatFreq | null>(null)
   const [customDate, setCustomDate] = useState('')
+  const [password, setPassword] = useState('')
   const [saving, setSaving] = useState(false)
 
   const freqOptions: { key: RepeatFreq; label: string; desc: string }[] = [
@@ -45,50 +48,78 @@ function RepeatModal({ items, userId, redirectUrl, onDone }: RepeatModalProps) {
   const handleRepeat = async () => {
     if (!freq) return
     if (freq === 'custom' && !customDate) { toast.error('Zgjedh datën'); return }
+    if (!userId && password.length < 6) { toast.error('Fjalëkalimi duhet të ketë të paktën 6 shkronja'); return }
     setSaving(true)
 
-    const supabase = createClient()
+    let uid = userId
+
+    // Guest checkout: no account yet, so create one on the spot — subscriptions
+    // need a real Supabase Auth user to belong to.
+    if (!uid) {
+      const supabase = createClient()
+      const { data, error } = await supabase.auth.signUp({
+        email: customerEmail,
+        password,
+        options: { data: { full_name: customerName } },
+      })
+      if (error) {
+        toast.error(
+          error.message === 'User already registered'
+            ? 'Ky email ka tashmë llogari — hyni në llogarinë tuaj për të krijuar paketën periodike.'
+            : error.message
+        )
+        setSaving(false)
+        return
+      }
+      uid = data.user?.id ?? null
+      if (!uid) {
+        toast.error('Diçka shkoi keq gjatë krijimit të llogarisë.')
+        setSaving(false)
+        return
+      }
+    }
+
     const orderDate = freq === 'custom' ? customDate : nextDate(freq as Exclude<RepeatFreq, 'custom'>)
     const dbFreq = freq === 'custom' ? 'monthly' : freq
 
-    const { data: sub, error } = await supabase
-      .from('subscriptions')
-      .insert({ user_id: userId, name: 'Porosi Periodike', frequency: dbFreq, next_order_date: orderDate })
-      .select()
-      .single()
-
-    if (error || !sub) {
-      toast.error(error?.message ?? 'Gabim')
+    const res = await fetch('/api/subscriptions/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: uid, items, frequency: dbFreq, next_order_date: orderDate }),
+    })
+    const data = await res.json()
+    if (!res.ok || data.error) {
+      toast.error(data.error ?? 'Gabim')
       setSaving(false)
       return
     }
 
-    await supabase.from('subscription_items').insert(
-      items.map(item => ({ subscription_id: sub.id, product_id: item.productId, quantity: item.quantity }))
-    )
-
-    toast.success('Paketa periodike u krijua!')
+    toast.success(userId ? 'Paketa periodike u krijua!' : 'Llogaria u krijua dhe paketa periodike u aktivizua!')
     onDone(redirectUrl)
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 animate-fade-in">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 animate-fade-in max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-start justify-between mb-5">
+        <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-brand-50 flex items-center justify-center flex-shrink-0">
               <RefreshCw size={20} className="text-brand-600" />
             </div>
             <div>
-              <h2 className="font-extrabold text-text-primary text-base">Përsërit këtë porosi?</h2>
-              <p className="text-xs text-text-muted mt-0.5">Krijoni një paketë periodike automatike</p>
+              <h2 className="font-extrabold text-text-primary text-base">Bëjeni këtë porosi periodike?</h2>
             </div>
           </div>
-          <button onClick={() => onDone(redirectUrl)} className="p-1.5 rounded-xl hover:bg-surface-muted text-text-muted transition-colors">
+          <button onClick={() => onDone(redirectUrl)} className="p-1.5 rounded-xl hover:bg-surface-muted text-text-muted transition-colors flex-shrink-0">
             <X size={16} />
           </button>
         </div>
+
+        <p className="text-sm text-text-secondary leading-relaxed mb-5">
+          Me ProHygiene mund t&apos;i bëni porositë tuaja periodike — dërgohen vetë, automatikisht,
+          çdo javë, çdo 2 javë ose çdo muaj. Ose zgjidhni vetë datën nga kalendari, sa shpesh të doni.
+        </p>
 
         {/* Frequency grid */}
         <div className="grid grid-cols-2 gap-2 mb-4">
@@ -123,6 +154,23 @@ function RepeatModal({ items, userId, redirectUrl, onDone }: RepeatModalProps) {
           </div>
         )}
 
+        {/* Guest inline account creation */}
+        {!userId && freq && (
+          <div className="mb-4 p-3.5 rounded-2xl bg-surface-soft border border-surface-border">
+            <p className="text-xs text-text-secondary mb-2.5">
+              Për t&apos;i aktivizuar porositë periodike duhet një llogari — po e krijojmë me <strong>{customerEmail}</strong>, ju vetëm zgjidhni fjalëkalimin.
+            </p>
+            <label className="label text-xs">Fjalëkalimi</label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Të paktën 6 shkronja"
+              className="input"
+            />
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-2 mt-2">
           <button
@@ -133,7 +181,7 @@ function RepeatModal({ items, userId, redirectUrl, onDone }: RepeatModalProps) {
           </button>
           <button
             onClick={handleRepeat}
-            disabled={!freq || saving || (freq === 'custom' && !customDate)}
+            disabled={!freq || saving || (freq === 'custom' && !customDate) || (!userId && password.length < 6)}
             className="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {saving ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
@@ -160,7 +208,9 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutFormData, string>>>({})
   const [repeatModal, setRepeatModal] = useState<{
     items: { productId: string; productName: string; quantity: number }[]
-    userId: string
+    userId: string | null
+    customerName: string
+    customerEmail: string
     redirectUrl: string
   } | null>(null)
 
@@ -319,13 +369,16 @@ export default function CheckoutPage() {
       }))
       clearCart()
 
-      // If logged-in user, offer repeat order
-      if (user) {
-        setRepeatModal({ items: savedItems, userId: user.id, redirectUrl })
-        setLoading(false)
-      } else {
-        window.location.href = redirectUrl
-      }
+      // Always offer a repeat/periodic order — guests get an inline account
+      // creation step inside the modal since subscriptions need a real user.
+      setRepeatModal({
+        items: savedItems,
+        userId: user?.id ?? null,
+        customerName: form.customer_name,
+        customerEmail: form.customer_email,
+        redirectUrl,
+      })
+      setLoading(false)
     } catch (err) {
       console.error(err)
       toast.error(tr.common.error)
@@ -351,6 +404,8 @@ export default function CheckoutPage() {
         <RepeatModal
           items={repeatModal.items}
           userId={repeatModal.userId}
+          customerName={repeatModal.customerName}
+          customerEmail={repeatModal.customerEmail}
           redirectUrl={repeatModal.redirectUrl}
           onDone={url => { setRepeatModal(null); window.location.href = url }}
         />
