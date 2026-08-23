@@ -5,12 +5,34 @@ import { Phone, Mail, MapPin, Facebook, Instagram, Linkedin, Send } from 'lucide
 import { useLanguageStore } from '@/store/language'
 import { t } from '@/lib/i18n'
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 import { Logo } from '@/components/ui/Logo'
 
 export function Footer() {
   const { lang } = useLanguageStore()
   const tr = t(lang)
   const [email, setEmail] = useState('')
+  const [subscribing, setSubscribing] = useState(false)
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubscribing(true)
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error ?? 'Failed')
+      toast.success(lang === 'sq' ? 'U regjistruat me sukses!' : 'Subscribed successfully!')
+      setEmail('')
+    } catch {
+      toast.error(lang === 'sq' ? 'Diçka shkoi keq. Provoni përsëri.' : 'Something went wrong. Please try again.')
+    } finally {
+      setSubscribing(false)
+    }
+  }
 
   const quickLinks = [
     { href: '/', label: tr.nav.home },
@@ -101,15 +123,16 @@ export function Footer() {
             <p className="text-slate-400 text-sm mb-3">
               {tr.footer.newsletterDesc}
             </p>
-            <form onSubmit={e => { e.preventDefault(); setEmail('') }} className="flex gap-2">
+            <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
               <input
                 type="email"
+                required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder={tr.footer.newsletterPlaceholder}
                 className="flex-1 min-w-0 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500"
               />
-              <button type="submit" className="px-3.5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors flex items-center flex-shrink-0">
+              <button type="submit" disabled={subscribing} className="px-3.5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors flex items-center flex-shrink-0 disabled:opacity-60">
                 <Send size={15} />
               </button>
             </form>

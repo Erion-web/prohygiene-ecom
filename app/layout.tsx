@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
+import { CookieConsent } from '@/components/CookieConsent'
 
 const APP_URL = 'https://prohygiene.shop'
 
@@ -52,6 +53,9 @@ export const metadata: Metadata = {
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? undefined,
+  },
+  icons: {
+    icon: '/favicon.ico',
   },
 }
 
@@ -106,6 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="antialiased">
         {children}
+        <CookieConsent />
         <Toaster
           position="top-right"
           gutter={10}

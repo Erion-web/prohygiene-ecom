@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { sendOrderConfirmationEmail, sendOrderNotificationEmail } from '@/lib/email'
 
 export async function POST(req: Request) {
   try {
@@ -41,6 +42,12 @@ export async function POST(req: Request) {
       console.error('Order items insert error:', itemsError)
       return NextResponse.json({ error: itemsError.message }, { status: 500 })
     }
+
+    // Fire-and-forget: a failed email must never fail an already-placed order.
+    Promise.all([
+      sendOrderConfirmationEmail(created, orderItems),
+      sendOrderNotificationEmail(created, orderItems),
+    ]).catch(err => console.error('[email] Order email dispatch failed:', err))
 
     return NextResponse.json({ order: created })
   } catch (err) {

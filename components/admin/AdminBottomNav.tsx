@@ -6,7 +6,7 @@ import { useState } from 'react'
 import {
   LayoutDashboard, Package, ShoppingBag, Users, X, LogOut,
   FolderOpen, Tag, Award, PercentCircle, RefreshCw, Image,
-  Settings, LayoutGrid,
+  Settings, LayoutGrid, Mail,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -28,6 +28,7 @@ const allNav = [
   { href: '/admin/sales',         label: 'Zbritjet',   icon: PercentCircle },
   { href: '/admin/banners',       label: 'Banerat',    icon: Image },
   { href: '/admin/subscriptions', label: 'Abonimi',    icon: RefreshCw },
+  { href: '/admin/newsletter',    label: 'Newsletter', icon: Mail },
   { href: '/admin/settings',      label: 'Cilësimet',  icon: Settings },
 ]
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { SlidersHorizontal, LayoutGrid, List, ChevronDown } from 'lucide-react'
 import { ProductCard } from '@/components/store/ProductCard'
 import { FilterSidebar } from '@/components/store/FilterSidebar'
@@ -15,34 +16,36 @@ import type { Product, Category, ProductFilters, AudienceType } from '@/types'
 interface ShopClientProps {
   categories: Category[]
   initialProducts: Product[]
-  searchParams: Record<string, string | string[] | undefined>
 }
 
 const PER_PAGE = 24
 
-function getParam(params: Record<string, string | string[] | undefined>, key: string): string | undefined {
-  const val = params[key]
-  return Array.isArray(val) ? val[0] : val
-}
-
-export function ShopClient({ categories, initialProducts, searchParams }: ShopClientProps) {
+export function ShopClient({ categories, initialProducts }: ShopClientProps) {
   const { lang } = useLanguageStore()
   const tr = t(lang)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [page, setPage] = useState(1)
 
-  const [filters, setFilters] = useState<ProductFilters>({
-    category: getParam(searchParams, 'category'),
-    audience_type: getParam(searchParams, 'audience_type') as AudienceType | undefined,
-    search: getParam(searchParams, 'search'),
-    on_sale: getParam(searchParams, 'on_sale') === 'true',
-    in_stock: getParam(searchParams, 'in_stock') === 'true',
-    featured: getParam(searchParams, 'featured') === 'true',
-    sort: (getParam(searchParams, 'sort') as ProductFilters['sort']) ?? 'newest',
+  // The URL is the single source of truth for filters: this is what makes the
+  // browser Back button (e.g. from a product page) restore the exact filtered
+  // view instead of resetting to "all categories".
+  const filters: ProductFilters = useMemo(() => ({
+    category: searchParams.get('category') ?? undefined,
+    audience_type: (searchParams.get('audience_type') as AudienceType | null) ?? undefined,
+    search: searchParams.get('search') ?? undefined,
+    on_sale: searchParams.get('on_sale') === 'true',
+    in_stock: searchParams.get('in_stock') === 'true',
+    featured: searchParams.get('featured') === 'true',
+    min_price: searchParams.get('min_price') ? Number(searchParams.get('min_price')) : undefined,
+    max_price: searchParams.get('max_price') ? Number(searchParams.get('max_price')) : undefined,
+    sort: (searchParams.get('sort') as ProductFilters['sort']) ?? 'newest',
     page: 1,
-  })
+  }), [searchParams])
 
   const sortOptions: { value: NonNullable<ProductFilters['sort']>; label: string }[] = [
     { value: 'newest', label: tr.shop.sortNewest },
@@ -115,9 +118,21 @@ export function ShopClient({ categories, initialProducts, searchParams }: ShopCl
   const hasMore = paginatedProducts.length < filteredProducts.length
 
   const handleFiltersChange = useCallback((newFilters: ProductFilters) => {
-    setFilters(newFilters)
+    const params = new URLSearchParams()
+    if (newFilters.category) params.set('category', newFilters.category)
+    if (newFilters.audience_type) params.set('audience_type', newFilters.audience_type)
+    if (newFilters.search) params.set('search', newFilters.search)
+    if (newFilters.on_sale) params.set('on_sale', 'true')
+    if (newFilters.in_stock) params.set('in_stock', 'true')
+    if (newFilters.featured) params.set('featured', 'true')
+    if (newFilters.min_price != null) params.set('min_price', String(newFilters.min_price))
+    if (newFilters.max_price != null) params.set('max_price', String(newFilters.max_price))
+    if (newFilters.sort && newFilters.sort !== 'newest') params.set('sort', newFilters.sort)
+
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
     setPage(1)
-  }, [])
+  }, [router, pathname])
 
   return (
     <div className="animate-fade-in">

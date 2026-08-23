@@ -19,6 +19,7 @@ const BACK_MAP: Record<string, string> = {
   '/admin/banners':         '/admin',
   '/admin/sales':           '/admin',
   '/admin/subscriptions':   '/admin',
+  '/admin/newsletter':      '/admin',
   '/admin/settings':        '/admin',
 }
 

@@ -31,11 +31,7 @@ async function getShopData() {
   }
 }
 
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>
-}) {
+export default async function ShopPage() {
   const { categories, initialProducts } = await getShopData()
 
   return (
@@ -43,7 +39,6 @@ export default async function ShopPage({
       <ShopClient
         categories={categories}
         initialProducts={initialProducts}
-        searchParams={searchParams}
       />
     </Suspense>
   )

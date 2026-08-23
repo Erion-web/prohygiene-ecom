@@ -16,10 +16,22 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSending(true)
-    await new Promise(r => setTimeout(r, 1000))
-    toast.success(tr.contact.success)
-    setForm({ name: '', email: '', phone: '', subject: '', message: '' })
-    setSending(false)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error ?? 'Failed to send')
+      toast.success(tr.contact.success)
+      setForm({ name: '', email: '', phone: '', subject: '', message: '' })
+    } catch (err) {
+      console.error(err)
+      toast.error(lang === 'sq' ? 'Dërgimi dështoi. Ju lutem provoni përsëri.' : 'Failed to send. Please try again.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
