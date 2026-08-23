@@ -17,8 +17,49 @@ function formatPrice(n: number) {
   return `€${n.toFixed(2)}`
 }
 
+// ── Shared brand shell — table-based layout for Outlook/Gmail compatibility ──
+function emailShell(bodyHtml: string, preheader?: string) {
+  return `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#f1f5f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${preheader}</div>` : ''}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f8;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 4px 28px rgba(11,51,70,0.10);">
+            <tr>
+              <td style="background:linear-gradient(135deg,#0b3346,#175269 55%,#0e95bd);padding:26px 32px;">
+                <span style="font-size:21px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;">Pro<span style="color:#5ccef2;">Hygiene</span></span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px;color:#1e293b;font-size:14px;line-height:1.65;">
+                ${bodyHtml}
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f8fafc;padding:20px 32px;border-top:1px solid #eef2f5;">
+                <p style="margin:0;font-size:12px;color:#8291a3;line-height:1.7;">
+                  ProHygiene · Rruga Nënë Tereza, Prishtinë<br/>
+                  046 10 80 40 · info@prohygiene.shop
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`
+}
+
+function badge(text: string, bg: string, color: string) {
+  return `<span style="display:inline-block;background:${bg};color:${color};font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;">${text}</span>`
+}
+
 interface OrderItemInput {
   product_name_sq: string
+  product_image_url: string | null
   quantity: number
   subtotal: number
 }
@@ -38,8 +79,14 @@ function orderItemsHtml(items: OrderItemInput[]) {
   return items
     .map(
       item => `<tr>
-        <td style="padding:8px 0;border-bottom:1px solid #eee;">${item.product_name_sq} × ${item.quantity}</td>
-        <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">${formatPrice(item.subtotal)}</td>
+        <td style="padding:10px 0;border-bottom:1px solid #eef2f5;width:52px;">
+          ${item.product_image_url
+            ? `<img src="${item.product_image_url}" alt="" width="44" height="44" style="width:44px;height:44px;object-fit:cover;border-radius:10px;border:1px solid #eef2f5;display:block;" />`
+            : `<div style="width:44px;height:44px;border-radius:10px;background:#ecfafd;"></div>`
+          }
+        </td>
+        <td style="padding:10px 0 10px 12px;border-bottom:1px solid #eef2f5;color:#1e293b;">${item.product_name_sq} <span style="color:#94a3b8;">× ${item.quantity}</span></td>
+        <td style="padding:10px 0;border-bottom:1px solid #eef2f5;text-align:right;font-weight:600;color:#1e293b;">${formatPrice(item.subtotal)}</td>
       </tr>`
     )
     .join('')
@@ -49,22 +96,29 @@ export async function sendOrderConfirmationEmail(order: OrderInput, items: Order
   const resend = getClient()
   if (!resend) return
 
+  const body = `
+    <p style="margin:0 0 4px;">${badge(`Porosia #${order.order_number}`, '#ecfafd', '#0e95bd')}</p>
+    <h1 style="margin:16px 0 8px;font-size:20px;color:#0b3346;">Faleminderit, ${order.customer_name}!</h1>
+    <p style="margin:0 0 20px;color:#475569;">Porosia juaj u pranua dhe është duke u përpunuar. Do t&apos;ju kontaktojmë për dërgesën.</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">${orderItemsHtml(items)}</table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 24px;">
+      <tr><td style="padding-top:12px;font-size:16px;font-weight:800;color:#0b3346;">Totali</td><td style="padding-top:12px;text-align:right;font-size:16px;font-weight:800;color:#0b3346;">${formatPrice(order.total)}</td></tr>
+    </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:12px;">
+      <tr><td style="padding:16px 18px;font-size:13px;color:#475569;">
+        <strong style="color:#1e293b;">Dërgohet në:</strong> ${order.address}, ${order.city}
+      </td></tr>
+    </table>
+    <p style="margin:24px 0 0;color:#64748b;font-size:13px;">Nëse keni pyetje, na kontaktoni në <strong>046 10 80 40</strong> ose <a href="mailto:info@prohygiene.shop" style="color:#0e95bd;">info@prohygiene.shop</a>.</p>
+  `
+
   try {
     await resend.emails.send({
       from: FROM,
       to: order.customer_email,
       cc: CC,
       subject: `Porosia juaj #${order.order_number} u pranua — ProHygiene`,
-      html: `
-        <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a1a;">
-          <h2>Faleminderit për porosinë, ${order.customer_name}!</h2>
-          <p>Porosia juaj <strong>#${order.order_number}</strong> u pranua dhe është duke u përpunuar.</p>
-          <table style="width:100%;border-collapse:collapse;margin:16px 0;">${orderItemsHtml(items)}</table>
-          <p style="font-weight:bold;font-size:16px;">Totali: ${formatPrice(order.total)}</p>
-          <p>Dërgohet në: ${order.address}, ${order.city}</p>
-          <p>Nëse keni pyetje, na kontaktoni në 046 10 80 40 ose info@prohygiene.shop.</p>
-        </div>
-      `,
+      html: emailShell(body, `Porosia #${order.order_number} u pranua — totali ${formatPrice(order.total)}`),
     })
   } catch (err) {
     console.error('[email] Failed to send order confirmation:', err)
@@ -75,22 +129,30 @@ export async function sendOrderNotificationEmail(order: OrderInput, items: Order
   const resend = getClient()
   if (!resend) return
 
+  const body = `
+    <p style="margin:0 0 4px;">${badge('Porosi e re', '#fef3c7', '#b45309')}</p>
+    <h1 style="margin:16px 0 16px;font-size:20px;color:#0b3346;">${order.customer_name}</h1>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:12px;margin-bottom:20px;">
+      <tr><td style="padding:16px 18px;font-size:13px;color:#475569;line-height:1.8;">
+        <strong style="color:#1e293b;">Email:</strong> ${order.customer_email}<br/>
+        <strong style="color:#1e293b;">Telefoni:</strong> ${order.customer_phone}<br/>
+        <strong style="color:#1e293b;">Dërgesa:</strong> ${order.address}, ${order.city}<br/>
+        <strong style="color:#1e293b;">Pagesa:</strong> ${order.payment_method}
+      </td></tr>
+    </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">${orderItemsHtml(items)}</table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 4px;">
+      <tr><td style="padding-top:12px;font-size:16px;font-weight:800;color:#0b3346;">Totali</td><td style="padding-top:12px;text-align:right;font-size:16px;font-weight:800;color:#0b3346;">${formatPrice(order.total)}</td></tr>
+    </table>
+  `
+
   try {
     await resend.emails.send({
       from: FROM,
       to: STORE_EMAIL,
       cc: CC,
       subject: `Porosi e re #${order.order_number} — ${formatPrice(order.total)}`,
-      html: `
-        <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a1a;">
-          <h2>Porosi e re nga ${order.customer_name}</h2>
-          <p>${order.customer_email} · ${order.customer_phone}</p>
-          <table style="width:100%;border-collapse:collapse;margin:16px 0;">${orderItemsHtml(items)}</table>
-          <p style="font-weight:bold;font-size:16px;">Totali: ${formatPrice(order.total)}</p>
-          <p>Dërgesa: ${order.address}, ${order.city}</p>
-          <p>Pagesa: ${order.payment_method}</p>
-        </div>
-      `,
+      html: emailShell(body, `Porosi e re nga ${order.customer_name} — ${formatPrice(order.total)}`),
     })
   } catch (err) {
     console.error('[email] Failed to send order notification:', err)
@@ -109,23 +171,27 @@ export async function sendContactFormEmail(form: ContactFormInput) {
   const resend = getClient()
   if (!resend) return { skipped: true }
 
+  const body = `
+    <p style="margin:0 0 4px;">${badge('Mesazh kontakti', '#ecfafd', '#0e95bd')}</p>
+    <h1 style="margin:16px 0 16px;font-size:20px;color:#0b3346;">${form.subject}</h1>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:12px;margin-bottom:20px;">
+      <tr><td style="padding:16px 18px;font-size:13px;color:#475569;line-height:1.8;">
+        <strong style="color:#1e293b;">Emri:</strong> ${form.name}<br/>
+        <strong style="color:#1e293b;">Email:</strong> ${form.email}<br/>
+        ${form.phone ? `<strong style="color:#1e293b;">Telefoni:</strong> ${form.phone}<br/>` : ''}
+      </td></tr>
+    </table>
+    <p style="margin:0 0 8px;color:#1e293b;font-weight:600;">Mesazhi:</p>
+    <p style="white-space:pre-wrap;color:#475569;margin:0;">${form.message}</p>
+  `
+
   await resend.emails.send({
     from: FROM,
     to: STORE_EMAIL,
     cc: CC,
     replyTo: form.email,
     subject: `[Kontakt] ${form.subject}`,
-    html: `
-      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a1a;">
-        <h2>Mesazh i ri nga faqja e kontaktit</h2>
-        <p><strong>Emri:</strong> ${form.name}</p>
-        <p><strong>Email:</strong> ${form.email}</p>
-        ${form.phone ? `<p><strong>Telefoni:</strong> ${form.phone}</p>` : ''}
-        <p><strong>Subjekti:</strong> ${form.subject}</p>
-        <p><strong>Mesazhi:</strong></p>
-        <p style="white-space:pre-wrap;">${form.message}</p>
-      </div>
-    `,
+    html: emailShell(body, `Mesazh i ri nga ${form.name}`),
   })
   return { skipped: false }
 }
@@ -158,15 +224,13 @@ export async function sendNewsletterCampaign(
         from: FROM,
         to: r.email,
         subject,
-        html: `
-          <div style="font-family:sans-serif;max-width:520px;margin:0 auto;color:#1a1a1a;">
-            ${bodyHtml}
-            <p style="margin-top:32px;font-size:11px;color:#999;">
-              Po e merrni këtë email sepse jeni regjistruar në newsletter-in e ProHygiene.
-              <a href="${appUrl}/api/newsletter/unsubscribe?token=${r.unsubscribe_token}">Çregjistrohu</a>
-            </p>
-          </div>
-        `,
+        html: emailShell(
+          `${bodyHtml}
+           <p style="margin-top:32px;font-size:11px;color:#94a3b8;">
+             Po e merrni këtë email sepse jeni regjistruar në newsletter-in e ProHygiene.
+             <a href="${appUrl}/api/newsletter/unsubscribe?token=${r.unsubscribe_token}" style="color:#0e95bd;">Çregjistrohu</a>
+           </p>`
+        ),
       }))
     )
   }
