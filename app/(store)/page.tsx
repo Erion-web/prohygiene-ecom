@@ -88,7 +88,7 @@ export default async function HomePage() {
     url: 'https://prohygiene.shop',
     telephone: '+38346108040',
     email: 'info@prohygiene.shop',
-    address: { '@type': 'PostalAddress', addressLocality: 'Prishtinë', addressCountry: 'XK' },
+    address: { '@type': 'PostalAddress', streetAddress: 'Rruga Rexhep Krasniqi', addressLocality: 'Prishtinë', addressCountry: 'XK' },
     priceRange: '€€',
     openingHours: 'Mo-Fr 08:00-17:00',
     sameAs: ['https://shtepiaku.com'],

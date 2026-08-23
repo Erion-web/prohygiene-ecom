@@ -40,7 +40,7 @@ function emailShell(bodyHtml: string, preheader?: string) {
             <tr>
               <td style="background:#f8fafc;padding:20px 32px;border-top:1px solid #eef2f5;">
                 <p style="margin:0;font-size:12px;color:#8291a3;line-height:1.7;">
-                  ProHygiene · Rruga Nënë Tereza, Prishtinë<br/>
+                  ProHygiene · Rruga Rexhep Krasniqi, Prishtinë<br/>
                   046 10 80 40 · info@prohygiene.shop
                 </p>
               </td>

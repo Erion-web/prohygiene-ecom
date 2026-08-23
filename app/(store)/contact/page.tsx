@@ -67,7 +67,8 @@ export default function ContactPage() {
                 {
                   icon: MapPin,
                   title: tr.contact.address,
-                  lines: ['Rruga Nënë Tereza', 'Prishtinë 10000, Kosovë'],
+                  lines: ['Rruga Rexhep Krasniqi', 'Prishtinë 10000, Kosovë'],
+                  href: 'https://maps.app.goo.gl/ecWZFJyh36TgnS1d7',
                 },
                 {
                   icon: Clock,
@@ -86,7 +87,15 @@ export default function ContactPage() {
                     <p className="font-semibold text-text-primary text-sm mb-1">{title}</p>
                     {lines.map(line =>
                       href ? (
-                        <a key={line} href={href} className="block text-text-secondary text-sm hover:text-brand-600 transition-colors">{line}</a>
+                        <a
+                          key={line}
+                          href={href}
+                          target={href.startsWith('http') ? '_blank' : undefined}
+                          rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                          className="block text-text-secondary text-sm hover:text-brand-600 transition-colors"
+                        >
+                          {line}
+                        </a>
                       ) : (
                         <p key={line} className="text-text-secondary text-sm">{line}</p>
                       )

@@ -83,6 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               email: 'info@prohygiene.shop',
               address: {
                 '@type': 'PostalAddress',
+                streetAddress: 'Rruga Rexhep Krasniqi',
                 addressLocality: 'Prishtinë',
                 addressRegion: 'Prishtinë',
                 addressCountry: 'XK',

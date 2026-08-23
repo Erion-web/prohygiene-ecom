@@ -76,10 +76,15 @@ export function Footer() {
                 <Mail size={14} className="text-brand-400 flex-shrink-0" />
                 info@prohygiene.shop
               </a>
-              <div className="flex items-start gap-2 text-slate-400 text-sm">
+              <a
+                href="https://maps.app.goo.gl/ecWZFJyh36TgnS1d7"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start gap-2 text-slate-400 hover:text-white transition-colors text-sm"
+              >
                 <MapPin size={14} className="text-brand-400 mt-0.5 flex-shrink-0" />
-                Rruga Nënë Tereza, Prishtinë
-              </div>
+                Rruga Rexhep Krasniqi, Prishtinë
+              </a>
             </div>
           </div>
 
