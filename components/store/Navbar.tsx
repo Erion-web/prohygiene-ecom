@@ -79,6 +79,7 @@ export function Navbar({ categories = [] }: NavbarProps) {
 
   const navLinks = [
     { href: '/shop',          label: tr.nav.shop },
+    { href: '/pajisjet',      label: tr.nav.leaseDevices },
     { href: '/home-products', label: lang === 'sq' ? 'Shtëpi' : 'Home' },
     { href: '/business',      label: lang === 'sq' ? 'Biznese' : 'Business' },
   ]

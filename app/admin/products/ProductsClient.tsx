@@ -69,6 +69,8 @@ export function ProductsClient({ products, categories, brands }: Props) {
   const [bestSeller, setBestSeller] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const [listingType, setListingType] = useState('')
+
   const hasFilters =
     search ||
     categoryId ||
@@ -76,6 +78,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
     audience ||
     status ||
     stock ||
+    listingType ||
     onSale ||
     featured ||
     bestSeller;
@@ -103,6 +106,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
       if (onSale && !p.sale_price) return false;
       if (featured && !p.is_featured) return false;
       if (bestSeller && !p.is_best_seller) return false;
+      if (listingType && (p.listing_type ?? "sale") !== listingType) return false;
       return true;
     });
   }, [
@@ -116,6 +120,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
     onSale,
     featured,
     bestSeller,
+    listingType,
   ]);
 
   const stats = useMemo(
@@ -136,6 +141,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
     setAudience("");
     setStatus("");
     setStock("");
+    setListingType("");
     setOnSale(false);
     setFeatured(false);
     setBestSeller(false);
@@ -303,6 +309,15 @@ export function ProductsClient({ products, categories, brands }: Props) {
                   { v: "out", l: "❌ Nuk ka në stok" },
                 ],
               },
+              {
+                val: listingType,
+                set: setListingType,
+                placeholder: "Listimi",
+                opts: [
+                  { v: "sale", l: "🛒 Shitje" },
+                  { v: "lease", l: "🔧 Shfrytëzim" },
+                ],
+              },
             ].map(({ val, set, placeholder, opts }) => (
               <div key={placeholder} className="relative">
                 <select
@@ -377,6 +392,15 @@ export function ProductsClient({ products, categories, brands }: Props) {
                   { v: "in", l: "✅ I disponueshëm" },
                   { v: "low", l: "⚠️ I ulët" },
                   { v: "out", l: "❌ Nuk ka në stok" },
+                ],
+              },
+              {
+                val: listingType,
+                set: setListingType,
+                placeholder: "Listimi",
+                opts: [
+                  { v: "sale", l: "🛒 Shitje" },
+                  { v: "lease", l: "🔧 Shfrytëzim" },
                 ],
               },
             ].map(({ val, set, placeholder, opts }) => (

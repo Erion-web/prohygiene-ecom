@@ -6,9 +6,10 @@ import { ArrowLeft } from 'lucide-react'
 
 export default async function NewProductPage() {
   const supabase = await createClient()
-  const [{ data: categories }, { data: brands }] = await Promise.all([
+  const [{ data: categories }, { data: brands }, { data: materials }] = await Promise.all([
     supabase.from('categories').select('id, name_sq, name_en').eq('is_active', true).order('sort_order'),
     supabase.from('brands').select('id, name').eq('is_active', true).order('sort_order'),
+    supabase.from('materials').select('*').eq('is_active', true).order('name_sq'),
   ])
 
   return (
@@ -23,7 +24,7 @@ export default async function NewProductPage() {
         }
       />
       <div className="p-6">
-        <ProductForm categories={categories ?? []} brands={brands ?? []} />
+        <ProductForm categories={categories ?? []} brands={brands ?? []} materials={materials ?? []} />
       </div>
     </div>
   )

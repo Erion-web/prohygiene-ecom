@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingCart, Star, Heart } from 'lucide-react'
+import { ShoppingCart, Star, Handshake } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
@@ -20,16 +20,17 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const { addItem } = useCartStore()
   const tr = t(lang)
 
+  const isLease = (product.listing_type ?? 'sale') === 'lease'
   const name = getProductName(product, lang)
   const effectivePrice = getEffectivePrice(product)
   const discountPercent = getDiscountPercent(product)
-  const isOnSale = discountPercent !== null
-  const isOutOfStock = product.stock === 0
+  const isOnSale = discountPercent !== null && !isLease
+  const isOutOfStock = product.stock === 0 && !isLease
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (isOutOfStock) return
+    if (isOutOfStock || isLease) return
     addItem(product)
     toast.success(tr.common.addedToCart)
   }
@@ -41,8 +42,6 @@ export function ProductCard({ product, className }: ProductCardProps) {
         'shadow-soft hover:shadow-elevated transition-all duration-300 hover:-translate-y-0.5',
         className
       )}>
-
-        {/* ── IMAGE ── */}
         <div className="relative aspect-[4/3] bg-surface-soft overflow-hidden">
           {product.image_url ? (
             <Image
@@ -58,22 +57,25 @@ export function ProductCard({ product, className }: ProductCardProps) {
             </div>
           )}
 
-          {/* Top-left: ONLY non-sale badges */}
           <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
-            {product.is_best_seller && (
+            {isLease && (
+              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-brand-600 text-white shadow-sm">
+                {tr.lease.badge}
+              </span>
+            )}
+            {product.is_best_seller && !isLease && (
               <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-400 text-white shadow-sm">
                 <Star size={9} fill="currentColor" />
                 {tr.common.bestSeller}
               </span>
             )}
-            {product.is_featured && !product.is_best_seller && (
+            {product.is_featured && !product.is_best_seller && !isLease && (
               <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-brand-600 text-white shadow-sm">
                 {tr.common.featured}
               </span>
             )}
           </div>
 
-          {/* Out of stock */}
           {isOutOfStock && (
             <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
               <span className="text-xs font-semibold text-text-muted bg-white px-3 py-1.5 rounded-full border border-surface-border">
@@ -83,23 +85,18 @@ export function ProductCard({ product, className }: ProductCardProps) {
           )}
         </div>
 
-        {/* ── CONTENT ── */}
         <div className="flex flex-col flex-1 px-3.5 pt-3 pb-3.5 gap-2">
-          {/* Category label */}
           {product.category && (
             <p className="text-[10px] font-bold text-brand-500 uppercase tracking-wider leading-none">
               {lang === 'sq' ? product.category.name_sq : product.category.name_en}
             </p>
           )}
 
-          {/* Product name */}
           <h3 className="text-sm font-semibold text-text-primary leading-snug line-clamp-2 group-hover:text-brand-600 transition-colors duration-200 flex-1">
             {name}
           </h3>
 
-          {/* Price + Add to cart */}
           <div className="flex items-center justify-between gap-2 mt-1">
-            {/* Prices */}
             <div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-extrabold text-base text-text-primary">
@@ -118,20 +115,25 @@ export function ProductCard({ product, className }: ProductCardProps) {
               )}
             </div>
 
-            {/* Add to cart — icon only */}
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={isOutOfStock}
-              className={cn(
-                'p-2 rounded-xl transition-all duration-200 flex-shrink-0',
-                isOutOfStock
-                  ? 'bg-surface-muted text-text-muted cursor-not-allowed'
-                  : 'bg-brand-600 hover:bg-brand-700 active:scale-95 text-white'
-              )}
-            >
-              <ShoppingCart size={14} />
-            </button>
+            {isLease ? (
+              <span className="p-2 rounded-xl bg-brand-50 text-brand-600 flex-shrink-0">
+                <Handshake size={14} />
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+                className={cn(
+                  'p-2 rounded-xl transition-all duration-200 flex-shrink-0',
+                  isOutOfStock
+                    ? 'bg-surface-muted text-text-muted cursor-not-allowed'
+                    : 'bg-brand-600 hover:bg-brand-700 active:scale-95 text-white'
+                )}
+              >
+                <ShoppingCart size={14} />
+              </button>
+            )}
           </div>
         </div>
       </div>

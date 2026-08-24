@@ -11,6 +11,7 @@ export const useCartStore = create<CartState>()(
       items: [],
 
       addItem: (product: Product, quantity = 1) => {
+        if ((product.listing_type ?? 'sale') === 'lease') return
         const { items } = get()
         const existing = items.find(item => item.product.id === product.id)
         const effectivePrice = getEffectivePrice(product)

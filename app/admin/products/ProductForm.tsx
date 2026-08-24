@@ -8,20 +8,27 @@ import toast from 'react-hot-toast'
 import { useDropzone } from 'react-dropzone'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
-import type { Product, AudienceType } from '@/types'
+import type { Product, AudienceType, ListingType, Material, DeviceMaterial } from '@/types'
 
 interface Category { id: string; name_sq: string; name_en: string }
 interface BrandOption { id: string; name: string }
 
+interface DeviceMaterialRow {
+  material_id: string
+  capacity: string
+}
+
 interface ProductFormProps {
   categories: Category[]
   brands: BrandOption[]
+  materials?: Material[]
+  initialDeviceMaterials?: DeviceMaterial[]
   product?: Product
 }
 
 const MAX_IMAGES = 5
 
-export function ProductForm({ categories, brands, product }: ProductFormProps) {
+export function ProductForm({ categories, brands, materials = [], initialDeviceMaterials = [], product }: ProductFormProps) {
   const router = useRouter()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
@@ -43,6 +50,7 @@ export function ProductForm({ categories, brands, product }: ProductFormProps) {
     description_en: product?.description_en ?? '',
     category_id: product?.category_id ?? '',
     audience_type: product?.audience_type ?? 'both' as AudienceType,
+    listing_type: (product?.listing_type ?? 'sale') as ListingType,
     price: product?.price?.toString() ?? '',
     sale_price: product?.sale_price?.toString() ?? '',
     stock: product?.stock?.toString() ?? '0',
@@ -53,6 +61,15 @@ export function ProductForm({ categories, brands, product }: ProductFormProps) {
     is_best_seller: product?.is_best_seller ?? false,
     is_active: product?.is_active ?? true,
   })
+
+  const [deviceMaterialRows, setDeviceMaterialRows] = useState<DeviceMaterialRow[]>(() =>
+    initialDeviceMaterials.length > 0
+      ? initialDeviceMaterials.map(dm => ({
+          material_id: dm.material_id,
+          capacity: dm.capacity.toString(),
+        }))
+      : [{ material_id: '', capacity: '' }]
+  )
 
   const update = (key: string, value: string | boolean) => {
     setForm(prev => {
@@ -136,6 +153,7 @@ export function ProductForm({ categories, brands, product }: ProductFormProps) {
       description_en: form.description_en || null,
       category_id: form.category_id || null,
       audience_type: form.audience_type,
+      listing_type: form.listing_type,
       price: parseFloat(form.price),
       sale_price: form.sale_price ? parseFloat(form.sale_price) : null,
       stock: parseInt(form.stock),
@@ -150,12 +168,32 @@ export function ProductForm({ categories, brands, product }: ProductFormProps) {
     }
 
     let error
+    let productId = product?.id
+
     if (product) {
       const res = await supabase.from('products').update(payload).eq('id', product.id)
       error = res.error
     } else {
-      const res = await supabase.from('products').insert(payload)
+      const res = await supabase.from('products').insert(payload).select('id').single()
       error = res.error
+      productId = res.data?.id
+    }
+
+    if (!error && form.listing_type === 'lease' && productId) {
+      await supabase.from('device_materials').delete().eq('product_id', productId)
+      const validRows = deviceMaterialRows.filter(r => r.material_id && r.capacity)
+      if (validRows.length > 0) {
+        const { error: dmError } = await supabase.from('device_materials').insert(
+          validRows.map(r => ({
+            product_id: productId,
+            material_id: r.material_id,
+            capacity: parseFloat(r.capacity),
+          }))
+        )
+        if (dmError) error = dmError
+      }
+    } else if (!error && productId && form.listing_type === 'sale') {
+      await supabase.from('device_materials').delete().eq('product_id', productId)
     }
 
     setLoading(false)
@@ -175,6 +213,27 @@ export function ProductForm({ categories, brands, product }: ProductFormProps) {
         <div className="lg:col-span-2 space-y-5">
           <div className="admin-card p-6 space-y-5">
             <h3 className="font-bold text-text-primary">Informacioni Bazë</h3>
+
+            <div>
+              <label className="label">Lloji i listimit</label>
+              <div className="flex gap-2">
+                {([
+                  { key: 'sale', label: 'Shitje (Dyqani)' },
+                  { key: 'lease', label: 'Shfrytëzim (Pajisje)' },
+                ] as { key: ListingType; label: string }[]).map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => update('listing_type', key)}
+                    className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold border transition-all ${
+                      form.listing_type === key ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-surface-border text-text-secondary'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
@@ -212,6 +271,67 @@ export function ProductForm({ categories, brands, product }: ProductFormProps) {
               <textarea value={form.description_en} onChange={e => update('description_en', e.target.value)} className="input resize-none h-24" />
             </div>
           </div>
+
+          {form.listing_type === 'lease' && (
+            <div className="admin-card p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-text-primary">Lëndët e Pajisjes</h3>
+                <button
+                  type="button"
+                  onClick={() => setDeviceMaterialRows(prev => [...prev, { material_id: '', capacity: '' }])}
+                  className="btn-secondary text-xs py-1.5 px-3"
+                >
+                  + Shto lëndë
+                </button>
+              </div>
+              {deviceMaterialRows.map((row, idx) => (
+                <div key={idx} className="grid sm:grid-cols-[1fr_140px_auto] gap-3 items-end">
+                  <div>
+                    <label className="label">Materiali</label>
+                    <select
+                      value={row.material_id}
+                      onChange={e => {
+                        const next = [...deviceMaterialRows]
+                        next[idx] = { ...next[idx], material_id: e.target.value }
+                        setDeviceMaterialRows(next)
+                      }}
+                      className="input"
+                    >
+                      <option value="">Zgjedh...</option>
+                      {materials.map(m => (
+                        <option key={m.id} value={m.id}>{m.name_sq} ({m.unit})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Kapaciteti</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={row.capacity}
+                      onChange={e => {
+                        const next = [...deviceMaterialRows]
+                        next[idx] = { ...next[idx], capacity: e.target.value }
+                        setDeviceMaterialRows(next)
+                      }}
+                      className="input"
+                      placeholder="ml / copë"
+                    />
+                  </div>
+                  {deviceMaterialRows.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setDeviceMaterialRows(prev => prev.filter((_, i) => i !== idx))}
+                      className="btn-ghost p-2 text-red-500 mb-0.5"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Pricing */}
           <div className="admin-card p-6 space-y-4">

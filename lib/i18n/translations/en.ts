@@ -16,6 +16,7 @@ const en: Translations = {
     categories: 'Categories',
     contact: 'Contact',
     about: 'About',
+    leaseDevices: 'Devices',
   },
 
   home: {
@@ -98,6 +99,24 @@ const en: Translations = {
     sale: 'Sale',
     vat: 'VAT',
     priceIncludesVat: 'Price includes VAT',
+  },
+
+  lease: {
+    badge: 'Lease',
+    pageTitle: 'Devices for Lease',
+    pageSubtitle: 'Professional hygiene devices for businesses and HORECA. Reserve a device and our team will contact you about contract terms.',
+    noDevices: 'No devices available at the moment.',
+    reserveDevice: 'Reserve this device',
+    ctaTitle: 'Interested in this device?',
+    ctaDesc: 'Fill out the form and we will contact you about pricing and lease terms.',
+    priceInfo: 'Indicative price — this device is available for lease, not online purchase.',
+    inquiryTitle: 'Reserve device',
+    inquirySubtitle: 'Leave your details and we will get in touch.',
+    messagePlaceholder: 'E.g. employee count, location, questions...',
+    submitInquiry: 'Send request',
+    sending: 'Sending...',
+    inquirySuccess: 'Request sent! We will contact you soon.',
+    inquiryError: 'Failed to send. Please try again.',
   },
 
   cart: {

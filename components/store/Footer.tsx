@@ -37,6 +37,7 @@ export function Footer() {
   const quickLinks = [
     { href: '/', label: tr.nav.home },
     { href: '/shop', label: tr.nav.shop },
+    { href: '/pajisjet', label: tr.nav.leaseDevices },
     { href: '/home-products', label: tr.nav.homeProducts },
     { href: '/business', label: tr.nav.business },
     { href: '/campaigns', label: tr.nav.campaigns },

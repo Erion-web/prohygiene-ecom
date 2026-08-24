@@ -22,6 +22,7 @@ async function getShopData() {
         category:categories(*)
       `)
       .eq('is_active', true)
+      .eq('listing_type', 'sale')
       .order('created_at', { ascending: false }),
   ])
 

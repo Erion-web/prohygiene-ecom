@@ -32,6 +32,7 @@ async function getHomeData() {
         .from('products')
         .select('*, category:categories(*)')
         .eq('is_active', true)
+        .eq('listing_type', 'sale')
         .order('created_at', { ascending: false })
         .limit(24),
       supabase

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Package, FolderOpen, Tag, ShoppingBag,
-  Users, Settings, LogOut, ChevronLeft, Menu, Award, PercentCircle, RefreshCw, Image, Mail
+  Users, Settings, LogOut, ChevronLeft, Menu, Award, PercentCircle, RefreshCw, Image, Mail, Handshake
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -21,6 +21,7 @@ const navItems = [
   { href: '/admin/banners',    label: 'Banerat',    icon: Image },
   { href: '/admin/orders',     label: 'Porositë',   icon: ShoppingBag },
   { href: '/admin/customers',  label: 'Klientët',   icon: Users },
+  { href: '/admin/lease',      label: 'Shfrytëzimi', icon: Handshake },
   { href: '/admin/subscriptions', label: 'Abonimi', icon: RefreshCw },
   { href: '/admin/newsletter', label: 'Newsletter', icon: Mail },
   { href: '/admin/settings',   label: 'Cilësimet',  icon: Settings },

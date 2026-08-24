@@ -196,6 +196,68 @@ export async function sendContactFormEmail(form: ContactFormInput) {
   return { skipped: false }
 }
 
+interface LeaseInquiryInput {
+  name: string
+  email: string
+  phone?: string
+  company?: string
+  message?: string
+  productName: string
+}
+
+export async function sendLeaseInquiryEmail(form: LeaseInquiryInput) {
+  const resend = getClient()
+  if (!resend) return { skipped: true }
+
+  const body = `
+    <p style="margin:0 0 16px;">Kërkesë e re për <strong>shfrytëzim pajisjeje</strong>.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:20px;">
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eef2f5;">
+        <strong style="color:#1e293b;">Pajisja:</strong> ${form.productName}<br/>
+        <strong style="color:#1e293b;">Emri:</strong> ${form.name}<br/>
+        <strong style="color:#1e293b;">Email:</strong> ${form.email}<br/>
+        ${form.phone ? `<strong style="color:#1e293b;">Telefoni:</strong> ${form.phone}<br/>` : ''}
+        ${form.company ? `<strong style="color:#1e293b;">Kompania:</strong> ${form.company}<br/>` : ''}
+      </td></tr>
+    </table>
+    ${form.message ? `<p style="white-space:pre-wrap;color:#475569;margin:0;">${form.message}</p>` : ''}
+  `
+
+  await resend.emails.send({
+    from: FROM,
+    to: STORE_EMAIL,
+    cc: CC,
+    replyTo: form.email,
+    subject: `[Shfrytëzim] ${form.productName} — ${form.name}`,
+    html: emailShell(body, `Kërkesë shfrytëzimi nga ${form.name}`),
+  })
+  return { skipped: false }
+}
+
+export async function sendLeaseReminderEmail(params: {
+  to: string
+  subject: string
+  title: string
+  message: string
+}) {
+  const resend = getClient()
+  if (!resend) return { skipped: true }
+
+  const body = `
+    <p style="margin:0 0 8px;font-size:16px;font-weight:700;color:#1e293b;">${params.title}</p>
+    <p style="white-space:pre-wrap;color:#475569;margin:0;">${params.message}</p>
+  `
+
+  await resend.emails.send({
+    from: FROM,
+    to: params.to,
+    cc: CC,
+    subject: params.subject,
+    html: emailShell(body, params.title),
+  })
+  return { skipped: false }
+}
+
 interface NewsletterRecipient {
   email: string
   unsubscribe_token: string

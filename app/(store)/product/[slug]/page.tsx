@@ -32,6 +32,7 @@ async function getRelatedProducts(product: Product): Promise<Product[]> {
       .eq('is_active', true)
       .eq('category_id', product.category_id ?? '')
       .neq('id', product.id)
+      .eq('listing_type', product.listing_type ?? 'sale')
       .limit(4)
     if (data && data.length > 0) return data
   } catch {}

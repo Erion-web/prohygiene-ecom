@@ -15,6 +15,7 @@ export default async function HomeProductsPage() {
       .from('products')
       .select('*, category:categories(*)')
       .eq('is_active', true)
+      .eq('listing_type', 'sale')
       .in('audience_type', ['home', 'both'])
       .order('is_featured', { ascending: false })
       .order('created_at', { ascending: false }),

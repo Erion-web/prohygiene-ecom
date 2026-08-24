@@ -20,6 +20,7 @@ export default async function BusinessPage() {
       .from('products')
       .select('*, category:categories(*)')
       .eq('is_active', true)
+      .eq('listing_type', 'sale')
       .in('audience_type', ['business', 'both'])
       .order('is_featured', { ascending: false })
       .order('created_at', { ascending: false }),

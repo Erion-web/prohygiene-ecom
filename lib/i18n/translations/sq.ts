@@ -15,6 +15,7 @@ const sq = {
     categories: "Kategoritë",
     contact: "Kontakt",
     about: "Rreth Nesh",
+    leaseDevices: "Pajisjet",
   },
 
   // Home page
@@ -107,6 +108,24 @@ const sq = {
     sale: "Ofertë",
     vat: "TVSH",
     priceIncludesVat: "Çmimi përfshin TVSH",
+  },
+
+  lease: {
+    badge: "Shfrytëzim",
+    pageTitle: "Pajisjet në Shfrytëzim",
+    pageSubtitle: "Pajisje profesionale higjiene për biznese dhe HORECA. Rezervoni pajisjen dhe ekipi ynë do t'ju kontaktojë për detajet e kontratës.",
+    noDevices: "Asnjë pajisje e disponueshme aktualisht.",
+    reserveDevice: "Rezervo këtë pajisje",
+    ctaTitle: "Interesoheni për këtë pajisje?",
+    ctaDesc: "Plotësoni formularin dhe do t'ju kontaktojmë për ofertën dhe kushtet e shfrytëzimit.",
+    priceInfo: "Çmimi informativ — pajisja ofrohet me shfrytëzim, jo për blerje online.",
+    inquiryTitle: "Rezervo pajisjen",
+    inquirySubtitle: "Na lini të dhënat tuaja dhe do t'ju kontaktojmë.",
+    messagePlaceholder: "P.sh. numri i punonjësve, lokacioni, pyetje...",
+    submitInquiry: "Dërgo kërkesën",
+    sending: "Duke dërguar...",
+    inquirySuccess: "Kërkesa u dërgua! Do t'ju kontaktojmë së shpejti.",
+    inquiryError: "Dërgimi dështoi. Provoni përsëri.",
   },
 
   // Cart
