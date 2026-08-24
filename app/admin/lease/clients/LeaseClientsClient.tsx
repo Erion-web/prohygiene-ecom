@@ -102,7 +102,7 @@ export function LeaseClientsClient({ initialClients }: Props) {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {!showForm && (
         <button onClick={() => setShowForm(true)} className="btn-primary gap-2 text-sm">
           <Plus size={15} />
@@ -111,7 +111,7 @@ export function LeaseClientsClient({ initialClients }: Props) {
       )}
 
       {showForm && (
-        <div className="admin-card p-6">
+        <div className="admin-card">
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-bold">{editingId ? 'Modifiko Klientin' : 'Klient i Ri'}</h3>
             <button type="button" onClick={reset} className="btn-ghost p-1.5"><X size={16} /></button>

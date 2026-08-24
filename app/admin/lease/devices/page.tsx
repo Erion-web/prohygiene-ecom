@@ -25,7 +25,7 @@ export default async function DeployedDevicesPage() {
   return (
     <div>
       <AdminHeader title="Pajisjet e Instaluara" subtitle="Lokacionet dhe nivelet e lëndëve" />
-      <div className="p-6 pt-0">
+      <div className="p-4">
         <DeployedDevicesClient
           initialDevices={(devicesRes.data as DeployedDevice[]) ?? []}
           contracts={contractsRes.data ?? []}

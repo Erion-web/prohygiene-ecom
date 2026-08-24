@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/auth'
 import { redirect } from 'next/navigation'
 import { AddressManager } from './AddressManager'
 
 export default async function AddressesPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/auth/login?redirect=/account/addresses')
 
   const { data: addresses } = await supabase

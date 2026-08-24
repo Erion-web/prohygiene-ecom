@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/auth'
 import { redirect } from 'next/navigation'
 import { SubscriptionBuilder } from './SubscriptionBuilder'
 
@@ -9,7 +10,7 @@ export default async function NewSubscriptionPage({
 }) {
   const { edit } = await searchParams
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/auth/login?redirect=/account/subscriptions/new')
 
   const { data: products } = await supabase

@@ -114,7 +114,7 @@ export function CampaignsClient({ initialCampaigns, products }: { initialCampaig
       )}
 
       {showForm && (
-        <div className="admin-card p-6 animate-slide-down">
+        <div className="admin-card animate-slide-down">
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-bold text-text-primary">{editingId ? 'Modifiko Kampanjën' : 'Kampanjë e Re'}</h3>
             <button onClick={reset}><X size={16} className="text-text-muted" /></button>

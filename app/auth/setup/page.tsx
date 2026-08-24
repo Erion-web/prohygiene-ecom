@@ -1,12 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Logo } from '@/components/ui/Logo'
 import { SetupForm } from './SetupForm'
 
 export default async function SetupPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/auth/login')
 
   const initialName = (user.user_metadata?.full_name as string | undefined) ?? ''

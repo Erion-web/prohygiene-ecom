@@ -13,7 +13,7 @@ export default async function LeaseMaterialsPage() {
   return (
     <div>
       <AdminHeader title="Lëndët e Para" subtitle="Materialet për pajisjet në shfrytëzim" />
-      <div className="p-6 pt-0">
+      <div className="p-4">
         <MaterialsClient
           initialMaterials={(materialsRes.data as Material[]) ?? []}
           categories={(categoriesRes.data as UtilityCategory[]) ?? []}

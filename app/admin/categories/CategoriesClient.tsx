@@ -116,7 +116,7 @@ export function CategoriesClient({ initialCategories }: CategoriesClientProps) {
 
       {/* Form */}
       {showForm && (
-        <div className="admin-card p-6 animate-slide-down">
+        <div className="admin-card animate-slide-down">
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-bold text-text-primary">{editingId ? 'Modifiko Kategorinë' : 'Kategori e Re'}</h3>
             <button onClick={reset} className="btn-ghost p-1.5"><X size={16} /></button>

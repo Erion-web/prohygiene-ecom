@@ -12,7 +12,7 @@ export default async function BrandsPage() {
     .order('name', { ascending: true })
 
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-4 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-black text-text-primary">Brendet</h1>

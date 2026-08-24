@@ -23,7 +23,7 @@ export default async function LeaseContractsPage() {
   return (
     <div>
       <AdminHeader title="Kontratat" subtitle="Kohëzgjatja, pajisjet dhe konsumi i pritur" />
-      <div className="p-6 pt-0">
+      <div className="p-4">
         <LeaseContractsClient
           initialContracts={(contractsRes.data as LeaseContract[]) ?? []}
           clients={clientsRes.data ?? []}

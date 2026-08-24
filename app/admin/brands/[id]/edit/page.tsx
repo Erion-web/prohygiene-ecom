@@ -9,7 +9,7 @@ export default async function EditBrandPage({ params }: { params: Promise<{ id: 
   if (!brand) notFound()
 
   return (
-    <div className="p-6">
+    <div className="p-4">
       <h1 className="text-2xl font-black text-text-primary mb-6">Ndrysho: {brand.name}</h1>
       <BrandForm brand={brand} />
     </div>

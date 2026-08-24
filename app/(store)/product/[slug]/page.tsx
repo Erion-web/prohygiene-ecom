@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { mockProducts } from '@/lib/data/mock'
 import { ProductPageClient } from './ProductPageClient'
@@ -9,7 +10,7 @@ interface Props {
   params: { slug: string }
 }
 
-async function getProduct(slug: string): Promise<Product | null> {
+const getProduct = cache(async function getProduct(slug: string): Promise<Product | null> {
   try {
     const supabase = await createClient()
     const { data } = await supabase
@@ -21,7 +22,7 @@ async function getProduct(slug: string): Promise<Product | null> {
     if (data) return data
   } catch {}
   return mockProducts.find(p => p.slug === slug) ?? null
-}
+})
 
 async function getRelatedProducts(product: Product): Promise<Product[]> {
   try {

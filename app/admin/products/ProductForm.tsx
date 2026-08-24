@@ -211,7 +211,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Main info */}
         <div className="lg:col-span-2 space-y-5">
-          <div className="admin-card p-6 space-y-5">
+          <div className="admin-card space-y-5">
             <h3 className="font-bold text-text-primary">Informacioni Bazë</h3>
 
             <div>
@@ -273,7 +273,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
           </div>
 
           {form.listing_type === 'lease' && (
-            <div className="admin-card p-6 space-y-4">
+            <div className="admin-card space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-text-primary">Lëndët e Pajisjes</h3>
                 <button
@@ -334,7 +334,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
           )}
 
           {/* Pricing */}
-          <div className="admin-card p-6 space-y-4">
+          <div className="admin-card space-y-4">
             <h3 className="font-bold text-text-primary">Çmimet & Stoku</h3>
             <div className="grid grid-cols-3 gap-4">
               <div>

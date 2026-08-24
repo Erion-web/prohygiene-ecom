@@ -75,9 +75,8 @@ export default async function AdminDashboard() {
         subtitle={`${new Date().toLocaleDateString('sq-AL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`}
       />
 
-      <div className="p-6 space-y-6">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="admin-page">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           {stats.map(stat => (
             <div key={stat.label} className={stat.href ? 'cursor-pointer' : undefined}>
               {stat.href ? (
@@ -93,10 +92,10 @@ export default async function AdminDashboard() {
           ))}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-4">
           {/* Recent Orders */}
           <div className="lg:col-span-2 admin-card">
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold text-text-primary">Porositë e Fundit</h2>
               <Link href="/admin/orders" className="text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1">
                 Shiko të gjitha <ArrowRight size={14} />
@@ -212,13 +211,15 @@ function StatCard({ label, value, icon: Icon, color, bg, change }: {
   href?: string
 }) {
   return (
-    <>
-      <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-3`}>
-        <Icon size={20} className={color} />
+    <div className="flex items-center gap-3">
+      <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
+        <Icon size={16} className={color} />
       </div>
-      <p className="text-2xl font-black text-text-primary mb-0.5">{value}</p>
-      <p className="text-xs text-text-muted font-medium">{label}</p>
-      {change && <p className="text-xs text-emerald-600 font-semibold mt-1">{change} ↑</p>}
-    </>
+      <div className="min-w-0">
+        <p className="text-lg font-black text-text-primary leading-tight">{value}</p>
+        <p className="text-[11px] text-text-muted font-medium truncate">{label}</p>
+        {change && <p className="text-[11px] text-emerald-600 font-semibold">{change} ↑</p>}
+      </div>
+    </div>
   )
 }

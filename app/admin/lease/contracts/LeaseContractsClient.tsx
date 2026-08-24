@@ -184,7 +184,7 @@ export function LeaseContractsClient({ initialContracts, clients, products, mate
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {!showForm && (
         <button onClick={() => setShowForm(true)} className="btn-primary gap-2 text-sm">
           <Plus size={15} />
@@ -193,7 +193,7 @@ export function LeaseContractsClient({ initialContracts, clients, products, mate
       )}
 
       {showForm && (
-        <div className="admin-card p-6 space-y-5">
+        <div className="admin-card space-y-5">
           <div className="flex items-center justify-between">
             <h3 className="font-bold">{editingId ? 'Modifiko Kontratën' : 'Kontratë e Re'}</h3>
             <button type="button" onClick={reset} className="btn-ghost p-1.5"><X size={16} /></button>

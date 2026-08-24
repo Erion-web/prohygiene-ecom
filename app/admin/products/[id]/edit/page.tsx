@@ -31,7 +31,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
           </Link>
         }
       />
-      <div className="p-6">
+      <div className="p-4">
         <ProductForm
           categories={categoriesRes.data ?? []}
           brands={brandsRes.data ?? []}

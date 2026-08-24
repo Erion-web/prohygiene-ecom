@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingCart, ChevronRight, Package, Tag, Users, Star, CheckCircle, AlertCircle, Clock, Handshake } from 'lucide-react'
+import { ShoppingCart, ChevronRight, Package, Tag, Users, Star, CheckCircle, AlertCircle, Clock, ArrowRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
@@ -13,6 +13,7 @@ import { QuantitySelector } from '@/components/ui/QuantitySelector'
 import { Badge } from '@/components/ui/Badge'
 import { ProductCard } from '@/components/store/ProductCard'
 import { LeaseInquiryModal } from '@/components/store/LeaseInquiryModal'
+import { LeaseReservePanel } from '@/components/store/lease/LeaseReservePanel'
 import { cn } from '@/lib/utils'
 import type { Product } from '@/types'
 
@@ -107,7 +108,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               )}
               {isLease && (
                 <div className="absolute top-4 left-4">
-                  <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-brand-600 text-white shadow-sm">
+                  <span className="inline-flex items-center rounded-full bg-brand-950/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white backdrop-blur-sm border border-white/10">
                     {tr.lease.badge}
                   </span>
                 </div>
@@ -172,8 +173,11 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               </div>
             )}
 
-            <div className="flex items-end gap-3 mb-6">
-              <span className="text-4xl font-black text-text-primary">
+            <div className="flex items-end gap-3 mb-2">
+              <span className={cn(
+                'font-black tracking-tight text-text-primary',
+                isLease ? 'text-3xl sm:text-4xl' : 'text-4xl'
+              )}>
                 {formatPrice(effectivePrice)}
               </span>
               {isOnSale && !isLease && (
@@ -188,7 +192,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               )}
             </div>
 
-            <p className="text-xs text-text-muted mb-6">
+            <p className={cn('text-xs mb-6', isLease ? 'text-text-secondary font-medium' : 'text-text-muted')}>
               {isLease ? tr.lease.priceInfo : `${tr.product.priceIncludesVat} (${product.vat_rate}%)`}
             </p>
 
@@ -201,18 +205,13 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
 
             {isLease ? (
               <div className="hidden sm:block mb-6">
-                <div className="rounded-2xl border-2 border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6">
-                  <h3 className="font-extrabold text-text-primary text-lg mb-2">{tr.lease.ctaTitle}</h3>
-                  <p className="text-sm text-text-secondary mb-4">{tr.lease.ctaDesc}</p>
-                  <button
-                    type="button"
-                    onClick={() => setInquiryOpen(true)}
-                    className="btn-primary py-3.5 px-8 text-base w-full sm:w-auto"
-                  >
-                    <Handshake size={20} />
-                    {tr.lease.reserveDevice}
-                  </button>
-                </div>
+                <LeaseReservePanel
+                  title={tr.lease.ctaTitle}
+                  description={tr.lease.ctaDesc}
+                  proLabel={tr.lease.proLabel}
+                  ctaLabel={tr.lease.reserveDevice}
+                  onReserve={() => setInquiryOpen(true)}
+                />
               </div>
             ) : (
               <>
@@ -264,10 +263,10 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
             <button
               type="button"
               onClick={() => setInquiryOpen(true)}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold bg-brand-600 hover:bg-brand-700 text-white active:scale-95 transition-all"
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold bg-brand-600 hover:bg-brand-700 text-white active:scale-[0.98] transition-all shadow-brand-sm"
             >
-              <Handshake size={17} />
               {tr.lease.reserveDevice}
+              <ArrowRight size={17} />
             </button>
           ) : (
             <>

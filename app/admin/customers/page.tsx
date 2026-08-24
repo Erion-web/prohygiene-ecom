@@ -12,7 +12,7 @@ export default async function CustomersAdminPage() {
   return (
     <div>
       <AdminHeader title="Klientët" subtitle={`${customers?.length ?? 0} klientë`} />
-      <div className="p-6">
+      <div className="p-4">
         <CustomersClient customers={customers ?? []} />
       </div>
     </div>

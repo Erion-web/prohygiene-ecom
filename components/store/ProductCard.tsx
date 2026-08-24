@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingCart, Star, Handshake } from 'lucide-react'
+import { ShoppingCart, Star, ArrowRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
@@ -59,7 +59,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
           <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
             {isLease && (
-              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-brand-600 text-white shadow-sm">
+              <span className="absolute top-2.5 left-2.5 inline-flex items-center rounded-full bg-brand-950/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
                 {tr.lease.badge}
               </span>
             )}
@@ -116,8 +116,8 @@ export function ProductCard({ product, className }: ProductCardProps) {
             </div>
 
             {isLease ? (
-              <span className="p-2 rounded-xl bg-brand-50 text-brand-600 flex-shrink-0">
-                <Handshake size={14} />
+              <span className="p-2 rounded-xl bg-brand-50 text-brand-700 border border-brand-100 flex-shrink-0">
+                <ArrowRight size={14} />
               </span>
             ) : (
               <button

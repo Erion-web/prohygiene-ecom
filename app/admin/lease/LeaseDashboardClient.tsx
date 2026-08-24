@@ -131,15 +131,15 @@ export function LeaseDashboardClient({
   ]
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-2">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex gap-1.5">
           {(['week', 'month'] as Period[]).map(p => (
             <button
               key={p}
               type="button"
               onClick={() => setPeriod(p)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                 period === p ? 'bg-brand-600 text-white' : 'bg-surface-soft text-text-secondary hover:bg-brand-50'
               }`}
             >
@@ -147,25 +147,29 @@ export function LeaseDashboardClient({
             </button>
           ))}
         </div>
-        <button type="button" onClick={exportCsv} className="btn-secondary gap-2 text-sm">
-          <Download size={15} />
-          Eksporto CSV
+        <button type="button" onClick={exportCsv} className="btn-secondary gap-1.5 text-xs py-1.5 px-3">
+          <Download size={13} />
+          CSV
         </button>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         {stats.map(s => (
-          <div key={s.label} className="admin-card p-4">
-            <div className={`w-9 h-9 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>
-              <s.icon size={18} className={s.color} />
+          <div key={s.label} className="admin-card">
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center flex-shrink-0`}>
+                <s.icon size={15} className={s.color} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-base font-black text-text-primary leading-tight">{s.value}</p>
+                <p className="text-[11px] text-text-muted truncate">{s.label}</p>
+              </div>
             </div>
-            <p className="text-xl font-black text-text-primary">{s.value}</p>
-            <p className="text-xs text-text-muted mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 admin-card overflow-hidden p-0">
           <div className="p-4 border-b border-surface-border">
             <h3 className="font-bold text-text-primary">Klientët — pamje operacionale</h3>

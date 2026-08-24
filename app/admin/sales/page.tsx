@@ -10,7 +10,7 @@ export default async function SalesPage() {
     .order('name_sq', { ascending: true })
 
   return (
-    <div className="p-6">
+    <div className="p-4">
       <div className="mb-6">
         <h1 className="text-2xl font-black text-text-primary">Menaxhimi i Zbritjeve</h1>
         <p className="text-text-muted text-sm mt-0.5">

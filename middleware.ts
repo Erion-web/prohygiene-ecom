@@ -1,12 +1,30 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { hasAuthCookie } from '@/lib/supabase/auth-cookie'
+
+function isProtectedPath(pathname: string) {
+  return pathname.startsWith('/admin') || pathname.startsWith('/account')
+}
 
 export async function middleware(request: NextRequest) {
-  // Skip entirely if env vars are not configured (e.g. during build or misconfigured deployment)
+  const { pathname } = request.nextUrl
+
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (isProtectedPath(pathname)) {
       const url = request.nextUrl.clone()
       url.pathname = '/auth/login'
+      return NextResponse.redirect(url)
+    }
+    return NextResponse.next()
+  }
+
+  const signedIn = hasAuthCookie(request.cookies.getAll())
+
+  if (!signedIn) {
+    if (isProtectedPath(pathname)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      url.searchParams.set('redirect', pathname)
       return NextResponse.redirect(url)
     }
     return NextResponse.next()
@@ -40,24 +58,35 @@ export async function middleware(request: NextRequest) {
     const { data } = await supabase.auth.getUser()
     user = data.user
   } catch {
-    // If Supabase is unreachable, allow public pages but block /admin
+    if (isProtectedPath(pathname)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      url.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(url)
+    }
+    return supabaseResponse
   }
 
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/account') && !user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    url.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(url)
+  }
+
+  if (pathname.startsWith('/admin')) {
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = '/auth/login'
-      url.searchParams.set('redirect', request.nextUrl.pathname)
+      url.searchParams.set('redirect', pathname)
       return NextResponse.redirect(url)
     }
 
-    // Primary: check app_metadata role (JWT-embedded, no DB round-trip needed)
     const jwtRole = (user.app_metadata as Record<string, unknown>)?.role
     if (typeof jwtRole === 'string' && ['admin', 'manager'].includes(jwtRole)) {
       return supabaseResponse
     }
 
-    // Fallback: check profiles table
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')

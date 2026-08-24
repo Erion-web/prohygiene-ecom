@@ -16,7 +16,7 @@ export default async function CampaignsAdminPage() {
   return (
     <div>
       <AdminHeader title="Kampanjat & Zbritjet" subtitle={`${campaignsRes.data?.length ?? 0} kampanja`} />
-      <div className="p-6">
+      <div className="p-4">
         <CampaignsClient
           initialCampaigns={campaignsRes.data ?? []}
           products={productsRes.data ?? []}

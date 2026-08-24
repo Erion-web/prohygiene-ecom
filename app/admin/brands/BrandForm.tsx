@@ -73,7 +73,7 @@ export function BrandForm({ brand }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-lg space-y-5">
-      <div className="admin-card p-6 space-y-4">
+      <div className="admin-card space-y-4">
         <h3 className="font-bold text-text-primary flex items-center gap-2">
           <Award size={16} className="text-brand-500" />
           {brand ? 'Ndrysho Brendin' : 'Shto Brend të Ri'}

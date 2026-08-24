@@ -13,7 +13,7 @@ export default async function LeaseClientsPage() {
   return (
     <div>
       <AdminHeader title="Klientët e Shfrytëzimit" subtitle="Kompanitë me kontrata pajisjesh" />
-      <div className="p-6 pt-0">
+      <div className="p-4">
         <LeaseClientsClient initialClients={(data as LeaseClient[]) ?? []} />
       </div>
     </div>

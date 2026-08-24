@@ -27,7 +27,7 @@ export default async function AdminSubscriptionsPage() {
   const totalProducts = subs?.reduce((n, s) => n + (s.items?.length ?? 0), 0) ?? 0
 
   return (
-    <div className="p-6 max-w-5xl">
+    <div className="p-4 max-w-5xl">
       <div className="mb-6">
         <h1 className="text-2xl font-black text-text-primary flex items-center gap-2">
           <RefreshCw size={20} className="text-brand-500" />

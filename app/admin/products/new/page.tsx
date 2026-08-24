@@ -23,7 +23,7 @@ export default async function NewProductPage() {
           </Link>
         }
       />
-      <div className="p-6">
+      <div className="p-4">
         <ProductForm categories={categories ?? []} brands={brands ?? []} materials={materials ?? []} />
       </div>
     </div>

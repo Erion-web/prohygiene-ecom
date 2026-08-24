@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, RefreshCw, Package, Calendar, Pencil, Pause, Play, Trash2 } from 'lucide-react'
@@ -12,7 +13,7 @@ const FREQ_LABELS: Record<string, string> = {
 
 export default async function SubscriptionsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/auth/login?redirect=/account/subscriptions')
 
   const { data: subs } = await supabase

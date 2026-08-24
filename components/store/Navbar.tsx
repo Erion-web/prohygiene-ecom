@@ -16,15 +16,16 @@ import type { Category } from '@/types'
 
 interface NavbarProps {
   categories?: Category[]
+  userName?: string | null
 }
 
-export function Navbar({ categories = [] }: NavbarProps) {
+export function Navbar({ categories = [], userName: initialUserName = null }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [catOpen, setCatOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [userName, setUserName] = useState<string | null>(null)
+  const [userName, setUserName] = useState<string | null>(initialUserName)
   const pathname = usePathname()
   const { lang } = useLanguageStore()
   const { getItemCount } = useCartStore()
@@ -54,14 +55,13 @@ export function Navbar({ categories = [] }: NavbarProps) {
   }, [])
 
   useEffect(() => {
+    setUserName(initialUserName)
+  }, [initialUserName])
+
+  useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        const name = (user.user_metadata?.full_name as string | undefined) ?? user.email?.split('@')[0] ?? null
-        setUserName(name)
-      }
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION') return
       if (session?.user) {
         const name = (session.user.user_metadata?.full_name as string | undefined) ?? session.user.email?.split('@')[0] ?? null
         setUserName(name)

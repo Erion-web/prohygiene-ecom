@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Navbar } from '@/components/store/Navbar'
@@ -15,7 +16,7 @@ async function getCategories(): Promise<Category[]> {
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/auth/login?redirect=/account')
 
   const [{ data: profile }, categories] = await Promise.all([
@@ -29,7 +30,10 @@ export default async function AccountLayout({ children }: { children: React.Reac
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar categories={categories} />
+      <Navbar
+        categories={categories}
+        userName={profile?.full_name || user.email?.split('@')[0] || null}
+      />
 
       <div className="flex-1 bg-surface-soft">
         <div className="max-w-5xl mx-auto px-4 py-4 sm:py-8">

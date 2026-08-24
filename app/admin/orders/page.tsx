@@ -27,7 +27,7 @@ export default async function OrdersAdminPage({
     <div>
       <AdminHeader title="Porositë" subtitle={`${orders.length} porosi`} />
 
-      <div className="p-3 md:p-6">
+      <div className="p-3 md:p-4">
         {/* Status filter chips */}
         <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1 no-scrollbar">
           <Link href="/admin/orders"

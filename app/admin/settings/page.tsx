@@ -19,7 +19,7 @@ export default async function SettingsAdminPage() {
   return (
     <div>
       <AdminHeader title="Cilësimet" subtitle="Konfiguro platformën ProHygiene" />
-      <div className="p-6 space-y-6 max-w-3xl">
+      <div className="p-4 space-y-4 max-w-3xl">
 
         {/* Payment methods — real toggles */}
         <PaymentToggleCard initialMethods={paymentMethods} />
@@ -59,7 +59,7 @@ export default async function SettingsAdminPage() {
             ],
           },
         ].map(({ icon: Icon, title, desc, items }) => (
-          <div key={title} className="admin-card p-6">
+          <div key={title} className="admin-card">
             <div className="flex items-start gap-4 mb-5">
               <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center flex-shrink-0">
                 <Icon size={20} className="text-brand-600" />
@@ -80,7 +80,7 @@ export default async function SettingsAdminPage() {
           </div>
         ))}
 
-        <div className="admin-card p-6 bg-gradient-to-br from-brand-50 to-white border-brand-100">
+        <div className="admin-card bg-gradient-to-br from-brand-50 to-white border-brand-100">
           <div className="flex items-center gap-3 mb-3">
             <Settings size={20} className="text-brand-600" />
             <h3 className="font-bold text-text-primary">Variablat e Mjedisit</h3>

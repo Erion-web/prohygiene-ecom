@@ -106,7 +106,7 @@ export function MaterialsClient({ initialMaterials, categories }: Props) {
       )}
 
       {showForm && (
-        <div className="admin-card p-6">
+        <div className="admin-card">
           <div className="flex items-center justify-between mb-5">
             <h3 className="font-bold">{editingId ? 'Modifiko Materialin' : 'Material i Ri'}</h3>
             <button type="button" onClick={reset} className="btn-ghost p-1.5"><X size={16} /></button>

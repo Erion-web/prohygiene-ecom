@@ -13,7 +13,7 @@ export default async function LeaseInquiriesPage() {
   return (
     <div>
       <AdminHeader title="Kërkesat për Shfrytëzim" subtitle="Formularët nga web-i" />
-      <div className="p-6 pt-0">
+      <div className="p-4">
         <LeaseInquiriesClient initialInquiries={(data as LeaseInquiry[]) ?? []} />
       </div>
     </div>
