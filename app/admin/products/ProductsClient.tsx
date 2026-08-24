@@ -6,6 +6,8 @@ import type { Brand, Category, Product } from "@/types";
 import {
   AlertTriangle,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Edit,
   Package,
   Search,
@@ -17,8 +19,14 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { DeleteProductButton } from "./DeleteProductButton";
+import {
+  hasProductListFilters,
+  productListSearchParams,
+  type ProductListFilters,
+} from "./query";
 
 type ProductRow = Product & {
   category?: { name_sq: string } | null;
@@ -29,6 +37,17 @@ interface Props {
   products: ProductRow[];
   categories: Pick<Category, "id" | "name_sq">[];
   brands: Pick<Brand, "id" | "name">[];
+  matched: number;
+  page: number;
+  pageSize: number;
+  stats: {
+    total: number;
+    active: number;
+    outOfStock: number;
+    lowStock: number;
+    onSale: number;
+  };
+  filters: ProductListFilters;
 }
 
 const AUDIENCE_LABELS: Record<string, string> = {
@@ -43,7 +62,39 @@ function getScrollEl() {
     : null;
 }
 
-export function ProductsClient({ products, categories, brands }: Props) {
+function pageNumbers(current: number, total: number): Array<number | "gap"> {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const set = new Set([1, total, current, current - 1, current + 1]);
+  const sorted = Array.from(set).filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  const out: Array<number | "gap"> = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) out.push("gap");
+    out.push(sorted[i]);
+  }
+  return out;
+}
+
+export function ProductsClient({
+  products,
+  categories,
+  brands,
+  matched,
+  page,
+  pageSize,
+  stats,
+  filters,
+}: Props) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [search, setSearch] = useState(filters.q);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+
+  useEffect(() => {
+    setSearch(filters.q);
+  }, [filters.q]);
+
   useEffect(() => {
     const saved = sessionStorage.getItem("admin-products-scroll");
     if (!saved) return;
@@ -58,94 +109,77 @@ export function ProductsClient({ products, categories, brands }: Props) {
     setTimeout(restore, 200);
   }, []);
 
-  const [search, setSearch] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [brandId, setBrandId] = useState("");
-  const [audience, setAudience] = useState("");
-  const [status, setStatus] = useState("");
-  const [stock, setStock] = useState("");
-  const [onSale, setOnSale] = useState(false);
-  const [featured, setFeatured] = useState(false);
-  const [bestSeller, setBestSeller] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-
-  const [listingType, setListingType] = useState('')
-
-  const hasFilters =
-    search ||
-    categoryId ||
-    brandId ||
-    audience ||
-    status ||
-    stock ||
-    listingType ||
-    onSale ||
-    featured ||
-    bestSeller;
-  const hasDropdownFilters =
-    categoryId || brandId || audience || status || stock;
-
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    return products.filter((p) => {
-      if (
-        q &&
-        !p.name_sq.toLowerCase().includes(q) &&
-        !p.sku.toLowerCase().includes(q) &&
-        !(p.name_en ?? "").toLowerCase().includes(q)
-      )
-        return false;
-      if (categoryId && p.category_id !== categoryId) return false;
-      if (brandId && p.brand_id !== brandId) return false;
-      if (audience && p.audience_type !== audience) return false;
-      if (status === "active" && !p.is_active) return false;
-      if (status === "inactive" && p.is_active) return false;
-      if (stock === "in" && p.stock <= 0) return false;
-      if (stock === "out" && p.stock !== 0) return false;
-      if (stock === "low" && (p.stock <= 0 || p.stock > 10)) return false;
-      if (onSale && !p.sale_price) return false;
-      if (featured && !p.is_featured) return false;
-      if (bestSeller && !p.is_best_seller) return false;
-      if (listingType && (p.listing_type ?? "sale") !== listingType) return false;
-      return true;
+  const pushFilters = (next: ProductListFilters) => {
+    const qs = productListSearchParams(next);
+    startTransition(() => {
+      router.push(qs ? `/admin/products?${qs}` : "/admin/products", {
+        scroll: false,
+      });
     });
-  }, [
-    products,
-    search,
+  };
+
+  const setFilter = (patch: Partial<ProductListFilters>) => {
+    pushFilters({ ...filters, ...patch, page: 1 });
+  };
+
+  useEffect(() => {
+    const q = search.trim();
+    if (q === filtersRef.current.q) return;
+    const t = window.setTimeout(() => {
+      pushFilters({ ...filtersRef.current, q, page: 1 });
+    }, 350);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
+  const hasFilters = hasProductListFilters(filters);
+  const hasDropdownFilters = Boolean(
+    filters.categoryId ||
+      filters.brandId ||
+      filters.audience ||
+      filters.status ||
+      filters.stock ||
+      filters.listingType
+  );
+
+  const totalPages = Math.max(1, Math.ceil(matched / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = matched === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const pageEnd = Math.min(currentPage * pageSize, matched);
+
+  const goToPage = (n: number) => {
+    const next = Math.min(Math.max(1, n), totalPages);
+    pushFilters({ ...filters, page: next });
+    getScrollEl()?.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const clearAll = () => {
+    setSearch("");
+    pushFilters({
+      q: "",
+      categoryId: "",
+      brandId: "",
+      audience: "",
+      status: "",
+      stock: "",
+      listingType: "",
+      onSale: false,
+      featured: false,
+      bestSeller: false,
+      page: 1,
+    });
+  };
+
+  const {
     categoryId,
     brandId,
     audience,
     status,
     stock,
+    listingType,
     onSale,
     featured,
     bestSeller,
-    listingType,
-  ]);
-
-  const stats = useMemo(
-    () => ({
-      total: products.length,
-      active: products.filter((p) => p.is_active).length,
-      outOfStock: products.filter((p) => p.stock === 0).length,
-      lowStock: products.filter((p) => p.stock > 0 && p.stock <= 10).length,
-      onSale: products.filter((p) => !!p.sale_price).length,
-    }),
-    [products]
-  );
-
-  const clearAll = () => {
-    setSearch("");
-    setCategoryId("");
-    setBrandId("");
-    setAudience("");
-    setStatus("");
-    setStock("");
-    setListingType("");
-    setOnSale(false);
-    setFeatured(false);
-    setBestSeller(false);
-  };
+  } = filters;
 
   const saveScroll = () => {
     const el = getScrollEl();
@@ -168,28 +202,28 @@ export function ProductsClient({ products, categories, brands }: Props) {
       value: stats.active,
       color: "text-emerald-600",
       active: status === "active",
-      onClick: () => setStatus((s) => (s === "active" ? "" : "active")),
+      onClick: () => setFilter({ status: status === "active" ? "" : "active" }),
     },
     {
       label: "Nuk ka në stok",
       value: stats.outOfStock,
       color: "text-red-500",
       active: stock === "out",
-      onClick: () => setStock((s) => (s === "out" ? "" : "out")),
+      onClick: () => setFilter({ stock: stock === "out" ? "" : "out" }),
     },
     {
       label: "I ulët",
       value: stats.lowStock,
       color: "text-amber-500",
       active: stock === "low",
-      onClick: () => setStock((s) => (s === "low" ? "" : "low")),
+      onClick: () => setFilter({ stock: stock === "low" ? "" : "low" }),
     },
     {
       label: "Zbritje",
       value: stats.onSale,
       color: "text-brand-600",
       active: onSale,
-      onClick: () => setOnSale((v) => !v),
+      onClick: () => setFilter({ onSale: !onSale }),
     },
   ] as const;
 
@@ -237,7 +271,10 @@ export function ProductsClient({ products, categories, brands }: Props) {
             />
             {search && (
               <button
-                onClick={() => setSearch("")}
+                onClick={() => {
+                  setSearch("");
+                  setFilter({ q: "" });
+                }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X size={12} />
@@ -266,7 +303,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
             {[
               {
                 val: categoryId,
-                set: setCategoryId,
+                set: (v: string) => setFilter({ categoryId: v }),
                 placeholder: "Kategoria",
                 opts: categories.map((c) => ({ v: c.id, l: c.name_sq })),
               },
@@ -274,7 +311,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
                 ? [
                     {
                       val: brandId,
-                      set: setBrandId,
+                      set: (v: string) => setFilter({ brandId: v }),
                       placeholder: "Brendi",
                       opts: brands.map((b) => ({ v: b.id, l: b.name })),
                     },
@@ -282,7 +319,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
                 : []),
               {
                 val: audience,
-                set: setAudience,
+                set: (v: string) => setFilter({ audience: v }),
                 placeholder: "Audienca",
                 opts: [
                   { v: "home", l: "🏠 Shtëpi" },
@@ -292,7 +329,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
               },
               {
                 val: status,
-                set: setStatus,
+                set: (v: string) => setFilter({ status: v }),
                 placeholder: "Statusi",
                 opts: [
                   { v: "active", l: "✅ Aktiv" },
@@ -301,7 +338,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
               },
               {
                 val: stock,
-                set: setStock,
+                set: (v: string) => setFilter({ stock: v }),
                 placeholder: "Stoku",
                 opts: [
                   { v: "in", l: "✅ I disponueshëm" },
@@ -311,7 +348,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
               },
               {
                 val: listingType,
-                set: setListingType,
+                set: (v: string) => setFilter({ listingType: v }),
                 placeholder: "Listimi",
                 opts: [
                   { v: "sale", l: "🛒 Shitje" },
@@ -351,7 +388,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
             {[
               {
                 val: categoryId,
-                set: setCategoryId,
+                set: (v: string) => setFilter({ categoryId: v }),
                 placeholder: "Kategoria",
                 opts: categories.map((c) => ({ v: c.id, l: c.name_sq })),
               },
@@ -359,7 +396,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
                 ? [
                     {
                       val: brandId,
-                      set: setBrandId,
+                      set: (v: string) => setFilter({ brandId: v }),
                       placeholder: "Brendi",
                       opts: brands.map((b) => ({ v: b.id, l: b.name })),
                     },
@@ -367,7 +404,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
                 : []),
               {
                 val: audience,
-                set: setAudience,
+                set: (v: string) => setFilter({ audience: v }),
                 placeholder: "Audienca",
                 opts: [
                   { v: "home", l: "🏠 Shtëpi" },
@@ -377,7 +414,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
               },
               {
                 val: status,
-                set: setStatus,
+                set: (v: string) => setFilter({ status: v }),
                 placeholder: "Statusi",
                 opts: [
                   { v: "active", l: "✅ Aktiv" },
@@ -386,7 +423,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
               },
               {
                 val: stock,
-                set: setStock,
+                set: (v: string) => setFilter({ stock: v }),
                 placeholder: "Stoku",
                 opts: [
                   { v: "in", l: "✅ I disponueshëm" },
@@ -396,7 +433,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
               },
               {
                 val: listingType,
-                set: setListingType,
+                set: (v: string) => setFilter({ listingType: v }),
                 placeholder: "Listimi",
                 opts: [
                   { v: "sale", l: "🛒 Shitje" },
@@ -434,14 +471,14 @@ export function ProductsClient({ products, categories, brands }: Props) {
         <div className="flex items-center gap-1.5 px-2.5 pb-2.5">
           {(
             [
-              { label: "⭐ I Zgjedhur", state: featured, set: setFeatured },
-              { label: "🔥 Bestseller", state: bestSeller, set: setBestSeller },
-              { label: "🏷️ Zbritje", state: onSale, set: setOnSale },
+              { label: "⭐ I Zgjedhur", state: featured, toggle: () => setFilter({ featured: !featured }) },
+              { label: "🔥 Bestseller", state: bestSeller, toggle: () => setFilter({ bestSeller: !bestSeller }) },
+              { label: "🏷️ Zbritje", state: onSale, toggle: () => setFilter({ onSale: !onSale }) },
             ] as const
-          ).map(({ label, state, set }) => (
+          ).map(({ label, state, toggle }) => (
             <button
               key={label}
-              onClick={() => set(!state)}
+              onClick={toggle}
               className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${
                 state
                   ? "bg-brand-600 text-white border-brand-600"
@@ -453,8 +490,11 @@ export function ProductsClient({ products, categories, brands }: Props) {
           ))}
           <div className="ml-auto flex items-center gap-2">
             <span className="text-xs text-gray-400">
-              <span className="font-bold text-gray-700">{filtered.length}</span>
-              {hasFilters && <span> / {products.length}</span>}
+              <span className="font-bold text-gray-700">
+                {matched === 0 ? 0 : `${pageStart}–${pageEnd}`}
+              </span>
+              <span> / {matched}</span>
+              {hasFilters && <span className="text-gray-300"> · {stats.total}</span>}
               <span className="hidden sm:inline"> produkte</span>
             </span>
             {hasFilters && (
@@ -470,8 +510,8 @@ export function ProductsClient({ products, categories, brands }: Props) {
       </div>
 
       {/* ── MOBILE CARDS (< md) ── */}
-      <div className="md:hidden space-y-2">
-        {filtered.length === 0 ? (
+      <div className={`md:hidden space-y-2 ${isPending ? "opacity-50" : ""}`}>
+        {matched === 0 ? (
           <div className="bg-white border border-gray-100 rounded-xl p-10 text-center text-gray-400">
             <Package size={28} className="mx-auto mb-2 opacity-30" />
             <p className="text-sm">
@@ -487,7 +527,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
             )}
           </div>
         ) : (
-          filtered.map((product) => (
+          products.map((product) => (
             <div
               key={product.id}
               className="bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3 active:bg-gray-50 transition-colors"
@@ -576,7 +616,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
       </div>
 
       {/* ── DESKTOP TABLE (≥ md) ── */}
-      <div className="hidden md:block bg-white border border-gray-100 rounded-xl overflow-hidden">
+      <div className={`hidden md:block bg-white border border-gray-100 rounded-xl overflow-hidden ${isPending ? "opacity-50" : ""}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -604,7 +644,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filtered.map((product) => (
+              {products.map((product) => (
                 <tr
                   key={product.id}
                   className="hover:bg-gray-50/60 transition-colors group"
@@ -733,7 +773,7 @@ export function ProductsClient({ products, categories, brands }: Props) {
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {matched === 0 && (
                 <tr>
                   <td colSpan={9} className="text-center py-12 text-gray-400">
                     <Package size={28} className="mx-auto mb-2 opacity-30" />
@@ -757,6 +797,54 @@ export function ProductsClient({ products, categories, brands }: Props) {
           </table>
         </div>
       </div>
+
+      {matched > pageSize && (
+        <div className="flex items-center justify-between gap-3 bg-white border border-gray-100 rounded-xl px-3 py-2">
+          <p className="text-xs text-gray-400 tabular-nums">
+            {pageStart}–{pageEnd} nga {matched}
+          </p>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage <= 1 || isPending}
+              className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:pointer-events-none"
+              aria-label="Faqja e mëparshme"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            {pageNumbers(currentPage, totalPages).map((item, i) =>
+              item === "gap" ? (
+                <span key={`gap-${i}`} className="px-1.5 text-xs text-gray-300">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => goToPage(item)}
+                  className={`min-w-[28px] h-7 px-1.5 rounded-lg text-xs font-semibold tabular-nums ${
+                    item === currentPage
+                      ? "bg-brand-600 text-white"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {item}
+                </button>
+              )
+            )}
+            <button
+              type="button"
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage >= totalPages || isPending}
+              className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:pointer-events-none"
+              aria-label="Faqja tjetër"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
