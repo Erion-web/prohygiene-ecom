@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import {
   LayoutDashboard, Package, ShoppingBag, Users, X, LogOut,
@@ -9,6 +9,7 @@ import {
   Settings, LayoutGrid, Mail, Handshake,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { isNavActive, shouldStartNav, useAdminNav } from '@/components/admin/AdminNavContext'
 
 const mainTabs = [
   { href: '/admin',          label: 'Home',      icon: LayoutDashboard, exact: true },
@@ -38,12 +39,11 @@ const allNav = [
 ]
 
 export function AdminBottomNav() {
-  const pathname = usePathname()
+  const { displayPath, startNav } = useAdminNav()
   const router = useRouter()
   const [open, setOpen] = useState(false)
 
-  const isActive = (href: string, exact = false) =>
-    exact ? pathname === href : pathname.startsWith(href)
+  const isActive = (href: string, exact = false) => isNavActive(displayPath, href, exact)
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -81,7 +81,10 @@ export function AdminBottomNav() {
                 <Link
                   key={href}
                   href={href}
-                  onClick={() => setOpen(false)}
+                  onClick={(e) => {
+                    if (shouldStartNav(e, href, displayPath)) startNav(href)
+                    setOpen(false)
+                  }}
                   className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-2xl text-[11px] font-medium transition-all active:scale-95 ${
                     isActive(href, exact)
                       ? 'bg-brand-600 text-white'
@@ -118,6 +121,9 @@ export function AdminBottomNav() {
               <Link
                 key={href}
                 href={href}
+                onClick={(e) => {
+                  if (shouldStartNav(e, href, displayPath)) startNav(href)
+                }}
                 className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl transition-all active:scale-95 ${
                   active ? 'text-brand-400' : 'text-slate-500 hover:text-slate-300'
                 }`}

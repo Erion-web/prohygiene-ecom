@@ -7,9 +7,10 @@ import {
   Users, Settings, LogOut, ChevronLeft, Menu, Award, PercentCircle,
   RefreshCw, Image, Mail, Handshake, ChevronDown,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { isNavActive, shouldStartNav, useAdminNav } from '@/components/admin/AdminNavContext'
 
 const leaseChildren = [
   { href: '/admin/lease', label: 'Dashboard', exact: true },
@@ -45,12 +46,19 @@ const navItems: Array<{
 
 export function AdminSidebar() {
   const pathname = usePathname()
+  const { displayPath, startNav } = useAdminNav()
   const [collapsed, setCollapsed] = useState(false)
   const [leaseOpen, setLeaseOpen] = useState(() => pathname.startsWith('/admin/lease'))
   const router = useRouter()
 
-  const isActive = (href: string, exact = false) =>
-    exact ? pathname === href : pathname.startsWith(href)
+  const isActive = (href: string, exact = false) => isNavActive(displayPath, href, exact)
+
+  useEffect(() => {
+    for (const item of navItems) {
+      router.prefetch(item.href)
+      item.children?.forEach(child => router.prefetch(child.href))
+    }
+  }, [router])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -82,13 +90,14 @@ export function AdminSidebar() {
         <div className="space-y-0.5 px-1.5">
           {navItems.map(({ href, label, icon: Icon, exact, children }) => {
             if (children) {
-              const groupActive = pathname.startsWith(href)
+              const groupActive = isNavActive(displayPath, href)
               return (
                 <div key={href}>
                   <button
                     type="button"
                     onClick={() => {
                       if (collapsed) {
+                        startNav(href)
                         router.push(href)
                         return
                       }
@@ -116,6 +125,9 @@ export function AdminSidebar() {
                         <Link
                           key={child.href}
                           href={child.href}
+                          onClick={(e) => {
+                            if (shouldStartNav(e, child.href, displayPath)) startNav(child.href)
+                          }}
                           className={cn(
                             'block px-2 py-1 rounded-md text-[12px] font-medium transition-colors',
                             isActive(child.href, child.exact)
@@ -137,6 +149,9 @@ export function AdminSidebar() {
                 key={href}
                 href={href}
                 title={collapsed ? label : undefined}
+                onClick={(e) => {
+                  if (shouldStartNav(e, href, displayPath)) startNav(href)
+                }}
                 className={cn(
                   'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-colors',
                   isActive(href, exact)

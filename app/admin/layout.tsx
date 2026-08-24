@@ -1,5 +1,6 @@
-import { AdminSidebar } from '@/components/admin/AdminSidebar'
-import { AdminBottomNav } from '@/components/admin/AdminBottomNav'
+import { Suspense } from 'react'
+import { AdminShell } from '@/components/admin/AdminNav'
+import { AdminPageSkeleton } from '@/components/admin/AdminPageSkeleton'
 
 export default function AdminLayout({
   children,
@@ -7,12 +8,10 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-surface-soft">
-      <AdminSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div id="admin-main" className="flex-1 overflow-y-auto pb-16 md:pb-0">{children}</div>
-      </div>
-      <AdminBottomNav />
-    </div>
+    <AdminShell>
+      <Suspense fallback={<AdminPageSkeleton />}>
+        {children}
+      </Suspense>
+    </AdminShell>
   )
 }
