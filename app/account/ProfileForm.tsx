@@ -5,6 +5,7 @@ import { Save, Loader2, User, Building2, Phone, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { CITIES } from '@/lib/cities'
 import type { Profile } from '@/types'
 
 interface Props {
@@ -149,11 +150,15 @@ export function ProfileForm({ profile, email }: Props) {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="label">Qyteti</label>
-            <input
-              value={form.city}
-              onChange={e => update('city', e.target.value)}
-              className="input" placeholder="Prishtinë"
-            />
+            <select value={form.city} onChange={e => update('city', e.target.value)} className="input">
+              <option value="">Zgjedh qytetin...</option>
+              {form.city && !(CITIES as readonly string[]).includes(form.city) && (
+                <option value={form.city}>{form.city}</option>
+              )}
+              {CITIES.map(city => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
           </div>
           <div className="sm:col-span-2">
             <label className="label">Adresa</label>

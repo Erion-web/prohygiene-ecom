@@ -25,7 +25,6 @@ const allNav = [
   { href: '/admin/customers',     label: 'Klientët',    icon: Users },
   { href: '/admin/lease',         label: 'Dashboard',   icon: Handshake },
   { href: '/admin/lease/inquiries', label: 'Kërkesat',  icon: Handshake },
-  { href: '/admin/lease/clients', label: 'Klientë SH',  icon: Users },
   { href: '/admin/lease/contracts', label: 'Kontrata',  icon: Handshake },
   { href: '/admin/lease/devices', label: 'Pajisjet',    icon: Package },
   { href: '/admin/categories',    label: 'Kategoritë',  icon: FolderOpen },

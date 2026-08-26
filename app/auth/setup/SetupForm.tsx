@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, User, Phone, MapPin, Building2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
+import { CITIES } from '@/lib/cities'
 
 interface Props {
   userId: string
@@ -107,14 +108,17 @@ export function SetupForm({ userId, initialName, email }: Props) {
           <label className="label">Qyteti</label>
           <div className="relative">
             <MapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              type="text"
+            <select
               value={city}
               onChange={e => setCity(e.target.value)}
               className="input pl-9"
-              placeholder="Prishtinë"
               autoComplete="address-level2"
-            />
+            >
+              <option value="">Zgjedh qytetin...</option>
+              {CITIES.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
         </div>
         <div>

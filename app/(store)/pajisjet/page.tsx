@@ -15,7 +15,7 @@ async function getLeaseProducts(): Promise<Product[]> {
     .from('products')
     .select('*, category:categories(*)')
     .eq('is_active', true)
-    .eq('listing_type', 'lease')
+    .eq('available_for_lease', true)
     .order('created_at', { ascending: false })
   return (data as Product[]) ?? []
 }

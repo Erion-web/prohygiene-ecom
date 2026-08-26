@@ -11,6 +11,7 @@ import { useLanguageStore } from '@/store/language'
 import { t } from '@/lib/i18n'
 import { formatPrice, getProductName, generateOrderNumber } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { CITIES } from '@/lib/cities'
 import type { CheckoutFormData, CustomerType, PaymentMethod } from '@/types'
 
 type RepeatFreq = 'weekly' | 'biweekly' | 'monthly' | 'custom'
@@ -192,12 +193,6 @@ function RepeatModal({ items, userId, customerName, customerEmail, redirectUrl, 
     </div>
   )
 }
-
-const CITIES = [
-  'Prishtinë', 'Ferizaj', 'Gjakovë', 'Gjilan', 'Mitrovicë',
-  'Pejë', 'Prizren', 'Vushtrri', 'Suharrekë', 'Rahovec',
-  'Dragash', 'Malishevë', 'Lipjan', 'Podujevë', 'Skenderaj',
-]
 
 export default function CheckoutPage() {
   const router = useRouter()

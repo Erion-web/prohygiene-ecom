@@ -109,3 +109,11 @@ export function getLowStockThreshold(): number {
 export function isLowStock(product: Product): boolean {
   return product.stock > 0 && product.stock <= getLowStockThreshold()
 }
+
+export function isForSale(product: Pick<Product, 'listing_type'>): boolean {
+  return (product.listing_type ?? 'sale') === 'sale'
+}
+
+export function isForLease(product: Pick<Product, 'listing_type' | 'available_for_lease'>): boolean {
+  return product.available_for_lease === true || product.listing_type === 'lease'
+}

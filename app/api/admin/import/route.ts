@@ -171,6 +171,7 @@ export async function POST(request: Request) {
           is_best_seller: false,
           vat_rate:       18,
           listing_type:   'sale',
+          available_for_lease: false,
           gallery_urls:   [] as string[],
         }
 

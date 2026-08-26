@@ -1,6 +1,7 @@
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { createClient } from '@/lib/supabase/server'
 import { LeaseContractsClient } from './LeaseContractsClient'
+import { LEASE_DEVICE_QUERY, toLeaseDeviceOptions } from '@/lib/lease/device-select'
 import type { LeaseContract } from '@/types'
 
 export default async function LeaseContractsPage() {
@@ -15,19 +16,24 @@ export default async function LeaseContractsPage() {
         contract_materials(*, material:materials(id, name_sq, unit))
       `)
       .order('created_at', { ascending: false }),
-    supabase.from('lease_clients').select('id, company_name').order('company_name'),
-    supabase.from('products').select('id, name_sq, sku').eq('listing_type', 'lease').eq('is_active', true).order('name_sq'),
+    supabase.from('lease_clients').select('id, company_name, city, address, addresses:lease_client_addresses(*)').order('company_name'),
+    supabase
+      .from('products')
+      .select(LEASE_DEVICE_QUERY)
+      .eq('available_for_lease', true)
+      .eq('is_active', true)
+      .order('name_sq'),
     supabase.from('materials').select('id, name_sq, unit').eq('is_active', true).order('name_sq'),
   ])
 
   return (
     <div>
-      <AdminHeader title="Kontratat" subtitle="Kohëzgjatja, pajisjet dhe konsumi i pritur" />
+      <AdminHeader title="Kontratat" subtitle="Marrëveshjet me klientët shfrytëzues" />
       <div className="p-4">
         <LeaseContractsClient
           initialContracts={(contractsRes.data as LeaseContract[]) ?? []}
           clients={clientsRes.data ?? []}
-          products={productsRes.data ?? []}
+          leaseDevices={toLeaseDeviceOptions((productsRes.data ?? []) as import('@/lib/lease/device-select').LeaseDeviceRow[])}
           materials={materialsRes.data ?? []}
         />
       </div>

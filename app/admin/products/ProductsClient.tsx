@@ -553,6 +553,9 @@ export function ProductsClient({
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm text-gray-900 leading-snug truncate">
                   {product.name_sq}
+                  {(product.available_for_lease || product.listing_type === 'lease') && (
+                    <span className="ml-1.5 text-[10px] font-bold text-brand-600">SH</span>
+                  )}
                 </p>
                 <p className="text-[11px] text-gray-400 font-mono">
                   {product.sku}
@@ -669,6 +672,9 @@ export function ProductsClient({
                   <td className="px-3 py-2">
                     <p className="font-medium text-gray-900 text-sm leading-snug">
                       {product.name_sq}
+                      {(product.available_for_lease || product.listing_type === 'lease') && (
+                        <span className="ml-1.5 text-[10px] font-bold text-brand-600">SH</span>
+                      )}
                     </p>
                     <p className="text-gray-400 text-[11px] font-mono">
                       {product.sku}

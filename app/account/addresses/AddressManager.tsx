@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Plus, MapPin, Star, Pencil, Trash2, Save, Loader2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
+import { CITIES } from '@/lib/cities'
 import { useRouter } from 'next/navigation'
 
 interface Address {
@@ -159,7 +160,12 @@ export function AddressManager({ addresses, userId }: Props) {
             </div>
             <div>
               <label className="label">Qyteti *</label>
-              <input value={form.city} onChange={e => u('city', e.target.value)} className="input text-sm" placeholder="Prishtinë" />
+              <select value={form.city} onChange={e => u('city', e.target.value)} className="input text-sm">
+                <option value="">Zgjedh qytetin...</option>
+                {CITIES.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
             <div className="sm:col-span-2">
               <label className="label">Adresa *</label>

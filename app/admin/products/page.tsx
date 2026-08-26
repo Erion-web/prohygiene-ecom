@@ -35,7 +35,8 @@ async function getData(filters: ProductListFilters) {
   if (filters.onSale) listQuery = listQuery.not('sale_price', 'is', null)
   if (filters.featured) listQuery = listQuery.eq('is_featured', true)
   if (filters.bestSeller) listQuery = listQuery.eq('is_best_seller', true)
-  if (filters.listingType) listQuery = listQuery.eq('listing_type', filters.listingType)
+  if (filters.listingType === 'sale') listQuery = listQuery.eq('listing_type', 'sale')
+  if (filters.listingType === 'lease') listQuery = listQuery.eq('available_for_lease', true)
 
   const [
     productsRes,
@@ -87,6 +88,10 @@ export default async function ProductsAdminPage({
         subtitle={`${stats.total} produkte gjithsej`}
         actions={
           <div className="flex gap-2">
+            <Link href="/admin/products/new?lease=1" className="btn-secondary gap-2 text-sm py-2">
+              <Plus size={15} />
+              <span className="hidden sm:inline">Pajisje SH</span>
+            </Link>
             <Link href="/admin/products/import" className="btn-secondary gap-2 text-sm py-2">
               <Upload size={15} />
               <span className="hidden sm:inline">Importo</span>

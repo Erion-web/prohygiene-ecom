@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
 import { t } from '@/lib/i18n'
-import { formatPrice, getProductName, getProductDescription, getEffectivePrice, getDiscountPercent, getCategoryName, isLowStock } from '@/lib/utils'
+import { formatPrice, getProductName, getProductDescription, getEffectivePrice, getDiscountPercent, getCategoryName, isLowStock, isForLease, isForSale } from '@/lib/utils'
 import { QuantitySelector } from '@/components/ui/QuantitySelector'
 import { Badge } from '@/components/ui/Badge'
 import { ProductCard } from '@/components/store/ProductCard'
@@ -30,13 +30,14 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
   const [selectedImage, setSelectedImage] = useState(0)
   const [inquiryOpen, setInquiryOpen] = useState(false)
 
-  const isLease = (product.listing_type ?? 'sale') === 'lease'
+  const forSale = isForSale(product)
+  const forLease = isForLease(product)
   const name = getProductName(product, lang)
   const description = getProductDescription(product, lang)
   const effectivePrice = getEffectivePrice(product)
   const discountPercent = getDiscountPercent(product)
-  const isOnSale = discountPercent !== null
-  const isOutOfStock = product.stock === 0
+  const isOnSale = discountPercent !== null && forSale
+  const isOutOfStock = product.stock === 0 && forSale
   const lowStock = isLowStock(product)
 
   const images = [
@@ -45,7 +46,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
   ].filter(Boolean) as string[]
 
   const handleAddToCart = () => {
-    if (isOutOfStock || isLease) return
+    if (isOutOfStock || !forSale) return
     addItem(product, qty)
     toast.success(`${name} — ${tr.common.addedToCart}`)
   }
@@ -65,11 +66,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
           <nav className="flex items-center gap-1.5 text-xs text-text-muted">
             <Link href="/" className="hover:text-brand-600 transition-colors">{tr.nav.home}</Link>
             <ChevronRight size={12} />
-            {isLease ? (
-              <>
-                <Link href="/pajisjet" className="hover:text-brand-600 transition-colors">{tr.nav.leaseDevices}</Link>
-              </>
-            ) : (
+            {forSale ? (
               <>
                 <Link href="/shop" className="hover:text-brand-600 transition-colors">{tr.nav.shop}</Link>
                 {product.category && (
@@ -81,6 +78,8 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
                   </>
                 )}
               </>
+            ) : (
+              <Link href="/pajisjet" className="hover:text-brand-600 transition-colors">{tr.nav.leaseDevices}</Link>
             )}
             <ChevronRight size={12} />
             <span className="text-text-primary font-medium line-clamp-1">{name}</span>
@@ -106,7 +105,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
                   <Package size={64} className="text-text-muted opacity-20" />
                 </div>
               )}
-              {isLease && (
+              {forLease && (
                 <div className="absolute top-4 left-4">
                   <span className="inline-flex items-center rounded-full bg-brand-950/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white backdrop-blur-sm border border-white/10">
                     {tr.lease.badge}
@@ -141,7 +140,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
                   {tr.common.bestSeller}
                 </Badge>
               )}
-              {isOnSale && !isLease && (
+              {isOnSale && (
                 <Badge variant="danger">-{discountPercent}%</Badge>
               )}
             </div>
@@ -152,7 +151,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
 
             <p className="text-sm text-text-muted mb-4 font-mono">SKU: {product.sku}</p>
 
-            {!isLease && (
+            {forSale && (
               <div className="mb-6">
                 {isOutOfStock ? (
                   <div className="flex items-center gap-1.5 text-red-600 text-sm font-medium">
@@ -176,11 +175,11 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
             <div className="flex items-end gap-3 mb-2">
               <span className={cn(
                 'font-black tracking-tight text-text-primary',
-                isLease ? 'text-3xl sm:text-4xl' : 'text-4xl'
+                !forSale ? 'text-3xl sm:text-4xl' : 'text-4xl'
               )}>
                 {formatPrice(effectivePrice)}
               </span>
-              {isOnSale && !isLease && (
+              {isOnSale && (
                 <div className="flex flex-col">
                   <span className="text-lg text-text-muted line-through font-medium">
                     {formatPrice(product.price)}
@@ -192,8 +191,8 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               )}
             </div>
 
-            <p className={cn('text-xs mb-6', isLease ? 'text-text-secondary font-medium' : 'text-text-muted')}>
-              {isLease ? tr.lease.priceInfo : `${tr.product.priceIncludesVat} (${product.vat_rate}%)`}
+            <p className={cn('text-xs mb-6', !forSale ? 'text-text-secondary font-medium' : 'text-text-muted')}>
+              {forSale ? `${tr.product.priceIncludesVat} (${product.vat_rate}%)` : tr.lease.priceInfo}
             </p>
 
             <p className="text-text-secondary leading-relaxed mb-6">
@@ -203,17 +202,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               )}
             </p>
 
-            {isLease ? (
-              <div className="hidden sm:block mb-6">
-                <LeaseReservePanel
-                  title={tr.lease.ctaTitle}
-                  description={tr.lease.ctaDesc}
-                  proLabel={tr.lease.proLabel}
-                  ctaLabel={tr.lease.reserveDevice}
-                  onReserve={() => setInquiryOpen(true)}
-                />
-              </div>
-            ) : (
+            {forSale && (
               <>
                 {!isOutOfStock && (
                   <div className="hidden sm:flex items-center gap-4 mb-6">
@@ -234,6 +223,18 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
                   </button>
                 )}
               </>
+            )}
+
+            {forLease && (
+              <div className="hidden sm:block mb-6">
+                <LeaseReservePanel
+                  title={tr.lease.ctaTitle}
+                  description={tr.lease.ctaDesc}
+                  proLabel={tr.lease.proLabel}
+                  ctaLabel={tr.lease.reserveDevice}
+                  onReserve={() => setInquiryOpen(true)}
+                />
+              </div>
             )}
 
             <div className="bg-surface-soft rounded-2xl border border-surface-border p-5 space-y-3">
@@ -259,16 +260,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
         </div>
 
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-surface-border px-4 pt-3 safe-bottom flex items-center gap-3 shadow-elevated">
-          {isLease ? (
-            <button
-              type="button"
-              onClick={() => setInquiryOpen(true)}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold bg-brand-600 hover:bg-brand-700 text-white active:scale-[0.98] transition-all shadow-brand-sm"
-            >
-              {tr.lease.reserveDevice}
-              <ArrowRight size={17} />
-            </button>
-          ) : (
+          {forSale && (
             <>
               <div className="flex items-center gap-2">
                 <button
@@ -296,6 +288,21 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
                 {isOutOfStock ? tr.product.outOfStock : tr.product.addToCart}
               </button>
             </>
+          )}
+          {forLease && (
+            <button
+              type="button"
+              onClick={() => setInquiryOpen(true)}
+              className={cn(
+                'flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold active:scale-[0.98] transition-all',
+                forSale
+                  ? 'px-3 border border-surface-border text-brand-700 bg-brand-50'
+                  : 'flex-1 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-sm'
+              )}
+            >
+              {tr.lease.reserveDevice}
+              <ArrowRight size={17} />
+            </button>
           )}
         </div>
 

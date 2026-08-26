@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
 import { t } from '@/lib/i18n'
-import { cn, formatPrice, getProductName, getEffectivePrice, getDiscountPercent } from '@/lib/utils'
+import { cn, formatPrice, getProductName, getEffectivePrice, getDiscountPercent, isForLease, isForSale } from '@/lib/utils'
 import type { Product } from '@/types'
 
 interface ProductCardProps {
@@ -20,17 +20,18 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const { addItem } = useCartStore()
   const tr = t(lang)
 
-  const isLease = (product.listing_type ?? 'sale') === 'lease'
+  const forSale = isForSale(product)
+  const forLease = isForLease(product)
   const name = getProductName(product, lang)
   const effectivePrice = getEffectivePrice(product)
   const discountPercent = getDiscountPercent(product)
-  const isOnSale = discountPercent !== null && !isLease
-  const isOutOfStock = product.stock === 0 && !isLease
+  const isOnSale = discountPercent !== null && forSale
+  const isOutOfStock = product.stock === 0 && forSale
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (isOutOfStock || isLease) return
+    if (isOutOfStock || !forSale) return
     addItem(product)
     toast.success(tr.common.addedToCart)
   }
@@ -58,18 +59,18 @@ export function ProductCard({ product, className }: ProductCardProps) {
           )}
 
           <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
-            {isLease && (
-              <span className="absolute top-2.5 left-2.5 inline-flex items-center rounded-full bg-brand-950/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+            {forLease && (
+              <span className="inline-flex items-center rounded-full bg-brand-950/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
                 {tr.lease.badge}
               </span>
             )}
-            {product.is_best_seller && !isLease && (
+            {product.is_best_seller && forSale && (
               <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-400 text-white shadow-sm">
                 <Star size={9} fill="currentColor" />
                 {tr.common.bestSeller}
               </span>
             )}
-            {product.is_featured && !product.is_best_seller && !isLease && (
+            {product.is_featured && !product.is_best_seller && forSale && (
               <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-brand-600 text-white shadow-sm">
                 {tr.common.featured}
               </span>
@@ -115,7 +116,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
               )}
             </div>
 
-            {isLease ? (
+            {!forSale ? (
               <span className="p-2 rounded-xl bg-brand-50 text-brand-700 border border-brand-100 flex-shrink-0">
                 <ArrowRight size={14} />
               </span>

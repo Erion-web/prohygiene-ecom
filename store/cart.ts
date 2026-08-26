@@ -3,7 +3,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { CartItem, CartState, Product } from '@/types'
-import { getEffectivePrice } from '@/lib/utils'
+import { getEffectivePrice, isForSale } from '@/lib/utils'
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -11,7 +11,7 @@ export const useCartStore = create<CartState>()(
       items: [],
 
       addItem: (product: Product, quantity = 1) => {
-        if ((product.listing_type ?? 'sale') === 'lease') return
+        if (!isForSale(product)) return
         const { items } = get()
         const existing = items.find(item => item.product.id === product.id)
         const effectivePrice = getEffectivePrice(product)

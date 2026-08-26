@@ -15,7 +15,6 @@ import { isNavActive, shouldStartNav, useAdminNav } from '@/components/admin/Adm
 const leaseChildren = [
   { href: '/admin/lease', label: 'Dashboard', exact: true },
   { href: '/admin/lease/inquiries', label: 'Kërkesat' },
-  { href: '/admin/lease/clients', label: 'Klientët' },
   { href: '/admin/lease/contracts', label: 'Kontratat' },
   { href: '/admin/lease/devices', label: 'Pajisjet' },
   { href: '/admin/lease/categories', label: 'Kategoritë' },

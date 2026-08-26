@@ -8,7 +8,8 @@ import toast from 'react-hot-toast'
 import { useDropzone } from 'react-dropzone'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
-import type { Product, AudienceType, ListingType, Material, DeviceMaterial } from '@/types'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import type { Product, AudienceType, Material, DeviceMaterial } from '@/types'
 
 interface Category { id: string; name_sq: string; name_en: string }
 interface BrandOption { id: string; name: string }
@@ -24,11 +25,13 @@ interface ProductFormProps {
   materials?: Material[]
   initialDeviceMaterials?: DeviceMaterial[]
   product?: Product
+  defaultForLease?: boolean
+  returnTo?: string
 }
 
 const MAX_IMAGES = 5
 
-export function ProductForm({ categories, brands, materials = [], initialDeviceMaterials = [], product }: ProductFormProps) {
+export function ProductForm({ categories, brands, materials = [], initialDeviceMaterials = [], product, defaultForLease, returnTo }: ProductFormProps) {
   const router = useRouter()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
@@ -50,7 +53,10 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
     description_en: product?.description_en ?? '',
     category_id: product?.category_id ?? '',
     audience_type: product?.audience_type ?? 'both' as AudienceType,
-    listing_type: (product?.listing_type ?? 'sale') as ListingType,
+    for_sale: product ? (product.listing_type ?? 'sale') === 'sale' : true,
+    for_lease: product
+      ? Boolean(product.available_for_lease) || product.listing_type === 'lease'
+      : Boolean(defaultForLease),
     price: product?.price?.toString() ?? '',
     sale_price: product?.sale_price?.toString() ?? '',
     stock: product?.stock?.toString() ?? '0',
@@ -140,6 +146,10 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
       toast.error('Plotësoni fushat e detyrueshme')
       return
     }
+    if (!form.for_sale && !form.for_lease) {
+      toast.error('Zgjidhni Shitje, Shfrytëzim, ose të dyja')
+      return
+    }
     setLoading(true)
 
     const [coverImage, ...galleryImages] = images
@@ -153,7 +163,8 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
       description_en: form.description_en || null,
       category_id: form.category_id || null,
       audience_type: form.audience_type,
-      listing_type: form.listing_type,
+      listing_type: form.for_sale ? 'sale' : 'lease',
+      available_for_lease: form.for_lease,
       price: parseFloat(form.price),
       sale_price: form.sale_price ? parseFloat(form.sale_price) : null,
       stock: parseInt(form.stock),
@@ -179,7 +190,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
       productId = res.data?.id
     }
 
-    if (!error && form.listing_type === 'lease' && productId) {
+    if (!error && form.for_lease && productId) {
       await supabase.from('device_materials').delete().eq('product_id', productId)
       const validRows = deviceMaterialRows.filter(r => r.material_id && r.capacity)
       if (validRows.length > 0) {
@@ -192,7 +203,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
         )
         if (dmError) error = dmError
       }
-    } else if (!error && productId && form.listing_type === 'sale') {
+    } else if (!error && productId && !form.for_lease) {
       await supabase.from('device_materials').delete().eq('product_id', productId)
     }
 
@@ -202,7 +213,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
       toast.error(error.message)
     } else {
       toast.success(product ? 'Produkti u përditësua' : 'Produkti u shtua')
-      router.push('/admin/products')
+      router.push(returnTo ?? '/admin/products')
     }
   }
 
@@ -217,21 +228,24 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
             <div>
               <label className="label">Lloji i listimit</label>
               <div className="flex gap-2">
-                {([
-                  { key: 'sale', label: 'Shitje (Dyqani)' },
-                  { key: 'lease', label: 'Shfrytëzim (Pajisje)' },
-                ] as { key: ListingType; label: string }[]).map(({ key, label }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => update('listing_type', key)}
-                    className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold border transition-all ${
-                      form.listing_type === key ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-surface-border text-text-secondary'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => update('for_sale', !form.for_sale)}
+                  className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold border transition-all ${
+                    form.for_sale ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-surface-border text-text-secondary'
+                  }`}
+                >
+                  Shitje (Dyqani)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => update('for_lease', !form.for_lease)}
+                  className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold border transition-all ${
+                    form.for_lease ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-surface-border text-text-secondary'
+                  }`}
+                >
+                  Shfrytëzim
+                </button>
               </div>
             </div>
 
@@ -272,7 +286,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
             </div>
           </div>
 
-          {form.listing_type === 'lease' && (
+          {form.for_lease && (
             <div className="admin-card space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-text-primary">Lëndët e Pajisjes</h3>
@@ -288,20 +302,18 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
                 <div key={idx} className="grid sm:grid-cols-[1fr_140px_auto] gap-3 items-end">
                   <div>
                     <label className="label">Materiali</label>
-                    <select
+                    <SearchableSelect
                       value={row.material_id}
-                      onChange={e => {
+                      onChange={id => {
                         const next = [...deviceMaterialRows]
-                        next[idx] = { ...next[idx], material_id: e.target.value }
+                        next[idx] = { ...next[idx], material_id: id }
                         setDeviceMaterialRows(next)
                       }}
-                      className="input"
-                    >
-                      <option value="">Zgjedh...</option>
-                      {materials.map(m => (
-                        <option key={m.id} value={m.id}>{m.name_sq} ({m.unit})</option>
-                      ))}
-                    </select>
+                      options={materials.map(m => ({ value: m.id, label: `${m.name_sq} (${m.unit})` }))}
+                      searchType="materials"
+                      placeholder="Zgjedh..."
+                      searchPlaceholder="Kërko materialin..."
+                    />
                   </div>
                   <div>
                     <label className="label">Kapaciteti</label>
@@ -444,22 +456,28 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
 
             <div>
               <label className="label">Kategoria</label>
-              <select value={form.category_id} onChange={e => update('category_id', e.target.value)} className="input">
-                <option value="">Pa kategori</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name_sq}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                value={form.category_id}
+                onChange={id => update('category_id', id)}
+                options={categories.map(cat => ({ value: cat.id, label: cat.name_sq }))}
+                searchType="categories"
+                placeholder="Pa kategori"
+                searchPlaceholder="Kërko kategorinë..."
+                allowClear
+              />
             </div>
 
             <div>
               <label className="label">Brendi</label>
-              <select value={form.brand_id} onChange={e => update('brand_id', e.target.value)} className="input">
-                <option value="">Pa brend</option>
-                {brands.map(b => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                value={form.brand_id}
+                onChange={id => update('brand_id', id)}
+                options={brands.map(b => ({ value: b.id, label: b.name }))}
+                searchType="brands"
+                placeholder="Pa brend"
+                searchPlaceholder="Kërko brendin..."
+                allowClear
+              />
             </div>
 
             <div>

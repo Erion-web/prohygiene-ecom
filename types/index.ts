@@ -93,6 +93,7 @@ export interface Product {
   brand_id: string | null
   audience_type: AudienceType
   listing_type: ListingType
+  available_for_lease: boolean
   price: number
   sale_price: number | null
   stock: number
@@ -157,6 +158,16 @@ export interface DeviceMaterial {
   material?: Material | null
 }
 
+export interface LeaseClientAddress {
+  id: string
+  client_id: string
+  label: string
+  city: string
+  address: string
+  is_primary: boolean
+  created_at: string
+}
+
 export interface LeaseClient {
   id: string
   profile_id: string | null
@@ -171,6 +182,7 @@ export interface LeaseClient {
   notes: string | null
   created_at: string
   updated_at: string
+  addresses?: LeaseClientAddress[]
 }
 
 export interface LeaseContract {
