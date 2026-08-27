@@ -205,12 +205,12 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
             {forSale && (
               <>
                 {!isOutOfStock && (
-                  <div className="hidden sm:flex items-end gap-3 mb-6">
-                    <div>
-                      <label className="label text-xs mb-1.5">{tr.product.quantity}</label>
+                  <div className="hidden sm:flex items-stretch gap-3 mb-6">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-sm font-medium text-text-secondary whitespace-nowrap leading-none">{tr.product.quantity}</span>
                       <QuantitySelector value={qty} min={1} max={product.stock} onChange={setQty} size="lg" />
                     </div>
-                    <button onClick={handleAddToCart} className="btn-primary h-[3.25rem] px-8 text-base">
+                    <button type="button" onClick={handleAddToCart} className="btn-primary h-[3.25rem] py-0 px-8 text-base">
                       <ShoppingCart size={20} />
                       {tr.product.addToCart}
                     </button>
@@ -259,26 +259,26 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
           </div>
         </div>
 
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-surface-border px-4 pt-3 safe-bottom flex items-center gap-3 shadow-elevated">
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-surface-border px-4 pt-3 safe-bottom flex items-stretch gap-3 shadow-elevated">
           {forSale && (
             <>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setQty(q => Math.max(1, q - 1))}
-                  className="w-9 h-9 rounded-xl border border-surface-border flex items-center justify-center text-text-secondary hover:border-brand-400 transition-colors font-bold text-lg"
+                  className="w-11 h-11 rounded-xl border border-surface-border flex items-center justify-center text-text-secondary hover:border-brand-400 transition-colors font-bold text-lg"
                 >−</button>
-                <span className="w-7 text-center font-bold text-text-primary">{qty}</span>
+                <span className="w-7 h-11 flex items-center justify-center font-bold text-text-primary">{qty}</span>
                 <button
                   onClick={() => setQty(q => Math.min(product.stock, q + 1))}
                   disabled={isOutOfStock}
-                  className="w-9 h-9 rounded-xl border border-surface-border flex items-center justify-center text-text-secondary hover:border-brand-400 transition-colors font-bold text-lg disabled:opacity-30"
+                  className="w-11 h-11 rounded-xl border border-surface-border flex items-center justify-center text-text-secondary hover:border-brand-400 transition-colors font-bold text-lg disabled:opacity-30"
                 >+</button>
               </div>
               <button
                 onClick={handleAddToCart}
                 disabled={isOutOfStock}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold transition-all',
+                  'flex-1 flex items-center justify-center gap-2 h-11 rounded-2xl text-sm font-bold transition-all',
                   isOutOfStock
                     ? 'bg-surface-muted text-text-muted cursor-not-allowed'
                     : 'bg-brand-600 hover:bg-brand-700 text-white active:scale-95'
@@ -294,7 +294,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               type="button"
               onClick={() => setInquiryOpen(true)}
               className={cn(
-                'flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold active:scale-[0.98] transition-all',
+                'flex items-center justify-center gap-2 h-11 rounded-2xl text-sm font-bold active:scale-[0.98] transition-all',
                 forSale
                   ? 'px-3 border border-surface-border text-brand-700 bg-brand-50'
                   : 'flex-1 bg-brand-600 hover:bg-brand-700 text-white shadow-brand-sm'

@@ -21,9 +21,9 @@ export function QuantitySelector({
   className,
 }: QuantitySelectorProps) {
   const sizeClasses = {
-    sm: { btn: 'w-7 h-7', input: 'w-8 text-xs', icon: 14 },
-    md: { btn: 'w-9 h-9', input: 'w-10 text-sm', icon: 16 },
-    lg: { btn: 'w-11 h-11', input: 'w-12 text-base', icon: 18 },
+    sm: { btn: 'w-7 h-7', input: 'w-8 h-7 text-xs', icon: 14 },
+    md: { btn: 'w-9 h-9', input: 'w-10 h-9 text-sm', icon: 16 },
+    lg: { btn: 'w-11 h-11', input: 'w-12 h-11 text-base', icon: 18 },
   }
   const s = sizeClasses[size]
 
@@ -40,7 +40,7 @@ export function QuantitySelector({
       >
         <Minus size={s.icon} />
       </button>
-      <span className={cn(s.input, 'text-center font-semibold text-text-primary')}>
+      <span className={cn(s.input, 'flex items-center justify-center text-center font-semibold leading-none text-text-primary')}>
         {value}
       </span>
       <button
