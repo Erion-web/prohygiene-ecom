@@ -17,7 +17,6 @@ const leaseChildren = [
   { href: '/admin/lease/inquiries', label: 'Kërkesat' },
   { href: '/admin/lease/contracts', label: 'Kontratat' },
   { href: '/admin/lease/devices', label: 'Pajisjet' },
-  { href: '/admin/lease/materials', label: 'Lëndët' },
 ]
 
 const navItems: Array<{
@@ -119,11 +118,6 @@ export function AdminSidebar() {
                   </button>
                   {!collapsed && leaseOpen && (
                     <div className="mt-1 ml-3 pl-3 border-l border-surface-border space-y-0.5">
-                      {!collapsed && (
-                        <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                          Shfrytëzimi
-                        </p>
-                      )}
                       {children.map(child => (
                         <Link
                           key={child.href}

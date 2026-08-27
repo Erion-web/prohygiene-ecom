@@ -16,7 +16,7 @@ export type CustomerType = 'individual' | 'business'
 
 export type ListingType = 'sale' | 'lease'
 
-export type MaterialUnit = 'ml' | 'cope'
+export type MaterialUnit = 'ml' | 'cope' | 'pako'
 
 export type LeasePaymentStatus = 'paid' | 'unpaid' | 'danger'
 
@@ -103,6 +103,7 @@ export interface Product {
   is_featured: boolean
   is_best_seller: boolean
   is_active: boolean
+  is_material: boolean
   vat_rate: number
   meta_title_sq: string | null
   meta_title_en: string | null
@@ -123,6 +124,7 @@ export interface Product {
 
 export interface Material {
   id: string
+  product_id: string | null
   category_id: string
   name_sq: string
   name_en: string

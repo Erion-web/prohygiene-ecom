@@ -9,6 +9,7 @@ import { useDropzone } from 'react-dropzone'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
 import { SearchableSelect } from '@/components/ui/searchable-select'
+import { PRODUCT_UNITS, syncProductMaterial, normalizeMaterialUnit } from '@/lib/lease/sync-material'
 import type { Product, AudienceType, Material, DeviceMaterial } from '@/types'
 
 interface Category { id: string; name_sq: string; name_en: string }
@@ -60,12 +61,13 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
     price: product?.price?.toString() ?? '',
     sale_price: product?.sale_price?.toString() ?? '',
     stock: product?.stock?.toString() ?? '0',
-    unit: product?.unit ?? 'cope',
+    unit: product?.unit && ['cope', 'pako', 'ml'].includes(product.unit) ? product.unit : 'cope',
     vat_rate: product?.vat_rate?.toString() ?? '18',
     brand_id: product?.brand_id ?? '',
     is_featured: product?.is_featured ?? false,
     is_best_seller: product?.is_best_seller ?? false,
     is_active: product?.is_active ?? true,
+    is_material: product?.is_material ?? false,
   })
 
   const [deviceMaterialRows, setDeviceMaterialRows] = useState<DeviceMaterialRow[]>(() =>
@@ -146,8 +148,12 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
       toast.error('Plotësoni fushat e detyrueshme')
       return
     }
-    if (!form.for_sale && !form.for_lease) {
-      toast.error('Zgjidhni Shitje, Shfrytëzim, ose të dyja')
+    if (!form.for_sale && !form.for_lease && !form.is_material) {
+      toast.error('Zgjidhni Shitje, Shfrytëzim, Lëndë e parë, ose një kombinim')
+      return
+    }
+    if (form.is_material && !form.category_id) {
+      toast.error('Zgjidhni kategorinë për lëndën e parë')
       return
     }
     setLoading(true)
@@ -168,7 +174,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
       price: parseFloat(form.price),
       sale_price: form.sale_price ? parseFloat(form.sale_price) : null,
       stock: parseInt(form.stock),
-      unit: form.unit,
+      unit: normalizeMaterialUnit(form.unit),
       vat_rate: parseFloat(form.vat_rate),
       image_url: coverImage ?? null,
       gallery_urls: galleryImages,
@@ -176,10 +182,12 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
       is_featured: form.is_featured,
       is_best_seller: form.is_best_seller,
       is_active: form.is_active,
+      is_material: form.is_material,
     }
 
     let error
     let productId = product?.id
+    let syncError: string | null = null
 
     if (product) {
       const res = await supabase.from('products').update(payload).eq('id', product.id)
@@ -207,10 +215,24 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
       await supabase.from('device_materials').delete().eq('product_id', productId)
     }
 
+    if (!error && productId) {
+      const materialSync = await syncProductMaterial(supabase, productId, {
+        is_material: form.is_material,
+        name_sq: form.name_sq,
+        name_en: form.name_en,
+        category_id: form.category_id || null,
+        unit: form.unit,
+        is_active: form.is_active,
+      })
+      if (materialSync.error) syncError = materialSync.error
+    }
+
     setLoading(false)
 
     if (error) {
       toast.error(error.message)
+    } else if (syncError) {
+      toast.error(syncError)
     } else {
       toast.success(product ? 'Produkti u përditësua' : 'Produkti u shtua')
       router.push(returnTo ?? '/admin/products')
@@ -232,6 +254,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
             {form.is_best_seller && <span className="badge text-xs bg-violet-50 text-violet-700">Bestseller</span>}
             {form.for_sale && <span className="badge text-xs badge-neutral">Shitje</span>}
             {form.for_lease && <span className="badge text-xs bg-cyan-50 text-cyan-700">Shfrytëzim</span>}
+            {form.is_material && <span className="badge text-xs bg-emerald-50 text-emerald-700">Lëndë e parë</span>}
           </div>
           <p className="text-xs text-text-muted font-mono truncate max-w-full">
             {form.slug}
@@ -277,7 +300,11 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
               </div>
               <div>
                 <label className="label">Njësia *</label>
-                <input type="text" value={form.unit} onChange={e => update('unit', e.target.value)} className="input" placeholder="cope, L, kg..." />
+                <select value={form.unit} onChange={e => update('unit', e.target.value)} className="input" required>
+                  {PRODUCT_UNITS.map(u => (
+                    <option key={u.value} value={u.value}>{u.label}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -529,6 +556,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
               { key: 'is_active', label: 'Aktiv' },
               { key: 'is_featured', label: 'I Zgjedhur' },
               { key: 'is_best_seller', label: 'Bestseller' },
+              { key: 'is_material', label: 'Lëndë e parë' },
             ].map(({ key, label }) => (
               <label key={key} className="flex items-center justify-between cursor-pointer">
                 <span className="text-sm text-text-secondary">{label}</span>

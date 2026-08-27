@@ -46,6 +46,7 @@ export function shouldAlertContractExpiry(endsAt: string, surplusDays: number): 
 
 export function formatMaterialUnit(unit: string, lang: 'sq' | 'en' = 'sq'): string {
   if (unit === 'ml') return 'ml'
+  if (unit === 'pako') return lang === 'sq' ? 'pako' : 'pack'
   return lang === 'sq' ? 'copë' : 'pcs'
 }
 
