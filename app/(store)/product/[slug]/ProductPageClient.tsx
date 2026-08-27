@@ -205,12 +205,12 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
             {forSale && (
               <>
                 {!isOutOfStock && (
-                  <div className="hidden sm:flex items-center gap-4 mb-6">
+                  <div className="hidden sm:flex items-end gap-3 mb-6">
                     <div>
-                      <label className="label text-xs">{tr.product.quantity}</label>
+                      <label className="label text-xs mb-1.5">{tr.product.quantity}</label>
                       <QuantitySelector value={qty} min={1} max={product.stock} onChange={setQty} size="lg" />
                     </div>
-                    <button onClick={handleAddToCart} className="btn-primary py-3.5 px-8 text-base flex-1 sm:flex-none">
+                    <button onClick={handleAddToCart} className="btn-primary h-[3.25rem] px-8 text-base">
                       <ShoppingCart size={20} />
                       {tr.product.addToCart}
                     </button>
