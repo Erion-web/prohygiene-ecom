@@ -1,7 +1,9 @@
+import Link from 'next/link'
+import { ArrowRight, FileText, MonitorSmartphone, Inbox } from 'lucide-react'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { createClient } from '@/lib/supabase/server'
 import { LeaseDashboardClient } from './LeaseDashboardClient'
-import type { DeployedDevice, LeaseClient, LeaseContract, LeaseInquiry, LeaseNotification } from '@/types'
+import type { DeployedDevice, LeaseClient, LeaseContract, LeaseInquiry } from '@/types'
 
 async function getDashboardData() {
   const supabase = await createClient()
@@ -11,7 +13,6 @@ async function getDashboardData() {
     deployedRes,
     clientsRes,
     inquiriesRes,
-    notificationsRes,
   ] = await Promise.all([
     supabase.from('lease_contracts').select('*, client:lease_clients(*)'),
     supabase
@@ -26,11 +27,6 @@ async function getDashboardData() {
       .eq('status', 'active'),
     supabase.from('lease_clients').select('*'),
     supabase.from('lease_inquiries').select('*').order('created_at', { ascending: false }).limit(50),
-    supabase
-      .from('lease_notifications')
-      .select('*, client:lease_clients(company_name)')
-      .order('created_at', { ascending: false })
-      .limit(30),
   ])
 
   return {
@@ -38,7 +34,6 @@ async function getDashboardData() {
     deployedDevices: (deployedRes.data as DeployedDevice[]) ?? [],
     clients: (clientsRes.data as LeaseClient[]) ?? [],
     inquiries: (inquiriesRes.data as LeaseInquiry[]) ?? [],
-    notifications: (notificationsRes.data as LeaseNotification[]) ?? [],
   }
 }
 
@@ -47,7 +42,29 @@ export default async function LeaseDashboardPage() {
 
   return (
     <div>
-      <AdminHeader title="Shfrytëzimi" subtitle="ROI operacional dhe njoftime" />
+      <AdminHeader
+        title="Shfrytëzimi"
+        subtitle={new Date().toLocaleDateString('sq-AL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        actions={
+          <div className="hidden sm:flex flex-wrap gap-2">
+            {[
+              { href: '/admin/lease/contracts', label: 'Kontratat', icon: FileText },
+              { href: '/admin/lease/devices', label: 'Pajisjet', icon: MonitorSmartphone },
+              { href: '/admin/lease/inquiries', label: 'Kërkesat', icon: Inbox },
+            ].map(action => (
+              <Link
+                key={action.href}
+                href={action.href}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-white border border-surface-border text-xs font-semibold text-text-secondary hover:text-brand-700 hover:border-brand-200 hover:bg-brand-50 transition-colors"
+              >
+                <action.icon size={14} />
+                {action.label}
+                <ArrowRight size={12} className="opacity-50" />
+              </Link>
+            ))}
+          </div>
+        }
+      />
       <div className="admin-page">
         <LeaseDashboardClient {...data} />
       </div>

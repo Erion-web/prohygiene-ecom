@@ -2,24 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import {
-  Droplets, ShieldCheck, Sparkles, Home, ChefHat,
-  ScrollText, Wind, Brush, Box, ShoppingBag,
-} from 'lucide-react'
+import { ShoppingBag } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getCategoryIcon } from '@/lib/store/category-icons'
 import { t } from '@/lib/i18n'
 import type { Category, Lang } from '@/types'
-
-const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  'detergjente':        Droplets,
-  'dezinfektues':       ShieldCheck,
-  'higjiena-personale': Sparkles,
-  'pastrimi-shtepia':   Home,
-  'horeca-profesional': ChefHat,
-  'letra-higjienike':   ScrollText,
-  'arome-ajri':         Wind,
-  'aksesore-pastrimi':  Brush,
-}
 
 interface CategorySidebarNavProps {
   categories: Category[]
@@ -55,7 +42,7 @@ export function CategorySidebarNav({ categories, lang }: CategorySidebarNavProps
 
       {categories.map(cat => {
         const name = lang === 'sq' ? cat.name_sq : cat.name_en
-        const Icon = CATEGORY_ICONS[cat.slug] ?? Box
+        const Icon = getCategoryIcon(cat)
         const isActive = activeSlug === cat.slug
 
         return (

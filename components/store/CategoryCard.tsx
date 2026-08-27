@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getCategoryIcon } from '@/lib/store/category-icons'
 import { t } from '@/lib/i18n'
 import type { Category } from '@/types'
 import type { Lang } from '@/types'
@@ -12,25 +13,15 @@ interface CategoryCardProps {
   className?: string
 }
 
-const categoryEmojis: Record<string, string> = {
-  'pastrimi-shtepia': '🏠',
-  'higjiena-personale': '🧼',
-  'detergjente': '🧺',
-  'pastrimi-industrial': '🏭',
-  'dezinfektues': '🦠',
-  'leter-tissue': '🧻',
-  'furnitura-hoteli': '🏨',
-  'pajiset-pastrimit': '🧹',
-}
-
 export function CategoryCard({ category, lang, className }: CategoryCardProps) {
   const tr = t(lang)
   const name = lang === 'sq' ? category.name_sq : category.name_en
+  const Icon = getCategoryIcon(category)
 
   return (
     <Link href={`/shop?category=${category.slug}`} className="group block">
       <div className={cn(
-        'relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-50 to-white border border-brand-100',
+        'relative overflow-hidden rounded-2xl bg-white border border-surface-border',
         'hover:border-brand-200 hover:shadow-soft transition-all duration-300 hover:-translate-y-0.5',
         className
       )}>
@@ -49,12 +40,12 @@ export function CategoryCard({ category, lang, className }: CategoryCardProps) {
             </div>
           </div>
         ) : (
-          <div className="p-6 flex flex-col items-center text-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-brand-100 flex items-center justify-center text-2xl">
-              {categoryEmojis[category.slug] ?? '📦'}
+          <div className="p-5 flex flex-col items-center text-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center group-hover:bg-brand-100 transition-colors">
+              <Icon size={22} strokeWidth={1.75} />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-text-primary group-hover:text-brand-600 transition-colors duration-200">
+              <h3 className="font-semibold text-sm text-text-primary group-hover:text-brand-600 transition-colors duration-200 leading-snug">
                 {name}
               </h3>
               {category.products_count != null && (

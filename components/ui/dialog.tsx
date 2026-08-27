@@ -18,7 +18,10 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn('fixed inset-0 z-50 bg-black/50 backdrop-blur-md data-[state=open]:animate-fade-in', className)}
+    className={cn(
+      'fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-xl [-webkit-backdrop-filter:blur(20px)]',
+      className
+    )}
     {...props}
   />
 ))
@@ -30,11 +33,11 @@ const DialogContent = React.forwardRef<
 >(({ className, children, onInteractOutside, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 pointer-events-none">
+    <div className="fixed inset-0 z-[51] flex items-center justify-center p-3 pointer-events-none">
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          'pointer-events-auto relative flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden rounded-2xl border border-surface-border bg-white shadow-elevated data-[state=open]:animate-fade-in',
+          'pointer-events-auto relative flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden rounded-2xl border border-surface-border bg-white shadow-elevated data-[state=open]:animate-scale-in',
           className
         )}
         onPointerDownOutside={event => {
