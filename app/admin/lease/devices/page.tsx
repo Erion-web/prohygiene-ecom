@@ -30,7 +30,7 @@ export default async function DeployedDevicesPage() {
   return (
     <div>
       <AdminHeader title="Pajisjet" subtitle="Katalogu dhe pajisjet te klientët" />
-      <div className="p-4 space-y-4">
+      <div className="admin-page space-y-4">
         <LeaseDevicesCatalog devices={productsRes.data ?? []} />
         <DeployedDevicesClient
           initialDevices={(devicesRes.data as DeployedDevice[]) ?? []}

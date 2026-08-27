@@ -21,7 +21,7 @@ export default async function BannersAdminPage() {
         title="Banerat"
         subtitle="Ngarko dhe menaxho imazhet e karuselit — lidhi me kampanjë për faqe automatike"
       />
-      <div className="p-4 max-w-4xl">
+      <div className="admin-page max-w-4xl">
         <BannersClient banners={banners ?? []} campaigns={campaigns ?? []} />
       </div>
     </div>

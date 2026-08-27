@@ -23,7 +23,8 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   return (
     <div>
       <AdminHeader
-        title={`Modifiko: ${productRes.data.name_sq}`}
+        title={productRes.data.name_sq}
+        subtitle={`SKU ${productRes.data.sku}${productRes.data.category_id ? '' : ' · Pa kategori'}`}
         actions={
           <Link href="/admin/products" className="btn-ghost gap-1.5 text-sm">
             <ArrowLeft size={15} />
@@ -31,7 +32,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
           </Link>
         }
       />
-      <div className="p-4">
+      <div className="admin-page">
         <ProductForm
           categories={categoriesRes.data ?? []}
           brands={brandsRes.data ?? []}

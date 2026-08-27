@@ -13,7 +13,7 @@ export default async function LeaseCategoriesPage() {
   return (
     <div>
       <AdminHeader title="Kategoritë e Lëndëve" subtitle="Aroma, sapuni, letër dhe materiale të tjera" />
-      <div className="p-4">
+      <div className="admin-page">
         <UtilityCategoriesClient initialCategories={(data as UtilityCategory[]) ?? []} />
       </div>
     </div>

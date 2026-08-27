@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, Edit, Trash2, Save, X, Loader2 } from 'lucide-react'
+import { type LegacyColumnDef } from '@tanstack/react-table/legacy'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
 import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
+import { AdminTable } from '@/components/admin/AdminTable'
 import type { UtilityCategory } from '@/types'
 
 interface Props {
@@ -87,8 +89,59 @@ export function UtilityCategoriesClient({ initialCategories }: Props) {
     }
   }
 
+  const columns = useMemo<LegacyColumnDef<UtilityCategory, unknown>[]>(() => [
+    {
+      id: 'name',
+      header: 'Emri',
+      cell: ({ row }) => (
+        <div>
+          <p className="font-medium text-text-primary text-sm">{row.original.name_sq}</p>
+          {row.original.name_en && <p className="text-xs text-text-muted">{row.original.name_en}</p>}
+        </div>
+      ),
+    },
+    {
+      id: 'slug',
+      header: 'Slug',
+      cell: ({ row }) => (
+        <span className="font-mono text-xs text-text-muted">{row.original.slug}</span>
+      ),
+    },
+    {
+      id: 'sort',
+      header: 'Renditja',
+      cell: ({ row }) => (
+        <span className="text-sm text-text-secondary">{row.original.sort_order}</span>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Statusi',
+      cell: ({ row }) => (
+        <span className={`badge text-xs ${row.original.is_active ? 'badge-success' : 'badge-neutral'}`}>
+          {row.original.is_active ? 'Aktiv' : 'Joaktiv'}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Veprime',
+      meta: { align: 'right' },
+      cell: ({ row }) => (
+        <div className="flex justify-end gap-1.5">
+          <button type="button" onClick={() => startEdit(row.original)} className="p-1.5 hover:bg-brand-50 rounded-lg">
+            <Edit size={14} />
+          </button>
+          <button type="button" onClick={() => handleDelete(row.original)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ),
+    },
+  ], [])
+
   return (
-    <div className="max-w-3xl space-y-5">
+    <div className="space-y-5">
       {!showForm && (
         <button onClick={() => setShowForm(true)} className="btn-primary gap-2 text-sm">
           <Plus size={15} />
@@ -130,42 +183,12 @@ export function UtilityCategoriesClient({ initialCategories }: Props) {
         </div>
       )}
 
-      <div className="admin-card overflow-hidden p-0">
-        <table className="w-full admin-table">
-          <thead>
-            <tr className="bg-surface-soft border-b border-surface-border">
-              <th className="text-left">Emri</th>
-              <th className="text-left">Slug</th>
-              <th className="text-left">Renditja</th>
-              <th className="text-left">Statusi</th>
-              <th className="text-right">Veprime</th>
-            </tr>
-          </thead>
-          <tbody>
-            {initialCategories.map(cat => (
-              <tr key={cat.id} className="hover:bg-surface-soft">
-                <td>
-                  <p className="font-medium text-sm">{cat.name_sq}</p>
-                  {cat.name_en && <p className="text-xs text-text-muted">{cat.name_en}</p>}
-                </td>
-                <td><span className="font-mono text-xs text-text-muted">{cat.slug}</span></td>
-                <td className="text-sm">{cat.sort_order}</td>
-                <td>
-                  <span className={`badge text-xs ${cat.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                    {cat.is_active ? 'Aktiv' : 'Joaktiv'}
-                  </span>
-                </td>
-                <td>
-                  <div className="flex justify-end gap-1.5">
-                    <button type="button" onClick={() => startEdit(cat)} className="p-1.5 hover:bg-brand-50 rounded-lg"><Edit size={14} /></button>
-                    <button type="button" onClick={() => handleDelete(cat)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500"><Trash2 size={14} /></button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable
+        data={initialCategories}
+        columns={columns}
+        getRowId={row => row.id}
+        emptyMessage="Nuk ka kategori ende"
+      />
     </div>
   )
 }

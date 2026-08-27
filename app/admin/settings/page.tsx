@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { AdminHeader } from '@/components/admin/AdminHeader'
-import { Settings, Globe, CreditCard, Bell, Shield } from 'lucide-react'
+import { Globe, CreditCard, Bell, Shield } from 'lucide-react'
 import { PaymentToggleCard } from './PaymentToggleCard'
 
 export default async function SettingsAdminPage() {
@@ -19,12 +19,10 @@ export default async function SettingsAdminPage() {
   return (
     <div>
       <AdminHeader title="Cilësimet" subtitle="Konfiguro platformën ProHygiene" />
-      <div className="p-4 space-y-4 max-w-3xl">
+      <div className="admin-page max-w-5xl space-y-4">
 
-        {/* Payment methods — real toggles */}
         <PaymentToggleCard initialMethods={paymentMethods} />
 
-        {/* Static info cards */}
         {[
           {
             icon: Globe,
@@ -80,27 +78,6 @@ export default async function SettingsAdminPage() {
           </div>
         ))}
 
-        <div className="admin-card bg-gradient-to-br from-brand-50 to-white border-brand-100">
-          <div className="flex items-center gap-3 mb-3">
-            <Settings size={20} className="text-brand-600" />
-            <h3 className="font-bold text-text-primary">Variablat e Mjedisit</h3>
-          </div>
-          <p className="text-text-secondary text-sm mb-4">
-            Konfiguro variablat e mëposhtme në skedarin <code className="bg-brand-100 px-1.5 py-0.5 rounded font-mono text-brand-700">.env.local</code>:
-          </p>
-          <div className="bg-slate-950 rounded-xl p-4 font-mono text-xs text-slate-300 space-y-1">
-            {[
-              'NEXT_PUBLIC_SUPABASE_URL=...',
-              'NEXT_PUBLIC_SUPABASE_ANON_KEY=...',
-              'SUPABASE_SERVICE_ROLE_KEY=...',
-              'PAYSERA_PROJECT_ID=...',
-              'PAYSERA_SIGN_PASSWORD=...',
-              'NEXT_PUBLIC_APP_URL=https://yourdomain.com',
-            ].map(line => (
-              <p key={line} className="text-emerald-400">{line}</p>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   )

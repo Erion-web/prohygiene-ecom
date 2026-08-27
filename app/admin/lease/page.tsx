@@ -48,7 +48,7 @@ export default async function LeaseDashboardPage() {
   return (
     <div>
       <AdminHeader title="Shfrytëzimi" subtitle="ROI operacional dhe njoftime" />
-      <div className="p-4">
+      <div className="admin-page">
         <LeaseDashboardClient {...data} />
       </div>
     </div>

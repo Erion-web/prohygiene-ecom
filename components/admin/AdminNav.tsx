@@ -12,8 +12,8 @@ function AdminChrome({ children }: { children: ReactNode }) {
   return (
     <>
       <AdminSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div id="admin-main" className="flex-1 overflow-y-auto pb-16 md:pb-0">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div id="admin-main" className="flex-1 overflow-y-auto pb-16 md:pb-0 admin-shell">
           {pending ? <AdminPageSkeleton /> : children}
         </div>
       </div>

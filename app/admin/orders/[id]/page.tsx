@@ -34,7 +34,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
         }
       />
 
-      <div className="p-4 grid lg:grid-cols-3 gap-4">
+      <div className="admin-page grid lg:grid-cols-3 gap-4">
         {/* Order items */}
         <div className="lg:col-span-2 space-y-4">
           <div className="admin-card p-5">

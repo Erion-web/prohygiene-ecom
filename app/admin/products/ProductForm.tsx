@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Upload, X, Loader2, Save, ImagePlus, Star, Home, Building2, Users } from 'lucide-react'
+import { X, Loader2, Save, ImagePlus, Star, Home, Building2, Users } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useDropzone } from 'react-dropzone'
 import { createClient } from '@/lib/supabase/client'
@@ -107,7 +107,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
       toast.error(`Maksimumi ${MAX_IMAGES} imazhe`)
       return
     }
-    setUploadingSlot(-1) // -1 = uploading new
+    setUploadingSlot(-1)
     try {
       const urls = await Promise.all(toUpload.map(uploadFile))
       setImages(prev => [...prev, ...urls])
@@ -218,12 +218,33 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Main info */}
-        <div className="lg:col-span-2 space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {product && (
+        <div className="admin-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-mono text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-100 px-2.5 py-1 rounded-lg">
+              {form.sku}
+            </span>
+            <span className={`badge text-xs ${form.is_active ? 'badge-success' : 'badge-neutral'}`}>
+              {form.is_active ? 'Aktiv' : 'Joaktiv'}
+            </span>
+            {form.is_featured && <span className="badge text-xs badge-warning">I zgjedhur</span>}
+            {form.is_best_seller && <span className="badge text-xs bg-violet-50 text-violet-700">Bestseller</span>}
+            {form.for_sale && <span className="badge text-xs badge-neutral">Shitje</span>}
+            {form.for_lease && <span className="badge text-xs bg-cyan-50 text-cyan-700">Shfrytëzim</span>}
+          </div>
+          <p className="text-xs text-text-muted font-mono truncate max-w-full">
+            {form.slug}
+          </p>
+        </div>
+      )}
+
+      <div className="grid xl:grid-cols-[minmax(0,1fr)_380px] gap-5">
+        <div className="space-y-5 min-w-0">
           <div className="admin-card space-y-5">
-            <h3 className="font-bold text-text-primary">Informacioni Bazë</h3>
+            <div className="flex items-center justify-between gap-3 border-b border-surface-border pb-4">
+              <h3 className="admin-section-title">Informacioni Bazë</h3>
+            </div>
 
             <div>
               <label className="label">Lloji i listimit</label>
@@ -288,8 +309,8 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
 
           {form.for_lease && (
             <div className="admin-card space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-text-primary">Lëndët e Pajisjes</h3>
+              <div className="flex items-center justify-between gap-3 border-b border-surface-border pb-4">
+                <h3 className="admin-section-title">Lëndët e Pajisjes</h3>
                 <button
                   type="button"
                   onClick={() => setDeviceMaterialRows(prev => [...prev, { material_id: '', capacity: '' }])}
@@ -345,10 +366,11 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
             </div>
           )}
 
-          {/* Pricing */}
           <div className="admin-card space-y-4">
-            <h3 className="font-bold text-text-primary">Çmimet & Stoku</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="border-b border-surface-border pb-4">
+              <h3 className="admin-section-title">Çmimet & Stoku</h3>
+            </div>
+            <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
               <div>
                 <label className="label">Çmimi (€) *</label>
                 <input type="number" step="0.01" min="0" value={form.price} onChange={e => update('price', e.target.value)} className="input" required />
@@ -369,30 +391,25 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-5">
-          {/* Images */}
-          <div className="admin-card p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-text-primary">Imazhet</h3>
+        <div className="space-y-5 xl:sticky xl:top-[4.5rem] xl:self-start">
+          <div className="admin-card space-y-4">
+            <div className="flex items-center justify-between border-b border-surface-border pb-4">
+              <h3 className="admin-section-title">Imazhet</h3>
               <span className="text-xs text-text-muted">{images.length} / {MAX_IMAGES}</span>
             </div>
 
-            {/* Thumbnail grid */}
             {images.length > 0 && (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2.5">
                 {images.map((url, idx) => (
                   <div key={url + idx} className="relative group aspect-square rounded-xl overflow-hidden bg-surface-soft border border-surface-border">
                     <Image src={url} alt="" fill className="object-cover" sizes="120px" />
 
-                    {/* Cover badge */}
                     {idx === 0 && (
                       <div className="absolute top-1 left-1 bg-brand-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                         <Star size={8} fill="currentColor" /> Cover
                       </div>
                     )}
 
-                    {/* Hover actions */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
                       {idx !== 0 && (
                         <button
@@ -417,7 +434,6 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
               </div>
             )}
 
-            {/* Dropzone — hidden when at max */}
             {images.length < MAX_IMAGES && (
               <div
                 {...getRootProps()}
@@ -450,9 +466,10 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
             </p>
           </div>
 
-          {/* Category & Audience */}
-          <div className="admin-card p-5 space-y-4">
-            <h3 className="font-bold text-text-primary">Kategoria & Audienca</h3>
+          <div className="admin-card space-y-4">
+            <div className="border-b border-surface-border pb-4">
+              <h3 className="admin-section-title">Kategoria & Audienca</h3>
+            </div>
 
             <div>
               <label className="label">Kategoria</label>
@@ -504,9 +521,10 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
             </div>
           </div>
 
-          {/* Flags */}
-          <div className="admin-card p-5 space-y-3">
-            <h3 className="font-bold text-text-primary">Opsionet</h3>
+          <div className="admin-card space-y-3">
+            <div className="border-b border-surface-border pb-4 mb-1">
+              <h3 className="admin-section-title">Opsionet</h3>
+            </div>
             {[
               { key: 'is_active', label: 'Aktiv' },
               { key: 'is_featured', label: 'I Zgjedhur' },
@@ -526,15 +544,19 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
         </div>
       </div>
 
-      {/* Submit */}
-      <div className="flex gap-3">
-        <button type="submit" disabled={loading} className="btn-primary py-3 px-8 gap-2">
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {product ? 'Ruaj Ndryshimet' : 'Krijo Produktin'}
-        </button>
-        <button type="button" onClick={() => router.back()} className="btn-secondary py-3 px-6">
-          Anulo
-        </button>
+      <div className="admin-card sticky bottom-4 z-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-brand-100 shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+        <p className="text-sm text-text-muted hidden sm:block">
+          {product ? 'Ruani ndryshimet për ta publikuar në dyqan' : 'Plotësoni fushat e detyrueshme për të krijuar produktin'}
+        </p>
+        <div className="flex gap-3 sm:ml-auto">
+          <button type="button" onClick={() => router.back()} className="btn-secondary py-2.5 px-5 flex-1 sm:flex-none">
+            Anulo
+          </button>
+          <button type="submit" disabled={loading} className="btn-primary py-2.5 px-6 gap-2 flex-1 sm:flex-none">
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {product ? 'Ruaj Ndryshimet' : 'Krijo Produktin'}
+          </button>
+        </div>
       </div>
     </form>
   )

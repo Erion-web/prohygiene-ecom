@@ -67,26 +67,26 @@ export function AdminSidebar() {
 
   return (
     <aside className={cn(
-      'hidden md:flex flex-col bg-slate-950 text-white transition-all duration-300 flex-shrink-0',
-      collapsed ? 'w-14' : 'w-52'
+      'hidden md:flex flex-col bg-white border-r border-surface-border transition-all duration-300 flex-shrink-0',
+      collapsed ? 'w-[4.5rem]' : 'w-52'
     )}>
-      <div className="flex items-center justify-between h-12 px-3 border-b border-slate-800">
+      <div className="flex items-center justify-between h-14 px-4 border-b border-surface-border">
         {!collapsed && (
-          <Link href="/" className="font-black text-[15px] tracking-tight">
-            Pro<span className="text-brand-400">Hygiene</span>
+          <Link href="/" className="font-bold text-[15px] tracking-tight text-text-primary">
+            Pro<span className="text-brand-600">Hygiene</span>
           </Link>
         )}
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-auto"
+          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-soft transition-colors ml-auto"
         >
-          {collapsed ? <Menu size={15} /> : <ChevronLeft size={15} />}
+          {collapsed ? <Menu size={16} /> : <ChevronLeft size={16} />}
         </button>
       </div>
 
-      <nav className="flex-1 py-2 overflow-y-auto">
-        <div className="space-y-0.5 px-1.5">
+      <nav className="flex-1 py-3 overflow-y-auto">
+        <div className="space-y-0.5 px-2">
           {navItems.map(({ href, label, icon: Icon, exact, children }) => {
             if (children) {
               const groupActive = isNavActive(displayPath, href)
@@ -104,22 +104,27 @@ export function AdminSidebar() {
                     }}
                     title={collapsed ? label : undefined}
                     className={cn(
-                      'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-colors w-full',
+                      'flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors w-full',
                       groupActive
-                        ? 'bg-brand-600 text-white'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                        ? 'bg-brand-600 text-white shadow-brand-sm'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-surface-soft'
                     )}
                   >
-                    <Icon size={16} className="flex-shrink-0" />
+                    <Icon size={17} className="flex-shrink-0" />
                     {!collapsed && (
                       <>
                         <span className="flex-1 text-left">{label}</span>
-                        <ChevronDown size={13} className={cn('transition-transform', leaseOpen && 'rotate-180')} />
+                        <ChevronDown size={14} className={cn('transition-transform opacity-70', leaseOpen && 'rotate-180')} />
                       </>
                     )}
                   </button>
                   {!collapsed && leaseOpen && (
-                    <div className="mt-0.5 ml-3 pl-2 border-l border-slate-800 space-y-0.5">
+                    <div className="mt-1 ml-3 pl-3 border-l border-surface-border space-y-0.5">
+                      {!collapsed && (
+                        <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                          Shfrytëzimi
+                        </p>
+                      )}
                       {children.map(child => (
                         <Link
                           key={child.href}
@@ -128,10 +133,10 @@ export function AdminSidebar() {
                             if (shouldStartNav(e, child.href, displayPath)) startNav(child.href)
                           }}
                           className={cn(
-                            'block px-2 py-1 rounded-md text-[12px] font-medium transition-colors',
+                            'block px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors',
                             isActive(child.href, child.exact)
-                              ? 'text-white bg-slate-800'
-                              : 'text-slate-500 hover:text-white hover:bg-slate-800/70'
+                              ? 'bg-brand-50 text-brand-700'
+                              : 'text-text-muted hover:text-text-primary hover:bg-surface-soft'
                           )}
                         >
                           {child.label}
@@ -152,13 +157,13 @@ export function AdminSidebar() {
                   if (shouldStartNav(e, href, displayPath)) startNav(href)
                 }}
                 className={cn(
-                  'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-colors',
+                  'flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium transition-colors',
                   isActive(href, exact)
-                    ? 'bg-brand-600 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-brand-600 text-white shadow-brand-sm'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-surface-soft'
                 )}
               >
-                <Icon size={16} className="flex-shrink-0" />
+                <Icon size={17} className="flex-shrink-0" />
                 {!collapsed && <span>{label}</span>}
               </Link>
             )
@@ -166,14 +171,14 @@ export function AdminSidebar() {
         </div>
       </nav>
 
-      <div className="border-t border-slate-800 p-1.5">
+      <div className="border-t border-surface-border p-2">
         <button
           type="button"
           onClick={handleLogout}
-          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-colors w-full"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium text-text-muted hover:text-red-600 hover:bg-red-50 transition-colors w-full"
           title={collapsed ? 'Dil' : undefined}
         >
-          <LogOut size={16} className="flex-shrink-0" />
+          <LogOut size={17} className="flex-shrink-0" />
           {!collapsed && <span>Dil</span>}
         </button>
       </div>

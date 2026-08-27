@@ -114,9 +114,9 @@ export function SalesClient({ products }: Props) {
           { label: 'Me zbritje', value: onSaleCount, color: 'text-emerald-600' },
           { label: 'Pa zbritje', value: products.length - onSaleCount, color: 'text-text-secondary' },
         ].map(({ label, value, color }) => (
-          <div key={label} className="admin-card p-4">
-            <p className={`text-2xl font-black ${color}`}>{value}</p>
-            <p className="text-xs text-text-muted mt-0.5">{label}</p>
+          <div key={label} className="admin-card">
+            <p className={`admin-kpi-value ${color}`}>{value}</p>
+            <p className="admin-kpi-label">{label}</p>
           </div>
         ))}
       </div>

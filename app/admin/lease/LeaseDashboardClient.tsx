@@ -161,8 +161,8 @@ export function LeaseDashboardClient({
                 <s.icon size={15} className={s.color} />
               </div>
               <div className="min-w-0">
-                <p className="text-base font-black text-text-primary leading-tight">{s.value}</p>
-                <p className="text-[11px] text-text-muted truncate">{s.label}</p>
+                <p className="admin-kpi-value leading-tight">{s.value}</p>
+                <p className="admin-kpi-label truncate">{s.label}</p>
               </div>
             </div>
           </div>
@@ -172,7 +172,7 @@ export function LeaseDashboardClient({
       <div className="grid lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 admin-card overflow-hidden p-0">
           <div className="p-4 border-b border-surface-border">
-            <h3 className="font-bold text-text-primary">Klientët — pamje operacionale</h3>
+            <h3 className="admin-section-title">Klientët — pamje operacionale</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full admin-table">

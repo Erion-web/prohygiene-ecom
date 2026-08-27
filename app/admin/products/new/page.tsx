@@ -30,7 +30,7 @@ export default async function NewProductPage({
           </Link>
         }
       />
-      <div className="p-4">
+      <div className="admin-page">
         <ProductForm
           categories={categories ?? []}
           brands={brands ?? []}

@@ -12,7 +12,7 @@ export default async function NewsletterAdminPage() {
   return (
     <div>
       <AdminHeader title="Newsletter" subtitle={`${count ?? 0} pajtues aktivë`} />
-      <div className="p-4 max-w-2xl">
+      <div className="admin-page max-w-2xl">
         <NewsletterClient subscriberCount={count ?? 0} />
       </div>
     </div>

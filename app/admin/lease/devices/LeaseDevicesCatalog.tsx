@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { AdminSectionTitle } from '@/components/admin/AdminSectionTitle'
 import { Edit, Plus } from 'lucide-react'
 import { toLeaseDeviceOptions, type LeaseDeviceRow } from '@/lib/lease/device-select'
 
@@ -11,23 +12,24 @@ export function LeaseDevicesCatalog({ devices }: Props) {
 
   return (
     <div className="admin-card space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h3 className="font-bold text-sm">Katalogu i pajisjeve</h3>
-          <p className="text-xs text-text-muted mt-0.5">
+          <AdminSectionTitle
+            action={
+              <div className="flex gap-2">
+                <Link href="/admin/products?listing=lease" className="btn-secondary text-xs py-1.5 px-3">
+                  Shiko në produkte
+                </Link>
+                <Link href="/admin/products/new?lease=1&return=/admin/lease/devices" className="btn-primary gap-1.5 text-xs py-1.5 px-3">
+                  <Plus size={14} />
+                  Shto pajisje
+                </Link>
+              </div>
+            }
+          >
+            Katalogu i pajisjeve
+          </AdminSectionTitle>
+          <p className="text-xs text-text-muted -mt-1">
             Produktet me listim Shfrytëzim — zgjidhen kur krijoni një kontratë
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/admin/products?listing=lease" className="btn-secondary text-xs py-1.5 px-3">
-            Shiko në produkte
-          </Link>
-          <Link href="/admin/products/new?lease=1&return=/admin/lease/devices" className="btn-primary gap-1.5 text-xs py-1.5 px-3">
-            <Plus size={14} />
-            Shto pajisje
-          </Link>
-        </div>
-      </div>
 
       {options.length === 0 ? (
         <p className="text-sm text-text-muted py-4 text-center">

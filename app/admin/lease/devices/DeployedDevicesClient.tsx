@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AdminSectionTitle } from '@/components/admin/AdminSectionTitle'
 import { Edit, Trash2, Save, X, Loader2, Droplets } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
@@ -139,12 +140,12 @@ export function DeployedDevicesClient({ initialDevices, materials }: Props) {
 
   return (
     <div className="space-y-3">
-      <h3 className="font-bold text-sm">Pajisjet në lokacion</h3>
+      <AdminSectionTitle>Pajisjet në lokacion</AdminSectionTitle>
 
       {editingId && (
         <div className="admin-card">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold">Modifiko lokacionin</h3>
+            <h3 className="admin-section-title">Modifiko lokacionin</h3>
             <button type="button" onClick={reset} className="btn-ghost p-1.5"><X size={16} /></button>
           </div>
           <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">

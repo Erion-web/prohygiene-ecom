@@ -137,29 +137,101 @@
     @apply w-full h-px bg-surface-border;
   }
 
-  /* Admin */
-  .admin-card {
-    @apply bg-white rounded-xl border border-surface-border p-4;
+  /* Admin shell */
+  .admin-shell {
+    @apply bg-surface-soft min-h-full;
+  }
+
+  .admin-content {
+    @apply p-4 md:p-6 space-y-5 max-w-[1600px] mx-auto w-full;
   }
 
   .admin-page {
-    @apply p-4 space-y-4;
+    @apply admin-content;
+  }
+
+  .admin-card {
+    @apply bg-white rounded-2xl border border-surface-border p-5 shadow-none;
+  }
+
+  .admin-card-flush {
+    @apply bg-white rounded-2xl border border-surface-border overflow-hidden shadow-none;
+  }
+
+  .admin-section-title {
+    @apply text-sm font-semibold text-text-primary;
+  }
+
+  .admin-card-title {
+    @apply text-sm font-semibold text-text-primary;
+  }
+
+  .admin-kpi-value {
+    @apply text-2xl font-bold text-text-primary tracking-tight leading-none;
+  }
+
+  .admin-kpi-label {
+    @apply text-xs text-text-muted font-medium mt-1;
+  }
+
+  .admin-kpi-highlight {
+    @apply admin-card bg-brand-600 border-brand-600 text-white;
+  }
+
+  .admin-kpi-highlight .admin-kpi-value {
+    @apply text-white;
+  }
+
+  .admin-kpi-highlight .admin-kpi-label {
+    @apply text-brand-100;
+  }
+
+  .admin-filter-bar {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .admin-search {
+    @apply flex items-center gap-2 bg-white border border-surface-border rounded-full px-3.5 py-2 text-sm text-text-primary placeholder:text-text-muted focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-400 transition-all;
+  }
+
+  .admin-row-card {
+    @apply flex items-center gap-3 p-3.5 rounded-xl border border-surface-border bg-white hover:bg-surface-soft transition-colors;
   }
 
   .admin-table th {
-    @apply text-[11px] font-semibold text-text-muted uppercase tracking-wider px-3 py-2;
+    @apply text-[11px] font-semibold text-text-muted uppercase tracking-wide px-4 py-3 text-left;
   }
 
   .admin-table td {
-    @apply px-3 py-2 text-sm text-text-primary;
+    @apply px-4 py-3 text-sm text-text-primary align-middle;
   }
 
   .admin-table tr {
-    @apply border-b border-surface-border last:border-0;
+    @apply border-b border-surface-border/80 last:border-0;
   }
 
-  .admin-table tr:hover {
-    @apply bg-surface-soft;
+  .admin-table tbody tr:hover {
+    @apply bg-surface-soft/80;
+  }
+
+  .admin-table-shell {
+    @apply admin-card-flush;
+  }
+
+  .admin-table-scroll {
+    @apply overflow-x-auto;
+  }
+
+  .admin-table-scroll-virtual {
+    @apply overflow-y-auto;
+  }
+
+  .admin-table-scroll thead {
+    @apply sticky top-0 z-10;
+  }
+
+  .admin-table-scroll thead th {
+    @apply bg-surface-soft/95 backdrop-blur-sm;
   }
 }
 

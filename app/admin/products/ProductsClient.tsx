@@ -228,25 +228,25 @@ export function ProductsClient({
   ] as const;
 
   return (
-    <div className="p-3 md:p-4 space-y-3">
+    <div className="admin-page space-y-3">
       {/* ── STATS ── */}
       <div className="grid grid-cols-5 gap-2">
         {statCards.map((s) => (
           <button
             key={s.label}
             onClick={s.onClick}
-            className={`bg-white border rounded-xl px-2 py-2.5 text-center transition-all active:scale-[0.97] ${
+            className={`admin-card px-2 py-2.5 text-center transition-all active:scale-[0.97] ${
               s.active
                 ? "border-brand-400 ring-1 ring-brand-300 bg-brand-50/30"
-                : "border-gray-100 hover:border-gray-200 hover:shadow-sm"
+                : "hover:border-brand-200"
             }`}
           >
             <p
-              className={`text-lg md:text-xl font-black tabular-nums ${s.color}`}
+              className={`text-base md:text-lg font-bold tabular-nums ${s.color}`}
             >
               {s.value}
             </p>
-            <p className="text-[10px] md:text-[11px] text-gray-400 mt-0.5 leading-none">
+            <p className="text-[10px] md:text-[11px] text-text-muted mt-0.5 leading-none">
               {s.label}
             </p>
           </button>
@@ -254,7 +254,7 @@ export function ProductsClient({
       </div>
 
       {/* ── FILTER BAR ── */}
-      <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+      <div className="admin-card-flush overflow-hidden">
         {/* Search row — always visible */}
         <div className="flex items-center gap-2 p-2.5">
           <div className="relative flex-1">

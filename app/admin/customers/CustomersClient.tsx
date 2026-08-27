@@ -1,18 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { Download, Users, Building2, User, Plus, X, Save, Loader2, Pencil, Trash2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Download, Users, Building2, User, Plus, X, Save, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 import { CITIES } from '@/lib/cities'
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { CustomerDetailPanel } from '@/components/admin/CustomerDetailPanel'
+import { CustomersAdminTable, type CustomerTableRow } from '@/components/admin/CustomersAdminTable'
 import type { LeaseClient, LeaseClientAddress, Profile } from '@/types'
+
+interface OrderSummary {
+  id: string
+  order_number: string
+  total: number
+  status: string
+  created_at: string
+  customer_email: string
+}
 
 interface Props {
   customers: Profile[]
   leaseClients: LeaseClient[]
+  orders: OrderSummary[]
 }
 
 const defaultForm = {
@@ -68,12 +80,13 @@ function exportCSV(customers: Profile[], leaseClients: LeaseClient[]) {
   toast.success(`${customers.length} klientë u exportuan`)
 }
 
-export function CustomersClient({ customers, leaseClients }: Props) {
+export function CustomersClient({ customers, leaseClients, orders }: Props) {
   const refresh = useScrollPreservingRefresh()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(defaultForm)
   const [loading, setLoading] = useState(false)
   const [cityFilter, setCityFilter] = useState('')
+  const [selectedDetail, setSelectedDetail] = useState<{ type: 'profile' | 'lease'; id: string } | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [editKind, setEditKind] = useState<'profile' | 'lease'>('profile')
   const [editId, setEditId] = useState('')
@@ -95,6 +108,54 @@ export function CustomersClient({ customers, leaseClients }: Props) {
   const filteredExtra = cityFilter
     ? extraLease.filter(l => l.city === cityFilter)
     : extraLease
+
+  const tableRows = useMemo<CustomerTableRow[]>(() => [
+    ...filteredCustomers.map(c => {
+      const lease = leaseForProfile(c, leaseClients)
+      return {
+        id: c.id,
+        kind: 'profile' as const,
+        name: c.full_name ?? '—',
+        phone: c.phone,
+        email: c.email,
+        customerType: c.customer_type,
+        businessName: c.business_name,
+        role: c.role,
+        isLease: Boolean(lease),
+        city: c.city,
+        createdAt: c.created_at,
+        profile: c,
+        lease,
+      }
+    }),
+    ...filteredExtra.map(l => ({
+      id: l.id,
+      kind: 'lease' as const,
+      name: l.company_name,
+      phone: l.phone,
+      email: l.email,
+      customerType: 'lease' as const,
+      businessName: l.company_name,
+      isLease: true,
+      city: l.city,
+      createdAt: l.created_at,
+      lease: l,
+    })),
+  ], [filteredCustomers, filteredExtra, leaseClients])
+
+  const selectedProfile = selectedDetail?.type === 'profile'
+    ? customers.find(c => c.id === selectedDetail.id)
+    : undefined
+  const selectedLeaseOnly = selectedDetail?.type === 'lease'
+    ? leaseClients.find(l => l.id === selectedDetail.id)
+    : undefined
+  const selectedLease = selectedProfile
+    ? leaseForProfile(selectedProfile, leaseClients)
+    : selectedLeaseOnly
+  const detailEmail = (selectedProfile?.email ?? selectedLeaseOnly?.email ?? '').toLowerCase()
+  const detailOrders = detailEmail
+    ? orders.filter(o => o.customer_email?.toLowerCase() === detailEmail)
+    : []
 
   const update = (key: string, value: string | boolean) => {
     setForm(prev => ({ ...prev, [key]: value }))
@@ -282,6 +343,21 @@ export function CustomersClient({ customers, leaseClients }: Props) {
 
   return (
     <div className="space-y-4">
+      {selectedDetail && (selectedProfile || selectedLeaseOnly) && (
+        <CustomerDetailPanel
+          profile={selectedProfile}
+          leaseClient={selectedLease}
+          orders={detailOrders}
+          onEdit={() => {
+            if (selectedProfile) startEditProfile(selectedProfile, selectedLease)
+            else if (selectedLeaseOnly) startEditLease(selectedLeaseOnly)
+          }}
+          onClose={() => setSelectedDetail(null)}
+        />
+      )}
+
+      {!selectedDetail && (
+        <>
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex gap-3 text-sm text-text-secondary flex-wrap">
           <span className="flex items-center gap-1.5">
@@ -329,7 +405,7 @@ export function CustomersClient({ customers, leaseClients }: Props) {
       {showForm && (
         <div className="admin-card">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold">Klient i Ri</h3>
+            <h3 className="admin-section-title">Klient i Ri</h3>
             <button type="button" onClick={reset} className="btn-ghost p-1.5"><X size={16} /></button>
           </div>
           <form onSubmit={handleCreate} className="grid sm:grid-cols-2 gap-3">
@@ -400,122 +476,40 @@ export function CustomersClient({ customers, leaseClients }: Props) {
         </div>
       )}
 
-      <div className="admin-card overflow-hidden p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full admin-table">
-            <thead>
-              <tr className="bg-surface-soft border-b border-surface-border">
-                <th className="text-left">Klienti</th>
-                <th className="text-left">Email</th>
-                <th className="text-left">Tipi</th>
-                <th className="text-left">Roli</th>
-                <th className="text-left">Shfrytëzues</th>
-                <th className="text-left">Qyteti</th>
-                <th className="text-left">Regjistruar</th>
-                <th className="text-right">Veprime</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCustomers.map(c => {
-                const lease = leaseForProfile(c, leaseClients)
-                return (
-                  <tr key={c.id} className="hover:bg-surface-soft transition-colors">
-                    <td>
-                      <div>
-                        <p className="font-medium text-text-primary text-sm">{c.full_name ?? '—'}</p>
-                        {c.phone && <p className="text-text-muted text-xs">{c.phone}</p>}
-                        {c.customer_type === 'business' && c.business_name && (
-                          <p className="text-xs text-brand-500">{c.business_name}</p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="text-sm text-text-secondary">{c.email}</td>
-                    <td>
-                      <span className={`badge text-xs ${c.customer_type === 'business' ? 'badge-warning' : 'badge-neutral'}`}>
-                        {c.customer_type === 'business' ? 'Biznes' : 'Individual'}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`badge text-xs ${c.role === 'admin' ? 'bg-brand-100 text-brand-700' : 'badge-neutral'}`}>
-                        {c.role}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        onClick={() => toggleLease(c, lease)}
-                        className={`badge text-xs ${lease ? 'badge-success' : 'badge-neutral'}`}
-                      >
-                        {lease ? 'PO' : 'JO'}
-                      </button>
-                    </td>
-                    <td className="text-sm text-text-secondary">{c.city ?? '—'}</td>
-                    <td className="text-xs text-text-muted">
-                      {new Date(c.created_at).toLocaleDateString('sq-AL')}
-                    </td>
-                    <td>
-                      <div className="flex justify-end gap-1">
-                        <button type="button" onClick={() => startEditProfile(c, lease)} className="p-1.5 hover:bg-brand-50 rounded-lg">
-                          <Pencil size={14} />
-                        </button>
-                        <button type="button" onClick={() => handleDelete('profile', c.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-              {filteredExtra.map(l => (
-                <tr key={l.id} className="hover:bg-surface-soft transition-colors">
-                  <td>
-                    <p className="font-medium text-text-primary text-sm">{l.company_name}</p>
-                    {l.phone && <p className="text-text-muted text-xs">{l.phone}</p>}
-                  </td>
-                  <td className="text-sm text-text-secondary">{l.email}</td>
-                  <td>
-                    <span className="badge text-xs badge-warning">Biznes</span>
-                  </td>
-                  <td>
-                    <span className="badge text-xs badge-neutral">—</span>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      onClick={() => toggleLease(undefined, l)}
-                      className="badge text-xs badge-success"
-                    >
-                      PO
-                    </button>
-                  </td>
-                  <td className="text-sm text-text-secondary">{l.city ?? '—'}</td>
-                  <td className="text-xs text-text-muted">
-                    {new Date(l.created_at).toLocaleDateString('sq-AL')}
-                  </td>
-                  <td>
-                    <div className="flex justify-end gap-1">
-                      <button type="button" onClick={() => startEditLease(l)} className="p-1.5 hover:bg-brand-50 rounded-lg">
-                        <Pencil size={14} />
-                      </button>
-                      <button type="button" onClick={() => handleDelete('lease', l.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredCustomers.length === 0 && filteredExtra.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="text-center py-12 text-text-muted">
-                    <Users size={32} className="mx-auto mb-3 opacity-40" />
-                    <p>{cityFilter ? 'Asnjë klient në këtë qytet' : 'Nuk ka klientë ende'}</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <CustomersAdminTable
+        rows={tableRows}
+        emptyMessage={cityFilter ? 'Asnjë klient në këtë qytet' : 'Nuk ka klientë ende'}
+        onRowClick={row => {
+          if (row.kind === 'profile' && row.profile) {
+            setSelectedDetail({ type: 'profile', id: row.profile.id })
+          } else if (row.lease) {
+            setSelectedDetail({ type: 'lease', id: row.lease.id })
+          }
+        }}
+        onToggleLease={row => {
+          if (row.kind === 'profile' && row.profile) {
+            toggleLease(row.profile, row.lease)
+          } else if (row.lease) {
+            toggleLease(undefined, row.lease)
+          }
+        }}
+        onEdit={row => {
+          if (row.kind === 'profile' && row.profile) {
+            startEditProfile(row.profile, row.lease)
+          } else if (row.lease) {
+            startEditLease(row.lease)
+          }
+        }}
+        onDelete={row => {
+          if (row.kind === 'profile') {
+            handleDelete('profile', row.id)
+          } else {
+            handleDelete('lease', row.id)
+          }
+        }}
+      />
+        </>
+      )}
 
       <Dialog open={editOpen} onOpenChange={open => { if (!open) setEditOpen(false) }}>
         <DialogContent>

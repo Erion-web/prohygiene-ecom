@@ -12,7 +12,7 @@ export default async function CategoriesAdminPage() {
   return (
     <div>
       <AdminHeader title="Kategoritë" subtitle={`${categories?.length ?? 0} kategori`} />
-      <div className="p-4">
+      <div className="admin-page">
         <CategoriesClient initialCategories={categories ?? []} />
       </div>
     </div>

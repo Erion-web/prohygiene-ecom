@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, Edit, Trash2, Save, X, Loader2 } from 'lucide-react'
+import { type LegacyColumnDef } from '@tanstack/react-table/legacy'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
+import { AdminTable } from '@/components/admin/AdminTable'
 import type { Material, MaterialUnit, UtilityCategory } from '@/types'
 
 interface Props {
@@ -96,8 +98,59 @@ export function MaterialsClient({ initialMaterials, categories }: Props) {
     }
   }
 
+  const columns = useMemo<LegacyColumnDef<Material, unknown>[]>(() => [
+    {
+      id: 'name',
+      header: 'Materiali',
+      cell: ({ row }) => (
+        <div>
+          <p className="font-medium text-text-primary text-sm">{row.original.name_sq}</p>
+          {row.original.name_en && <p className="text-xs text-text-muted">{row.original.name_en}</p>}
+        </div>
+      ),
+    },
+    {
+      id: 'category',
+      header: 'Kategoria',
+      cell: ({ row }) => (
+        <span className="text-sm text-text-secondary">
+          {row.original.utility_category?.name_sq ?? '—'}
+        </span>
+      ),
+    },
+    {
+      id: 'type',
+      header: 'Lloji',
+      cell: ({ row }) => (
+        <span className="text-sm text-text-secondary">{row.original.material_type ?? '—'}</span>
+      ),
+    },
+    {
+      id: 'unit',
+      header: 'Njësia',
+      cell: ({ row }) => (
+        <span className="text-sm font-mono text-text-secondary">{row.original.unit}</span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Veprime',
+      meta: { align: 'right' },
+      cell: ({ row }) => (
+        <div className="flex justify-end gap-1.5">
+          <button type="button" onClick={() => startEdit(row.original)} className="p-1.5 hover:bg-brand-50 rounded-lg">
+            <Edit size={14} />
+          </button>
+          <button type="button" onClick={() => handleDelete(row.original)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ),
+    },
+  ], [])
+
   return (
-    <div className="max-w-4xl space-y-5">
+    <div className="space-y-5">
       {!showForm && (
         <button onClick={() => setShowForm(true)} className="btn-primary gap-2 text-sm">
           <Plus size={15} />
@@ -108,7 +161,7 @@ export function MaterialsClient({ initialMaterials, categories }: Props) {
       {showForm && (
         <div className="admin-card">
           <div className="flex items-center justify-between mb-5">
-            <h3 className="font-bold">{editingId ? 'Modifiko Materialin' : 'Material i Ri'}</h3>
+            <h3 className="admin-section-title">{editingId ? 'Modifiko Materialin' : 'Material i Ri'}</h3>
             <button type="button" onClick={reset} className="btn-ghost p-1.5"><X size={16} /></button>
           </div>
           <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
@@ -155,40 +208,12 @@ export function MaterialsClient({ initialMaterials, categories }: Props) {
         </div>
       )}
 
-      <div className="admin-card overflow-hidden p-0">
-        <table className="w-full admin-table">
-          <thead>
-            <tr className="bg-surface-soft border-b border-surface-border">
-              <th className="text-left">Materiali</th>
-              <th className="text-left">Kategoria</th>
-              <th className="text-left">Lloji</th>
-              <th className="text-left">Njësia</th>
-              <th className="text-right">Veprime</th>
-            </tr>
-          </thead>
-          <tbody>
-            {initialMaterials.map(m => (
-              <tr key={m.id} className="hover:bg-surface-soft">
-                <td>
-                  <p className="font-medium text-sm">{m.name_sq}</p>
-                  {m.name_en && <p className="text-xs text-text-muted">{m.name_en}</p>}
-                </td>
-                <td className="text-sm text-text-secondary">
-                  {m.utility_category?.name_sq ?? '—'}
-                </td>
-                <td className="text-sm">{m.material_type ?? '—'}</td>
-                <td className="text-sm font-mono">{m.unit}</td>
-                <td>
-                  <div className="flex justify-end gap-1.5">
-                    <button type="button" onClick={() => startEdit(m)} className="p-1.5 hover:bg-brand-50 rounded-lg"><Edit size={14} /></button>
-                    <button type="button" onClick={() => handleDelete(m)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500"><Trash2 size={14} /></button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <AdminTable
+        data={initialMaterials}
+        columns={columns}
+        getRowId={row => row.id}
+        emptyMessage="Nuk ka materiale ende"
+      />
     </div>
   )
 }

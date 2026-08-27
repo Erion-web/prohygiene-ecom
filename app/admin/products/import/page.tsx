@@ -16,7 +16,7 @@ export default function ImportProductsPage() {
           </Link>
         }
       />
-      <div className="p-4">
+      <div className="admin-page">
         <ImportProductsClient />
       </div>
     </div>

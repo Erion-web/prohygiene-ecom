@@ -55,22 +55,22 @@ export function AdminBottomNav() {
       {open && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
-          <div className="relative bg-slate-950 rounded-t-3xl overflow-hidden">
+          <div className="relative bg-white rounded-t-3xl overflow-hidden border-t border-surface-border">
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-slate-700 rounded-full" />
+              <div className="w-10 h-1 bg-surface-border rounded-full" />
             </div>
-            <div className="flex items-center justify-between px-5 py-2.5 border-b border-slate-800/60">
-              <span className="font-black text-white text-base">
-                Pro<span className="text-brand-400">Hygiene</span>
-                <span className="ml-2 text-slate-500 font-normal text-xs">Admin</span>
+            <div className="flex items-center justify-between px-5 py-2.5 border-b border-surface-border">
+              <span className="font-bold text-text-primary text-base">
+                Pro<span className="text-brand-600">Hygiene</span>
+                <span className="ml-2 text-text-muted font-normal text-xs">Admin</span>
               </span>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-soft transition-colors"
               >
                 <X size={18} />
               </button>
@@ -87,7 +87,7 @@ export function AdminBottomNav() {
                   className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-2xl text-[11px] font-medium transition-all active:scale-95 ${
                     isActive(href, exact)
                       ? 'bg-brand-600 text-white'
-                      : 'text-slate-400 hover:text-white bg-slate-900/60 hover:bg-slate-800'
+                      : 'text-text-secondary hover:text-text-primary bg-surface-soft hover:bg-surface-muted'
                   }`}
                 >
                   <Icon size={18} strokeWidth={1.8} />
@@ -99,7 +99,7 @@ export function AdminBottomNav() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-all border border-slate-800 active:scale-[0.98]"
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-medium text-text-muted hover:text-red-600 hover:bg-red-50 transition-all border border-surface-border active:scale-[0.98]"
               >
                 <LogOut size={16} />
                 Dil nga sistemi
@@ -110,7 +110,7 @@ export function AdminBottomNav() {
       )}
 
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-slate-950/95 backdrop-blur-md border-t border-slate-800"
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 backdrop-blur-md border-t border-surface-border"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 8px)' }}
       >
         <div className="flex items-center justify-around px-1 pt-1 pb-1">
@@ -124,13 +124,13 @@ export function AdminBottomNav() {
                   if (shouldStartNav(e, href, displayPath)) startNav(href)
                 }}
                 className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl transition-all active:scale-95 ${
-                  active ? 'text-brand-400' : 'text-slate-500 hover:text-slate-300'
+                  active ? 'text-brand-600' : 'text-text-muted hover:text-text-secondary'
                 }`}
               >
-                <div className={`relative p-1 rounded-xl transition-all ${active ? 'bg-brand-400/15' : ''}`}>
+                <div className={`relative p-1 rounded-xl transition-all ${active ? 'bg-brand-50' : ''}`}>
                   <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />
                 </div>
-                <span className={`text-[10px] font-medium leading-none ${active ? 'text-brand-400' : ''}`}>
+                <span className={`text-[10px] font-medium leading-none ${active ? 'text-brand-600' : ''}`}>
                   {label}
                 </span>
               </Link>
@@ -139,7 +139,7 @@ export function AdminBottomNav() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl text-slate-500 transition-all active:scale-95"
+            className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl text-text-muted transition-all active:scale-95"
           >
             <div className="p-1 rounded-xl">
               <LayoutGrid size={20} strokeWidth={1.8} />
