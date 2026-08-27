@@ -2,6 +2,7 @@ import { AdminHeader } from '@/components/admin/AdminHeader'
 import { createClient } from '@/lib/supabase/server'
 import { LeaseContractsClient } from './LeaseContractsClient'
 import { LEASE_DEVICE_QUERY, toLeaseDeviceOptions } from '@/lib/lease/device-select'
+import { listMaterialProductOptions } from '@/lib/lease/sync-material'
 import type { LeaseContract } from '@/types'
 
 export default async function LeaseContractsPage() {
@@ -23,7 +24,7 @@ export default async function LeaseContractsPage() {
       .eq('available_for_lease', true)
       .eq('is_active', true)
       .order('name_sq'),
-    supabase.from('materials').select('id, name_sq, unit').eq('is_active', true).order('name_sq'),
+    listMaterialProductOptions(supabase),
   ])
 
   return (

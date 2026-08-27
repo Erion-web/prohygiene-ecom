@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { createClient } from '@/lib/supabase/server'
 import { DeployedDevicesClient } from './DeployedDevicesClient'
+import { listMaterialProductOptions } from '@/lib/lease/sync-material'
 import type { DeployedDevice } from '@/types'
 
 export default async function DeployedDevicesPage() {
@@ -17,7 +18,7 @@ export default async function DeployedDevicesPage() {
         consumable_levels:device_consumable_levels(*, material:materials(*))
       `)
       .order('installed_at', { ascending: false }),
-    supabase.from('materials').select('id, name_sq, unit').eq('is_active', true),
+    listMaterialProductOptions(supabase),
   ])
 
   return (

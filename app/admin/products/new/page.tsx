@@ -3,6 +3,7 @@ import { AdminHeader } from '@/components/admin/AdminHeader'
 import { ProductForm } from '../ProductForm'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import { listMaterialProductOptions } from '@/lib/lease/sync-material'
 
 export default async function NewProductPage({
   searchParams,
@@ -13,10 +14,10 @@ export default async function NewProductPage({
   const isLease = lease === '1'
 
   const supabase = await createClient()
-  const [{ data: categories }, { data: brands }, { data: materials }] = await Promise.all([
+  const [{ data: categories }, { data: brands }, materials] = await Promise.all([
     supabase.from('categories').select('id, name_sq, name_en').eq('is_active', true).order('sort_order'),
     supabase.from('brands').select('id, name').eq('is_active', true).order('sort_order'),
-    supabase.from('materials').select('*').eq('is_active', true).order('name_sq'),
+    listMaterialProductOptions(supabase),
   ])
 
   return (

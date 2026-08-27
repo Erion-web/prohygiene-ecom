@@ -56,15 +56,22 @@ export async function GET(req: Request) {
   }
 
   if (type === 'materials') {
-    let query = supabase.from('materials').select('id, name_sq, unit').eq('is_active', true).order('name_sq').limit(40)
-    if (q) query = query.ilike('name_sq', `%${q}%`)
+    let query = supabase
+      .from('products')
+      .select('id, name_sq, unit, material:materials!product_id(id)')
+      .eq('is_material', true)
+      .eq('is_active', true)
+      .order('name_sq')
+      .limit(40)
+    if (q) query = query.or(`name_sq.ilike.%${q}%,sku.ilike.%${q}%`)
     const { data, error } = await query
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({
-      options: (data ?? []).map(row => ({
-        value: row.id,
-        label: `${row.name_sq} (${row.unit})`,
-      })),
+      options: (data ?? []).flatMap(row => {
+        const material = Array.isArray(row.material) ? row.material[0] : row.material
+        if (!material?.id) return []
+        return [{ value: material.id as string, label: `${row.name_sq} (${row.unit})` }]
+      }),
     })
   }
 

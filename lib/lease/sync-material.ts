@@ -57,3 +57,60 @@ export async function syncProductMaterial(
   const { error } = await supabase.from('materials').insert(payload)
   return { error: error?.message ?? null }
 }
+
+export type MaterialProductOption = {
+  id: string
+  product_id: string
+  name_sq: string
+  unit: MaterialUnit
+}
+
+export async function listMaterialProductOptions(
+  supabase: SupabaseClient
+): Promise<MaterialProductOption[]> {
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, name_sq, name_en, category_id, unit, is_active')
+    .eq('is_material', true)
+    .eq('is_active', true)
+    .order('name_sq')
+
+  if (!products?.length) return []
+
+  const { data: existing } = await supabase
+    .from('materials')
+    .select('id, product_id')
+    .in('product_id', products.map(p => p.id))
+
+  const byProduct = new Map((existing ?? []).filter(m => m.product_id).map(m => [m.product_id as string, m.id as string]))
+  const missing = products.filter(p => !byProduct.has(p.id) && p.category_id)
+
+  if (missing.length > 0) {
+    const { data: inserted } = await supabase
+      .from('materials')
+      .insert(
+        missing.map(p => ({
+          product_id: p.id,
+          category_id: p.category_id,
+          name_sq: p.name_sq,
+          name_en: p.name_en || p.name_sq,
+          unit: normalizeMaterialUnit(p.unit),
+          is_active: p.is_active,
+        }))
+      )
+      .select('id, product_id')
+
+    for (const row of inserted ?? []) {
+      if (row.product_id) byProduct.set(row.product_id, row.id)
+    }
+  }
+
+  return products
+    .filter(p => byProduct.has(p.id))
+    .map(p => ({
+      id: byProduct.get(p.id) as string,
+      product_id: p.id,
+      name_sq: p.name_sq,
+      unit: normalizeMaterialUnit(p.unit),
+    }))
+}
