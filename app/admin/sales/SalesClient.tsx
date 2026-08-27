@@ -1,10 +1,17 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { PercentCircle, Tag, X, Search, CheckSquare, Square, Loader2, AlertCircle } from 'lucide-react'
+import { useState, useEffect, useRef, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { PercentCircle, Tag, X, Search, CheckSquare, Square, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import {
+  salesListSearchParams,
+  sanitizeSalesSearch,
+  type SalesListFilters,
+  type SalesSaleFilter,
+} from './query'
 
 interface ProductRow {
   id: string
@@ -14,33 +21,113 @@ interface ProductRow {
   sale_price: number | null
   image_url: string | null
   is_active: boolean
-  category: { name_sq: string }[] | null
-  brand: { name: string }[] | null
+  category: { name_sq: string }[] | { name_sq: string } | null
+  brand: { name: string }[] | { name: string } | null
 }
 
-interface Props { products: ProductRow[] }
+interface Props {
+  products: ProductRow[]
+  matched: number
+  page: number
+  pageSize: number
+  stats: {
+    total: number
+    onSale: number
+    noSale: number
+  }
+  filters: SalesListFilters
+}
 
 type Mode = 'percent' | 'fixed' | 'remove'
 
-export function SalesClient({ products }: Props) {
-  const [selected, setSelected]   = useState<Set<string>>(new Set())
-  const [search, setSearch]       = useState('')
-  const [mode, setMode]           = useState<Mode>('percent')
-  const [discountVal, setDiscount] = useState('')
-  const [loading, setLoading]     = useState(false)
-  const [filter, setFilter]       = useState<'all' | 'on_sale' | 'no_sale'>('all')
+function pageNumbers(current: number, total: number): Array<number | 'gap'> {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const set = new Set([1, total, current, current - 1, current + 1])
+  const sorted = Array.from(set).filter(p => p >= 1 && p <= total).sort((a, b) => a - b)
+  const out: Array<number | 'gap'> = []
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) out.push('gap')
+    out.push(sorted[i])
+  }
+  return out
+}
 
-  const filtered = useMemo(() => {
-    return products.filter(p => {
-      const matchSearch = p.name_sq.toLowerCase().includes(search.toLowerCase()) ||
-        p.sku.toLowerCase().includes(search.toLowerCase())
-      const matchFilter =
-        filter === 'all' ? true :
-        filter === 'on_sale' ? p.sale_price !== null :
-        p.sale_price === null
-      return matchSearch && matchFilter
+function getScrollEl() {
+  return typeof document !== 'undefined' ? document.getElementById('admin-main') : null
+}
+
+function categoryName(category: ProductRow['category']) {
+  if (!category) return null
+  return Array.isArray(category) ? category[0]?.name_sq : category.name_sq
+}
+
+function brandName(brand: ProductRow['brand']) {
+  if (!brand) return null
+  return Array.isArray(brand) ? brand[0]?.name : brand.name
+}
+
+export function SalesClient({ products, matched, page, pageSize, stats, filters }: Props) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [search, setSearch] = useState(filters.q)
+  const [mode, setMode] = useState<Mode>('percent')
+  const [discountVal, setDiscount] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [selectingAll, setSelectingAll] = useState(false)
+  const filtersRef = useRef(filters)
+  filtersRef.current = filters
+
+  useEffect(() => {
+    setSearch(filters.q)
+  }, [filters.q])
+
+  useEffect(() => {
+    setSelected(new Set())
+  }, [filters.q, filters.sale, page])
+
+  const pushFilters = (next: SalesListFilters) => {
+    const qs = salesListSearchParams(next)
+    startTransition(() => {
+      router.push(qs ? `/admin/sales?${qs}` : '/admin/sales', { scroll: false })
     })
-  }, [products, search, filter])
+  }
+
+  const setFilter = (patch: Partial<SalesListFilters>) => {
+    pushFilters({ ...filters, ...patch, page: 1 })
+  }
+
+  useEffect(() => {
+    const q = search.trim()
+    if (q === filtersRef.current.q) return
+    const t = window.setTimeout(() => {
+      pushFilters({ ...filtersRef.current, q, page: 1 })
+    }, 350)
+    return () => window.clearTimeout(t)
+  }, [search])
+
+  const totalPages = Math.max(1, Math.ceil(matched / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const pageStart = matched === 0 ? 0 : (currentPage - 1) * pageSize + 1
+  const pageEnd = Math.min(currentPage * pageSize, matched)
+
+  const goToPage = (n: number) => {
+    const next = Math.min(Math.max(1, n), totalPages)
+    pushFilters({ ...filters, page: next })
+    getScrollEl()?.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const fetchAllMatchingIds = async () => {
+    const supabase = createClient()
+    const q = sanitizeSalesSearch(filters.q)
+    let query = supabase.from('products').select('id').eq('is_active', true)
+    if (q) query = query.or(`name_sq.ilike.%${q}%,sku.ilike.%${q}%`)
+    if (filters.sale === 'on_sale') query = query.not('sale_price', 'is', null)
+    if (filters.sale === 'no_sale') query = query.is('sale_price', null)
+    const { data, error } = await query
+    if (error) throw error
+    return data?.map(row => row.id) ?? []
+  }
 
   const toggleOne = (id: string) => {
     setSelected(prev => {
@@ -50,11 +137,19 @@ export function SalesClient({ products }: Props) {
     })
   }
 
-  const toggleAll = () => {
-    if (selected.size === filtered.length) {
+  const toggleAll = async () => {
+    if (selected.size === matched && matched > 0) {
       setSelected(new Set())
-    } else {
-      setSelected(new Set(filtered.map(p => p.id)))
+      return
+    }
+    setSelectingAll(true)
+    try {
+      const ids = await fetchAllMatchingIds()
+      setSelected(new Set(ids))
+    } catch {
+      toast.error('Nuk u ngarkuan produktet')
+    } finally {
+      setSelectingAll(false)
     }
   }
 
@@ -77,16 +172,23 @@ export function SalesClient({ products }: Props) {
       const res = await supabase.from('products').update({ sale_price: null }).in('id', ids)
       error = res.error
     } else {
-      // Need to update each product individually since percent discount depends on its price
-      const toUpdate = products.filter(p => ids.includes(p.id))
-      for (const p of toUpdate) {
-        const salePrice = mode === 'percent'
-          ? Math.round(p.price * (1 - val / 100) * 100) / 100
-          : Math.round((p.price - val) * 100) / 100
+      const { data: toUpdate, error: fetchError } = await supabase
+        .from('products')
+        .select('id, price')
+        .in('id', ids)
 
-        if (salePrice <= 0) continue
-        const res = await supabase.from('products').update({ sale_price: salePrice }).eq('id', p.id)
-        if (res.error) { error = res.error; break }
+      if (fetchError) {
+        error = fetchError
+      } else {
+        for (const p of toUpdate ?? []) {
+          const salePrice = mode === 'percent'
+            ? Math.round(p.price * (1 - val / 100) * 100) / 100
+            : Math.round((p.price - val) * 100) / 100
+
+          if (salePrice <= 0) continue
+          const res = await supabase.from('products').update({ sale_price: salePrice }).eq('id', p.id)
+          if (res.error) { error = res.error; break }
+        }
       }
     }
 
@@ -97,22 +199,20 @@ export function SalesClient({ products }: Props) {
       const action = mode === 'remove' ? 'u hoq zbritja' : 'u vendos çmimi i zbritur'
       toast.success(`${ids.length} produkte ${action}`)
       setSelected(new Set())
-      // Refresh page data
-      window.location.reload()
+      router.refresh()
     }
   }
 
-  const allSelected = filtered.length > 0 && selected.size === filtered.length
-  const onSaleCount = products.filter(p => p.sale_price !== null).length
+  const allSelected = matched > 0 && selected.size === matched
+  const pageAllSelected = products.length > 0 && products.every(p => selected.has(p.id))
 
   return (
-    <div className="space-y-5">
-      {/* Stats bar */}
+    <div className={cn('space-y-5', isPending && 'opacity-60 pointer-events-none')}>
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Gjithsej produkte', value: products.length, color: 'text-text-primary' },
-          { label: 'Me zbritje', value: onSaleCount, color: 'text-emerald-600' },
-          { label: 'Pa zbritje', value: products.length - onSaleCount, color: 'text-text-secondary' },
+          { label: 'Gjithsej produkte', value: stats.total, color: 'text-text-primary' },
+          { label: 'Me zbritje', value: stats.onSale, color: 'text-emerald-600' },
+          { label: 'Pa zbritje', value: stats.noSale, color: 'text-text-secondary' },
         ].map(({ label, value, color }) => (
           <div key={label} className="admin-card">
             <p className={`admin-kpi-value ${color}`}>{value}</p>
@@ -121,7 +221,6 @@ export function SalesClient({ products }: Props) {
         ))}
       </div>
 
-      {/* Action panel */}
       {selected.size > 0 && (
         <div className="admin-card p-4 border border-brand-200 bg-brand-50">
           <div className="flex flex-wrap items-center gap-3">
@@ -137,6 +236,7 @@ export function SalesClient({ products }: Props) {
               ] as { key: Mode; label: string }[]).map(({ key, label }) => (
                 <button
                   key={key}
+                  type="button"
                   onClick={() => setMode(key)}
                   className={cn(
                     'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
@@ -171,6 +271,7 @@ export function SalesClient({ products }: Props) {
             )}
 
             <button
+              type="button"
               onClick={applyToSelected}
               disabled={loading}
               className="btn-primary py-1.5 px-4 text-sm gap-1.5 ml-auto"
@@ -180,6 +281,7 @@ export function SalesClient({ products }: Props) {
             </button>
 
             <button
+              type="button"
               onClick={() => setSelected(new Set())}
               className="p-1.5 text-text-muted hover:text-text-primary"
             >
@@ -189,7 +291,6 @@ export function SalesClient({ products }: Props) {
         </div>
       )}
 
-      {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-48">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -205,13 +306,14 @@ export function SalesClient({ products }: Props) {
             { key: 'all',     label: 'Të gjitha' },
             { key: 'on_sale', label: 'Me zbritje' },
             { key: 'no_sale', label: 'Pa zbritje' },
-          ] as { key: typeof filter; label: string }[]).map(({ key, label }) => (
+          ] as { key: SalesSaleFilter; label: string }[]).map(({ key, label }) => (
             <button
               key={key}
-              onClick={() => setFilter(key)}
+              type="button"
+              onClick={() => setFilter({ sale: key })}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
-                filter === key ? 'bg-white shadow-soft text-text-primary' : 'text-text-muted hover:text-text-secondary'
+                filters.sale === key ? 'bg-white shadow-soft text-text-primary' : 'text-text-muted hover:text-text-secondary'
               )}
             >
               {label}
@@ -220,15 +322,25 @@ export function SalesClient({ products }: Props) {
         </div>
       </div>
 
-      {/* Table */}
       <div className="admin-card overflow-hidden p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-surface-border bg-surface-soft">
                 <th className="px-4 py-3 w-10">
-                  <button onClick={toggleAll} className="text-text-muted hover:text-brand-600">
-                    {allSelected ? <CheckSquare size={16} className="text-brand-600" /> : <Square size={16} />}
+                  <button
+                    type="button"
+                    onClick={toggleAll}
+                    disabled={selectingAll || matched === 0}
+                    className="text-text-muted hover:text-brand-600 disabled:opacity-40"
+                  >
+                    {selectingAll ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : allSelected || pageAllSelected ? (
+                      <CheckSquare size={16} className="text-brand-600" />
+                    ) : (
+                      <Square size={16} />
+                    )}
                   </button>
                 </th>
                 <th className="text-left text-xs font-semibold text-text-secondary px-4 py-3">Produkti</th>
@@ -239,7 +351,7 @@ export function SalesClient({ products }: Props) {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 && (
+              {products.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-10 text-center text-text-muted text-sm">
                     <AlertCircle size={24} className="mx-auto mb-2 opacity-40" />
@@ -247,9 +359,11 @@ export function SalesClient({ products }: Props) {
                   </td>
                 </tr>
               )}
-              {filtered.map(p => {
+              {products.map(p => {
                 const isSelected = selected.has(p.id)
                 const saving = p.sale_price !== null ? ((p.price - p.sale_price) / p.price * 100).toFixed(0) : null
+                const cat = categoryName(p.category)
+                const br = brandName(p.brand)
 
                 return (
                   <tr
@@ -283,10 +397,10 @@ export function SalesClient({ products }: Props) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-xs text-text-secondary">
-                        {p.category?.[0]?.name_sq && <span>{p.category[0].name_sq}</span>}
-                        {p.brand?.[0]?.name && (
+                        {cat && <span>{cat}</span>}
+                        {br && (
                           <span className="ml-1.5 px-1.5 py-0.5 bg-brand-50 text-brand-700 rounded-full font-medium">
-                            {p.brand[0].name}
+                            {br}
                           </span>
                         )}
                       </div>
@@ -315,6 +429,55 @@ export function SalesClient({ products }: Props) {
           </table>
         </div>
       </div>
+
+      {matched > pageSize && (
+        <div className="admin-card flex items-center justify-between gap-3 py-2.5 px-4">
+          <p className="text-xs text-text-muted tabular-nums">
+            {pageStart}–{pageEnd} nga {matched}
+          </p>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage <= 1 || isPending}
+              className="p-1.5 rounded-lg text-text-muted hover:bg-surface-soft disabled:opacity-30 disabled:pointer-events-none"
+              aria-label="Faqja e mëparshme"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            {pageNumbers(currentPage, totalPages).map((item, i) =>
+              item === 'gap' ? (
+                <span key={`gap-${i}`} className="px-1.5 text-xs text-text-muted">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => goToPage(item)}
+                  className={cn(
+                    'min-w-[28px] h-7 px-1.5 rounded-lg text-xs font-semibold tabular-nums',
+                    item === currentPage
+                      ? 'bg-brand-600 text-white'
+                      : 'text-text-secondary hover:bg-surface-soft',
+                  )}
+                >
+                  {item}
+                </button>
+              )
+            )}
+            <button
+              type="button"
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage >= totalPages || isPending}
+              className="p-1.5 rounded-lg text-text-muted hover:bg-surface-soft disabled:opacity-30 disabled:pointer-events-none"
+              aria-label="Faqja tjetër"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
