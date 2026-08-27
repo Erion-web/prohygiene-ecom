@@ -1,26 +1,36 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { SlidersHorizontal, LayoutGrid, List, ChevronDown } from 'lucide-react'
+import { SlidersHorizontal, LayoutGrid, List, ChevronDown, Loader2 } from 'lucide-react'
 import { ProductCard } from '@/components/store/ProductCard'
 import { FilterSidebar } from '@/components/store/FilterSidebar'
-import { ProductGridSkeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useLanguageStore } from '@/store/language'
 import { t } from '@/lib/i18n'
-import { getEffectivePrice, getProductName } from '@/lib/utils'
 import { cn } from '@/lib/utils'
-import type { Product, Category, ProductFilters, AudienceType } from '@/types'
+import {
+  parseShopListParams,
+  shopFiltersKey,
+  shopListSearchParams,
+  type ShopListFilters,
+} from '@/lib/shop/query'
+import type { Product, Category, ProductFilters } from '@/types'
 
 interface ShopClientProps {
   categories: Category[]
   initialProducts: Product[]
+  total: number
+  filters: ShopListFilters
+  pageSize: number
 }
 
-const PER_PAGE = 24
-
-export function ShopClient({ categories, initialProducts }: ShopClientProps) {
+export function ShopClient({
+  categories,
+  initialProducts,
+  total: initialTotal,
+  pageSize,
+}: ShopClientProps) {
   const { lang } = useLanguageStore()
   const tr = t(lang)
   const router = useRouter()
@@ -29,23 +39,36 @@ export function ShopClient({ categories, initialProducts }: ShopClientProps) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [products, setProducts] = useState(initialProducts)
   const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(initialTotal)
+  const [loadingMore, setLoadingMore] = useState(false)
 
-  // The URL is the single source of truth for filters: this is what makes the
-  // browser Back button (e.g. from a product page) restore the exact filtered
-  // view instead of resetting to "all categories".
+  const urlFilters = useMemo(
+    () => parseShopListParams(Object.fromEntries(searchParams.entries())),
+    [searchParams],
+  )
+
+  const filtersKey = shopFiltersKey(urlFilters)
+
+  useEffect(() => {
+    setProducts(initialProducts)
+    setPage(1)
+    setTotal(initialTotal)
+  }, [initialProducts, initialTotal, filtersKey])
+
   const filters: ProductFilters = useMemo(() => ({
-    category: searchParams.get('category') ?? undefined,
-    audience_type: (searchParams.get('audience_type') as AudienceType | null) ?? undefined,
-    search: searchParams.get('search') ?? undefined,
-    on_sale: searchParams.get('on_sale') === 'true',
-    in_stock: searchParams.get('in_stock') === 'true',
-    featured: searchParams.get('featured') === 'true',
-    min_price: searchParams.get('min_price') ? Number(searchParams.get('min_price')) : undefined,
-    max_price: searchParams.get('max_price') ? Number(searchParams.get('max_price')) : undefined,
-    sort: (searchParams.get('sort') as ProductFilters['sort']) ?? 'newest',
-    page: 1,
-  }), [searchParams])
+    category: urlFilters.category,
+    audience_type: urlFilters.audience_type,
+    search: urlFilters.search,
+    on_sale: urlFilters.on_sale,
+    in_stock: urlFilters.in_stock,
+    featured: urlFilters.featured,
+    min_price: urlFilters.min_price,
+    max_price: urlFilters.max_price,
+    sort: urlFilters.sort,
+    page: urlFilters.page,
+  }), [urlFilters])
 
   const sortOptions: { value: NonNullable<ProductFilters['sort']>; label: string }[] = [
     { value: 'newest', label: tr.shop.sortNewest },
@@ -54,89 +77,44 @@ export function ShopClient({ categories, initialProducts }: ShopClientProps) {
     { value: 'best_sellers', label: tr.shop.sortBestSellers },
   ]
 
-  const filteredProducts = useMemo(() => {
-    let products = [...initialProducts]
-
-    if (filters.search) {
-      const q = filters.search.toLowerCase()
-      products = products.filter(p =>
-        p.name_sq.toLowerCase().includes(q) ||
-        p.name_en.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q)
-      )
-    }
-
-    if (filters.category) {
-      products = products.filter(p => p.category?.slug === filters.category)
-    }
-
-    if (filters.audience_type) {
-      products = products.filter(p =>
-        p.audience_type === filters.audience_type || p.audience_type === 'both'
-      )
-    }
-
-    if (filters.on_sale) {
-      products = products.filter(p => p.sale_price != null || p.effective_price != null)
-    }
-
-    if (filters.in_stock) {
-      products = products.filter(p => p.stock > 0)
-    }
-
-    if (filters.min_price) {
-      products = products.filter(p => getEffectivePrice(p) >= filters.min_price!)
-    }
-
-    if (filters.max_price) {
-      products = products.filter(p => getEffectivePrice(p) <= filters.max_price!)
-    }
-
-    if (filters.featured) {
-      products = products.filter(p => p.is_featured)
-    }
-
-    // Sort
-    switch (filters.sort) {
-      case 'price_asc':
-        products.sort((a, b) => getEffectivePrice(a) - getEffectivePrice(b))
-        break
-      case 'price_desc':
-        products.sort((a, b) => getEffectivePrice(b) - getEffectivePrice(a))
-        break
-      case 'best_sellers':
-        products.sort((a, b) => (b.is_best_seller ? 1 : 0) - (a.is_best_seller ? 1 : 0))
-        break
-      default:
-        products.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    }
-
-    return products
-  }, [initialProducts, filters])
-
-  const paginatedProducts = filteredProducts.slice(0, page * PER_PAGE)
-  const hasMore = paginatedProducts.length < filteredProducts.length
+  const hasMore = products.length < total
 
   const handleFiltersChange = useCallback((newFilters: ProductFilters) => {
-    const params = new URLSearchParams()
-    if (newFilters.category) params.set('category', newFilters.category)
-    if (newFilters.audience_type) params.set('audience_type', newFilters.audience_type)
-    if (newFilters.search) params.set('search', newFilters.search)
-    if (newFilters.on_sale) params.set('on_sale', 'true')
-    if (newFilters.in_stock) params.set('in_stock', 'true')
-    if (newFilters.featured) params.set('featured', 'true')
-    if (newFilters.min_price != null) params.set('min_price', String(newFilters.min_price))
-    if (newFilters.max_price != null) params.set('max_price', String(newFilters.max_price))
-    if (newFilters.sort && newFilters.sort !== 'newest') params.set('sort', newFilters.sort)
-
-    const qs = params.toString()
+    const next: ShopListFilters = {
+      category: newFilters.category,
+      audience_type: newFilters.audience_type as ShopListFilters['audience_type'],
+      search: newFilters.search,
+      on_sale: Boolean(newFilters.on_sale),
+      in_stock: Boolean(newFilters.in_stock),
+      featured: Boolean(newFilters.featured),
+      min_price: newFilters.min_price,
+      max_price: newFilters.max_price,
+      sort: (newFilters.sort ?? 'newest') as ShopListFilters['sort'],
+      page: 1,
+    }
+    const qs = shopListSearchParams(next)
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-    setPage(1)
   }, [router, pathname])
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return
+    setLoadingMore(true)
+    const nextPage = page + 1
+    const qs = shopListSearchParams({ ...urlFilters, page: nextPage })
+    try {
+      const res = await fetch(`/api/store/products?${qs}&pageSize=${pageSize}`)
+      if (!res.ok) throw new Error('fetch failed')
+      const data = await res.json() as { products: Product[]; total: number }
+      setProducts(prev => [...prev, ...data.products])
+      setPage(nextPage)
+      setTotal(data.total)
+    } finally {
+      setLoadingMore(false)
+    }
+  }
 
   return (
     <div className="animate-fade-in">
-      {/* Page Header */}
       <div className="bg-surface-soft border-b border-surface-border">
         <div className="container-custom py-4 sm:py-8">
           <h1 className="text-xl sm:text-2xl font-extrabold text-text-primary mb-1">{tr.shop.title}</h1>
@@ -151,7 +129,6 @@ export function ShopClient({ categories, initialProducts }: ShopClientProps) {
 
       <div className="container-custom py-4 sm:py-6">
         <div className="flex gap-6 lg:gap-8">
-          {/* Sidebar — desktop */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
             <div className="sticky top-20">
               <FilterSidebar
@@ -162,11 +139,8 @@ export function ShopClient({ categories, initialProducts }: ShopClientProps) {
             </div>
           </aside>
 
-          {/* Products */}
           <div className="flex-1 min-w-0">
-            {/* Toolbar */}
             <div className="flex items-center gap-3 mb-6">
-              {/* Mobile filter toggle */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="lg:hidden btn-secondary gap-2 py-2 px-3 text-sm"
@@ -175,20 +149,21 @@ export function ShopClient({ categories, initialProducts }: ShopClientProps) {
                 {tr.shop.filters}
               </button>
 
-              {/* Count */}
               <p className="text-sm text-text-muted flex-1">
-                <span className="font-semibold text-text-primary">{filteredProducts.length}</span>{' '}
+                <span className="font-semibold text-text-primary">{total}</span>{' '}
                 {tr.shop.products}
               </p>
 
-              {/* Sort */}
               <div className="relative">
                 <div className="flex items-center gap-1 text-sm">
                   <span className="text-text-muted hidden sm:inline">{tr.shop.sort}:</span>
                   <div className="relative">
                     <select
                       value={filters.sort ?? 'newest'}
-                      onChange={e => handleFiltersChange({ ...filters, sort: e.target.value as ProductFilters['sort'] })}
+                      onChange={e => handleFiltersChange({
+                        ...filters,
+                        sort: e.target.value as ProductFilters['sort'],
+                      })}
                       className="appearance-none bg-white border border-surface-border rounded-xl pl-3 pr-8 py-2 text-sm font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 cursor-pointer"
                     >
                       {sortOptions.map(opt => (
@@ -200,7 +175,6 @@ export function ShopClient({ categories, initialProducts }: ShopClientProps) {
                 </div>
               </div>
 
-              {/* View toggle */}
               <div className="hidden sm:flex items-center gap-1 bg-surface-muted rounded-lg p-1">
                 <button
                   onClick={() => setView('grid')}
@@ -217,7 +191,6 @@ export function ShopClient({ categories, initialProducts }: ShopClientProps) {
               </div>
             </div>
 
-            {/* Mobile Sidebar */}
             {sidebarOpen && (
               <div className="lg:hidden mb-6 animate-slide-down">
                 <FilterSidebar
@@ -228,8 +201,7 @@ export function ShopClient({ categories, initialProducts }: ShopClientProps) {
               </div>
             )}
 
-            {/* Grid */}
-            {filteredProducts.length === 0 ? (
+            {products.length === 0 ? (
               <EmptyState
                 title={tr.shop.noProducts}
                 description={tr.shop.noProductsDesc}
@@ -250,7 +222,7 @@ export function ShopClient({ categories, initialProducts }: ShopClientProps) {
                     ? 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4'
                     : 'grid-cols-1'
                 )}>
-                  {paginatedProducts.map(product => (
+                  {products.map(product => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
@@ -258,9 +230,12 @@ export function ShopClient({ categories, initialProducts }: ShopClientProps) {
                 {hasMore && (
                   <div className="mt-10 flex justify-center">
                     <button
-                      onClick={() => setPage(p => p + 1)}
-                      className="btn-secondary px-8 py-3"
+                      type="button"
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="btn-secondary px-8 py-3 gap-2"
                     >
+                      {loadingMore && <Loader2 size={16} className="animate-spin" />}
                       {tr.shop.loadMore}
                     </button>
                   </div>

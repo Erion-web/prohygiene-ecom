@@ -40,7 +40,8 @@ export function AdminHeader({ title, subtitle, actions }: AdminHeaderProps) {
       {backHref && (
         <Link
           href={backHref}
-          className="md:hidden flex-shrink-0 p-1.5 -ml-1 text-text-muted hover:text-text-primary rounded-lg transition-colors"
+          className="flex-shrink-0 p-1.5 -ml-1 text-text-muted hover:text-text-primary rounded-lg transition-colors"
+          aria-label="Kthehu"
         >
           <ChevronLeft size={20} />
         </Link>

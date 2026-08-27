@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { AdminSectionTitle } from '@/components/admin/AdminSectionTitle'
-import { Edit, Trash2, Save, X, Loader2, Droplets } from 'lucide-react'
+import { Save, X, Loader2, Droplets } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
-import { dailyConsumptionRate, daysUntilEmpty } from '@/lib/lease/utils'
 import { CITIES } from '@/lib/cities'
 import { SearchableSelect } from '@/components/ui/searchable-select'
+import { DeployedDevicesTable } from './DeployedDevicesTable'
 import type { DeployedDevice, DeployedDeviceStatus } from '@/types'
 
 interface MaterialOption { id: string; name_sq: string; unit: string }
@@ -212,64 +212,12 @@ export function DeployedDevicesClient({ initialDevices, materials }: Props) {
         </div>
       )}
 
-      <div className="space-y-4">
-        {initialDevices.length === 0 && (
-          <div className="admin-card p-8 text-center text-text-muted text-sm">
-            Nuk ka pajisje ende. Shtojini në kontratë — shfaqen këtu automatikisht.
-          </div>
-        )}
-        {initialDevices.map(d => {
-          const contract = d.contract
-          const dailyRate = contract
-            ? dailyConsumptionRate(contract.expected_consumption, contract.consumption_period)
-            : 0
-
-          return (
-            <div key={d.id} className="admin-card p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-                <div>
-                  <p className="font-bold text-text-primary">{d.product?.name_sq ?? 'Pajisje'}</p>
-                  <p className="text-sm text-text-secondary">{d.client?.company_name} — {d.location_label}</p>
-                  <p className="text-xs text-text-muted">{d.city}{d.address ? `, ${d.address}` : ''}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => setRefillDeviceId(d.id)} className="btn-secondary text-xs py-1.5 px-3 gap-1">
-                    <Droplets size={14} /> Rimbush
-                  </button>
-                  <button type="button" onClick={() => startEdit(d)} className="btn-ghost p-2"><Edit size={14} /></button>
-                  <button type="button" onClick={() => handleDelete(d)} className="btn-ghost p-2 text-red-500"><Trash2 size={14} /></button>
-                </div>
-              </div>
-
-              {d.consumable_levels && d.consumable_levels.length > 0 && (
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {d.consumable_levels.map(level => {
-                    const daysLeft = daysUntilEmpty(level.current_level, dailyRate)
-                    const pct = level.capacity > 0 ? Math.round((level.current_level / level.capacity) * 100) : 0
-                    return (
-                      <div key={level.id} className="bg-surface-soft rounded-xl p-3 border border-surface-border">
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="font-medium">{level.material?.name_sq ?? 'Material'}</span>
-                          <span className="text-text-muted">{level.current_level} / {level.capacity} {level.material?.unit}</span>
-                        </div>
-                        <div className="h-2 bg-white rounded-full overflow-hidden mb-1">
-                          <div
-                            className={`h-full rounded-full ${pct <= 20 ? 'bg-red-500' : pct <= 40 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                            style={{ width: `${Math.min(100, pct)}%` }}
-                          />
-                        </div>
-                        {daysLeft !== null && (
-                          <p className="text-xs text-text-muted">~{Math.round(daysLeft)} ditë të mbetura</p>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+      <DeployedDevicesTable
+        devices={initialDevices}
+        onRefill={setRefillDeviceId}
+        onEdit={startEdit}
+        onDelete={handleDelete}
+      />
     </div>
   )
 }

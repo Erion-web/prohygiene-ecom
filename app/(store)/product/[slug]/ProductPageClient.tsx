@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingCart, ChevronRight, Package, Tag, Users, Star, CheckCircle, AlertCircle, Clock, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ShoppingCart, ChevronRight, Package, Tag, Users, Star, CheckCircle, AlertCircle, Clock, ArrowRight, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
@@ -23,6 +24,7 @@ interface ProductPageClientProps {
 }
 
 export function ProductPageClient({ product, relatedProducts }: ProductPageClientProps) {
+  const router = useRouter()
   const { lang } = useLanguageStore()
   const { addItem } = useCartStore()
   const tr = t(lang)
@@ -57,13 +59,23 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
     both: { sq: 'Të gjithë', en: 'All' },
   }
 
+  const backFallback = forSale ? '/shop' : '/pajisjet'
+
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push(backFallback)
+    }
+  }
+
   return (
     <div className="animate-fade-in pb-24 sm:pb-0">
       <LeaseInquiryModal product={product} isOpen={inquiryOpen} onClose={() => setInquiryOpen(false)} />
 
       <div className="bg-surface-soft border-b border-surface-border">
         <div className="container-custom py-3">
-          <nav className="flex items-center gap-1.5 text-xs text-text-muted">
+          <nav className="flex items-center gap-1.5 text-xs text-text-muted flex-wrap">
             <Link href="/" className="hover:text-brand-600 transition-colors">{tr.nav.home}</Link>
             <ChevronRight size={12} />
             {forSale ? (
@@ -87,7 +99,18 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
         </div>
       </div>
 
-      <div className="container-custom py-5 sm:py-8 md:py-10">
+      <div className="container-custom pt-4 pb-1">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-text-secondary hover:text-brand-600 transition-colors px-1 py-0.5 rounded-lg hover:bg-surface-soft"
+        >
+          <ArrowLeft size={16} strokeWidth={2.2} />
+          {tr.common.back}
+        </button>
+      </div>
+
+      <div className="container-custom pb-5 sm:pb-8 md:pb-10 pt-2 sm:pt-3">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
           <div className="space-y-4">
             <div className="relative aspect-square bg-surface-soft rounded-3xl border border-surface-border overflow-hidden">

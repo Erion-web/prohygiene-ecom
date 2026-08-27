@@ -7,15 +7,15 @@ import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 import { AdminTable } from '@/components/admin/AdminTable'
-import type { Material, MaterialUnit, UtilityCategory } from '@/types'
+import type { Category, Material, MaterialUnit } from '@/types'
 
 interface Props {
   initialMaterials: Material[]
-  categories: UtilityCategory[]
+  categories: Category[]
 }
 
 const defaultForm = {
-  utility_category_id: '',
+  category_id: '',
   name_sq: '',
   name_en: '',
   material_type: '',
@@ -44,7 +44,7 @@ export function MaterialsClient({ initialMaterials, categories }: Props) {
   const startEdit = (m: Material) => {
     setEditingId(m.id)
     setForm({
-      utility_category_id: m.utility_category_id,
+      category_id: m.category_id,
       name_sq: m.name_sq,
       name_en: m.name_en,
       material_type: m.material_type ?? '',
@@ -57,14 +57,14 @@ export function MaterialsClient({ initialMaterials, categories }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.name_sq || !form.utility_category_id) {
+    if (!form.name_sq || !form.category_id) {
       toast.error('Plotësoni fushat e detyrueshme')
       return
     }
     setLoading(true)
     const supabase = createClient()
     const payload = {
-      utility_category_id: form.utility_category_id,
+      category_id: form.category_id,
       name_sq: form.name_sq,
       name_en: form.name_en || form.name_sq,
       material_type: form.material_type || null,
@@ -114,7 +114,7 @@ export function MaterialsClient({ initialMaterials, categories }: Props) {
       header: 'Kategoria',
       cell: ({ row }) => (
         <span className="text-sm text-text-secondary">
-          {row.original.utility_category?.name_sq ?? '—'}
+          {row.original.category?.name_sq ?? '—'}
         </span>
       ),
     },
@@ -167,7 +167,7 @@ export function MaterialsClient({ initialMaterials, categories }: Props) {
           <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="label">Kategoria *</label>
-              <select value={form.utility_category_id} onChange={e => update('utility_category_id', e.target.value)} className="input" required>
+              <select value={form.category_id} onChange={e => update('category_id', e.target.value)} className="input" required>
                 <option value="">Zgjedh...</option>
                 {categories.map(c => (
                   <option key={c.id} value={c.id}>{c.name_sq}</option>

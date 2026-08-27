@@ -6,8 +6,8 @@ import { usePathname } from 'next/navigation'
 import { ShoppingCart, Search, User, Menu, X, ChevronDown, LogOut, Settings } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
-import { t } from '@/lib/i18n'
-import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
+import { t, langs } from '@/lib/i18n'
+import type { Lang } from '@/types'
 import { Logo } from '@/components/ui/Logo'
 import { SearchModal } from '@/components/store/SearchModal'
 import { cn } from '@/lib/utils'
@@ -27,7 +27,7 @@ export function Navbar({ categories = [], userName: initialUserName = null }: Na
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [userName, setUserName] = useState<string | null>(initialUserName)
   const pathname = usePathname()
-  const { lang } = useLanguageStore()
+  const { lang, setLang } = useLanguageStore()
   const { getItemCount } = useCartStore()
   const tr = t(lang)
   const itemCount = getItemCount()
@@ -86,6 +86,31 @@ export function Navbar({ categories = [], userName: initialUserName = null }: Na
 
   const isActive = (href: string) =>
     pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
+
+  const languageMenu = (
+    <div className="px-4 py-2">
+      <p className="text-[11px] font-bold uppercase tracking-widest text-text-muted mb-2">
+        {tr.nav.language}
+      </p>
+      <div className="flex items-center gap-0.5 bg-surface-muted rounded-lg p-0.5">
+        {langs.map(l => (
+          <button
+            key={l.code}
+            type="button"
+            onClick={() => setLang(l.code as Lang)}
+            className={cn(
+              'flex-1 py-1.5 rounded-md text-xs font-semibold transition-all duration-200',
+              lang === l.code
+                ? 'bg-white text-text-primary shadow-soft'
+                : 'text-text-muted hover:text-text-secondary'
+            )}
+          >
+            {l.code.toUpperCase()}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 
   return (
     <>
@@ -167,8 +192,6 @@ export function Navbar({ categories = [], userName: initialUserName = null }: Na
                 </span>
               </button>
 
-              <LanguageSwitcher />
-
               <Link
                 href="/cart"
                 aria-label={tr.nav.cart}
@@ -211,17 +234,41 @@ export function Navbar({ categories = [], userName: initialUserName = null }: Na
                           <LogOut size={14} /> {tr.nav.logout}
                         </button>
                       </form>
+                      <div className="h-px bg-surface-border mx-4 my-1" />
+                      {languageMenu}
                     </div>
                   )}
                 </div>
               ) : (
-                <Link
-                  href="/auth/login"
-                  aria-label={tr.nav.account}
-                  className="flex items-center justify-center w-9 h-9 rounded-xl text-text-secondary hover:text-text-primary hover:bg-surface-muted transition-all duration-200"
-                >
-                  <User size={17} strokeWidth={2} />
-                </Link>
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(v => !v)}
+                    aria-label={tr.nav.account}
+                    className="flex items-center justify-center w-9 h-9 rounded-xl text-text-secondary hover:text-text-primary hover:bg-surface-muted transition-all duration-200"
+                  >
+                    <User size={17} strokeWidth={2} />
+                  </button>
+                  {userMenuOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl border border-surface-border shadow-elevated py-2 animate-slide-down z-50">
+                      <Link
+                        href="/auth/login"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-secondary hover:text-brand-600 hover:bg-brand-50 transition-colors"
+                      >
+                        <User size={14} /> {tr.nav.login}
+                      </Link>
+                      <Link
+                        href="/auth/login?mode=register"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-secondary hover:text-brand-600 hover:bg-brand-50 transition-colors"
+                      >
+                        <User size={14} /> {tr.nav.register}
+                      </Link>
+                      <div className="h-px bg-surface-border mx-4 my-1" />
+                      {languageMenu}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -312,26 +359,47 @@ export function Navbar({ categories = [], userName: initialUserName = null }: Na
               </div>
             )}
 
-            <div className="pt-3 border-t border-surface-border flex items-center justify-between px-4 py-3">
+            <div className="pt-3 border-t border-surface-border px-4 py-3 space-y-3">
               {userName ? (
-                <Link
-                  href="/account"
-                  className="flex items-center gap-2 text-sm font-semibold text-text-primary"
-                >
-                  <div className="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-bold">
-                    {userName.charAt(0).toUpperCase()}
-                  </div>
-                  {userName.split(' ')[0]}
-                </Link>
+                <>
+                  <Link
+                    href="/account"
+                    className="flex items-center gap-2 text-sm font-semibold text-text-primary"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-bold">
+                      {userName.charAt(0).toUpperCase()}
+                    </div>
+                    {userName.split(' ')[0]}
+                  </Link>
+                  <Link
+                    href="/account/orders"
+                    className="flex items-center gap-2 px-1 text-sm text-text-secondary hover:text-brand-600 transition-colors"
+                  >
+                    <Settings size={15} /> {tr.nav.orders}
+                  </Link>
+                  <form action="/auth/signout" method="post">
+                    <button type="submit" className="flex items-center gap-2 px-1 text-sm text-red-500 hover:text-red-600 transition-colors">
+                      <LogOut size={15} /> {tr.nav.logout}
+                    </button>
+                  </form>
+                </>
               ) : (
-                <Link
-                  href="/auth/login"
-                  className="flex items-center gap-2 text-sm font-semibold text-text-primary"
-                >
-                  <User size={16} /> {tr.nav.account}
-                </Link>
+                <div className="space-y-1">
+                  <Link
+                    href="/auth/login"
+                    className="flex items-center gap-2 px-1 py-2 text-sm font-semibold text-text-primary hover:text-brand-600 transition-colors"
+                  >
+                    <User size={16} /> {tr.nav.login}
+                  </Link>
+                  <Link
+                    href="/auth/login?mode=register"
+                    className="flex items-center gap-2 px-1 py-2 text-sm font-semibold text-text-primary hover:text-brand-600 transition-colors"
+                  >
+                    <User size={16} /> {tr.nav.register}
+                  </Link>
+                </div>
               )}
-              <LanguageSwitcher />
+              {languageMenu}
             </div>
           </div>
         </div>

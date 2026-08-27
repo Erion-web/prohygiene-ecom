@@ -121,22 +121,9 @@ export interface Product {
   effective_price?: number | null
 }
 
-export interface UtilityCategory {
-  id: string
-  name_sq: string
-  name_en: string
-  slug: string
-  description_sq: string | null
-  description_en: string | null
-  sort_order: number
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
-
 export interface Material {
   id: string
-  utility_category_id: string
+  category_id: string
   name_sq: string
   name_en: string
   material_type: string | null
@@ -146,7 +133,7 @@ export interface Material {
   is_active: boolean
   created_at: string
   updated_at: string
-  utility_category?: UtilityCategory | null
+  category?: Category | null
 }
 
 export interface DeviceMaterial {

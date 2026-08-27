@@ -17,7 +17,6 @@ const leaseChildren = [
   { href: '/admin/lease/inquiries', label: 'Kërkesat' },
   { href: '/admin/lease/contracts', label: 'Kontratat' },
   { href: '/admin/lease/devices', label: 'Pajisjet' },
-  { href: '/admin/lease/categories', label: 'Kategoritë' },
   { href: '/admin/lease/materials', label: 'Lëndët' },
 ]
 

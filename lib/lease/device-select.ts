@@ -10,17 +10,11 @@ export type LeaseDeviceRow = {
   name_sq: string
   sku: string
   category?: { name_sq: string } | { name_sq: string }[] | null
-  device_materials?: Array<{
-    material?: {
-      utility_category?: { name_sq: string } | { name_sq: string }[] | null
-    } | null
-  }> | null
 }
 
 export const LEASE_DEVICE_QUERY = `
   id, name_sq, sku,
-  category:categories(name_sq),
-  device_materials(material:materials(utility_category:utility_categories(name_sq)))
+  category:categories(name_sq)
 `
 
 function one<T>(value: T | T[] | null | undefined): T | null {
@@ -29,16 +23,12 @@ function one<T>(value: T | T[] | null | undefined): T | null {
 }
 
 export function toLeaseDeviceOptions(rows: LeaseDeviceRow[]): LeaseDeviceOption[] {
-  return rows.map(p => {
-    const utility = one(one(p.device_materials?.[0]?.material)?.utility_category)?.name_sq
-    const shop = one(p.category)?.name_sq
-    return {
-      id: p.id,
-      name_sq: p.name_sq,
-      sku: p.sku,
-      group: utility ?? shop ?? 'Pa kategori',
-    }
-  })
+  return rows.map(p => ({
+    id: p.id,
+    name_sq: p.name_sq,
+    sku: p.sku,
+    group: one(p.category)?.name_sq ?? 'Pa kategori',
+  }))
 }
 
 export function groupLeaseDevices(devices: LeaseDeviceOption[]): [string, LeaseDeviceOption[]][] {

@@ -2,12 +2,9 @@ import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { ShopClient } from './ShopClient'
-import {
-  mapStoreSearchRowToProduct,
-  sanitizeStoreSearch,
-  searchStoreProducts,
-} from '@/lib/search/store-products'
-import type { Category, Product } from '@/types'
+import { fetchShopProductsPage } from '@/lib/shop/products'
+import { parseShopListParams, SHOP_PAGE_SIZE } from '@/lib/shop/query'
+import type { Category } from '@/types'
 
 export const metadata: Metadata = {
   title: 'Detergjente & Produkte Higjiene Online — Dyqani',
@@ -15,56 +12,28 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://prohygiene.shop/shop' },
 }
 
-async function getShopData(search?: string) {
-  const supabase = await createClient()
-  const sanitized = search ? sanitizeStoreSearch(search) : ''
-
-  const categoriesRes = await supabase
-    .from('categories')
-    .select('*')
-    .eq('is_active', true)
-    .order('sort_order')
-
-  let initialProducts: Product[] = []
-
-  if (sanitized.length >= 2) {
-    const { data, error } = await searchStoreProducts(supabase, sanitized, 100)
-    if (!error) {
-      initialProducts = data.map(mapStoreSearchRowToProduct)
-    }
-  } else {
-    const productsRes = await supabase
-      .from('products')
-      .select(`
-        *,
-        category:categories(*)
-      `)
-      .eq('is_active', true)
-      .eq('listing_type', 'sale')
-      .order('created_at', { ascending: false })
-
-    initialProducts = (productsRes.data ?? []) as Product[]
-  }
-
-  return {
-    categories: (categoriesRes.data as Category[]) ?? [],
-    initialProducts,
-  }
-}
-
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const { search } = await searchParams
-  const { categories, initialProducts } = await getShopData(search)
+  const sp = await searchParams
+  const filters = parseShopListParams(sp)
+  const supabase = await createClient()
+
+  const [categoriesRes, productsResult] = await Promise.all([
+    supabase.from('categories').select('*').eq('is_active', true).order('sort_order'),
+    fetchShopProductsPage(supabase, { ...filters, page: 1 }, SHOP_PAGE_SIZE),
+  ])
 
   return (
     <Suspense fallback={<div className="section container-custom">Loading...</div>}>
       <ShopClient
-        categories={categories}
-        initialProducts={initialProducts}
+        categories={(categoriesRes.data as Category[]) ?? []}
+        initialProducts={productsResult.products}
+        total={productsResult.total}
+        filters={filters}
+        pageSize={SHOP_PAGE_SIZE}
       />
     </Suspense>
   )
