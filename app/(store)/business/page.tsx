@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/store/ProductCard'
 import { CategoryCard } from '@/components/store/CategoryCard'
 import { Building2, ArrowRight, Phone, CheckCircle } from 'lucide-react'
+import { HotelIcon, RestaurantIcon, ClinicIcon, OfficeIcon } from '@/components/store/HorecaSegmentIcons'
 
 export const metadata: Metadata = {
   title: 'Furnizim HORECA & Biznes — Kimikate Profesionale Kosovë',
@@ -95,13 +96,15 @@ export default async function BusinessPage() {
           <h2 className="text-xl font-bold text-text-primary mb-5">Segmentet HORECA</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { emoji: '🏨', label: 'Hotele', href: '/shop?audience_type=business&search=hotel' },
-              { emoji: '🍽️', label: 'Restorante', href: '/shop?audience_type=business&search=restorant' },
-              { emoji: '🏥', label: 'Spitale & Klinika', href: '/shop?audience_type=business&search=spital' },
-              { emoji: '🏢', label: 'Zyra & Biznese', href: '/shop?audience_type=business' },
+              { icon: HotelIcon, label: 'Hotele', href: '/shop?audience_type=business&search=hotel' },
+              { icon: RestaurantIcon, label: 'Restorante', href: '/shop?audience_type=business&search=restorant' },
+              { icon: ClinicIcon, label: 'Spitale & Klinika', href: '/shop?audience_type=business&search=spital' },
+              { icon: OfficeIcon, label: 'Zyra & Biznese', href: '/shop?audience_type=business' },
             ].map(seg => (
               <Link key={seg.label} href={seg.href} className="card p-5 text-center hover:border-brand-200 hover:shadow-soft transition-all duration-200 group">
-                <div className="text-3xl mb-3">{seg.emoji}</div>
+                <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center group-hover:bg-brand-100 transition-colors">
+                  <seg.icon className="w-7 h-7" />
+                </div>
                 <p className="font-semibold text-text-primary text-sm group-hover:text-brand-600 transition-colors">{seg.label}</p>
               </Link>
             ))}

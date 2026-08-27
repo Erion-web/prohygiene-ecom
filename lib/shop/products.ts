@@ -26,6 +26,10 @@ function applySort<T extends { order: (column: string, options: { ascending: boo
       return query
         .order('is_best_seller', { ascending: false })
         .order('created_at', { ascending: false })
+    case 'featured':
+      return query
+        .order('is_featured', { ascending: false })
+        .order('created_at', { ascending: false })
     default:
       return query.order('created_at', { ascending: false })
   }

@@ -35,7 +35,7 @@ export default async function DeployedDevicesPage() {
       <div className="admin-page">
         <DeployedDevicesClient
           initialDevices={(devicesRes.data as DeployedDevice[]) ?? []}
-          materials={materialsRes.data ?? []}
+          materials={materialsRes}
         />
       </div>
     </div>

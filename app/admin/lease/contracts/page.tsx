@@ -35,7 +35,7 @@ export default async function LeaseContractsPage() {
           initialContracts={(contractsRes.data as LeaseContract[]) ?? []}
           clients={clientsRes.data ?? []}
           leaseDevices={toLeaseDeviceOptions((productsRes.data ?? []) as import('@/lib/lease/device-select').LeaseDeviceRow[])}
-          materials={materialsRes.data ?? []}
+          materials={materialsRes}
         />
       </div>
     </div>

@@ -2,7 +2,7 @@ import type { AudienceType } from '@/types'
 
 export const SHOP_PAGE_SIZE = 24
 
-export type ShopSort = 'newest' | 'price_asc' | 'price_desc' | 'best_sellers'
+export type ShopSort = 'newest' | 'price_asc' | 'price_desc' | 'best_sellers' | 'featured'
 
 export type ShopListFilters = {
   category?: string
@@ -28,7 +28,7 @@ export function parseShopListParams(
   const page = Math.max(1, parseInt(first(sp, 'page'), 10) || 1)
   const sortRaw = first(sp, 'sort')
   const sort: ShopSort =
-    sortRaw === 'price_asc' || sortRaw === 'price_desc' || sortRaw === 'best_sellers'
+    sortRaw === 'price_asc' || sortRaw === 'price_desc' || sortRaw === 'best_sellers' || sortRaw === 'featured'
       ? sortRaw
       : 'newest'
   const audience = first(sp, 'audience_type')
