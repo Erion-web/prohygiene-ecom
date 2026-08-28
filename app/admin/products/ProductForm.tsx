@@ -9,8 +9,8 @@ import { useDropzone } from 'react-dropzone'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
 import { SearchableSelect } from '@/components/ui/searchable-select'
-import { PRODUCT_UNITS, syncProductMaterial, normalizeMaterialUnit } from '@/lib/lease/sync-material'
-import type { Product, AudienceType, Material, DeviceMaterial } from '@/types'
+import { PRODUCT_UNITS, syncProductMaterial, normalizeMaterialUnit, type MaterialProductOption } from '@/lib/lease/sync-material'
+import type { Product, AudienceType, DeviceMaterial } from '@/types'
 
 interface Category { id: string; name_sq: string; name_en: string }
 interface BrandOption { id: string; name: string }
@@ -23,7 +23,7 @@ interface DeviceMaterialRow {
 interface ProductFormProps {
   categories: Category[]
   brands: BrandOption[]
-  materials?: Material[]
+  materials?: MaterialProductOption[]
   initialDeviceMaterials?: DeviceMaterial[]
   product?: Product
   defaultForLease?: boolean

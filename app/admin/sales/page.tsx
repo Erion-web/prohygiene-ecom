@@ -15,7 +15,11 @@ async function getData(filters: SalesListFilters) {
   const from = (filters.page - 1) * SALES_PAGE_SIZE
   const to = from + SALES_PAGE_SIZE - 1
 
-  let listQuery = supabase
+  // Explicit `any` here is deliberate: reassigning this query through a helper
+  // otherwise makes TS try to fully resolve Supabase's generated builder type
+  // across both assignment sites, which blows up with "Type instantiation is
+  // excessively deep and possibly infinite" (a known supabase-js/TS pain point).
+  let listQuery: any = supabase
     .from('products')
     .select(
       'id, sku, name_sq, price, sale_price, image_url, is_active, category:categories(name_sq), brand:brands(name)',

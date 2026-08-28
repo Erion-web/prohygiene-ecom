@@ -50,6 +50,7 @@ export function mapStoreSearchRowToProduct(row: StoreSearchProductRow): Product 
     gallery_urls: [],
     is_featured: row.is_featured,
     is_best_seller: row.is_best_seller,
+    is_material: false,
     is_active: true,
     vat_rate: Number(row.vat_rate),
     meta_title_sq: null,

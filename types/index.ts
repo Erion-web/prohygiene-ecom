@@ -491,7 +491,7 @@ export interface ProductFilters {
   search?: string
   featured?: boolean
   best_seller?: boolean
-  sort?: 'newest' | 'price_asc' | 'price_desc' | 'best_sellers'
+  sort?: 'newest' | 'price_asc' | 'price_desc' | 'best_sellers' | 'featured'
   page?: number
   per_page?: number
 }

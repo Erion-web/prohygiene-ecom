@@ -46,20 +46,25 @@ type FilterableQuery = {
   is: (column: string, value: null) => FilterableQuery
 }
 
-export function applySalesListFilters<Q extends FilterableQuery>(
-  query: Q,
+// Deliberately not generic over the caller's exact Supabase query builder type —
+// doing so makes TS try to fully resolve that (very deep) generated type through
+// this function's chain, which blows up with "Type instantiation is excessively
+// deep and possibly infinite". Operating on the narrow FilterableQuery interface
+// instead keeps the check shallow; cast back to the original type at the call site.
+export function applySalesListFilters(
+  query: FilterableQuery,
   filters: SalesListFilters,
   q: string,
-): Q {
-  let next = query.eq('is_active', true) as Q
+): FilterableQuery {
+  let next = query.eq('is_active', true)
   if (q) {
-    next = next.or(`name_sq.ilike.%${q}%,sku.ilike.%${q}%`) as Q
+    next = next.or(`name_sq.ilike.%${q}%,sku.ilike.%${q}%`)
   }
   if (filters.sale === 'on_sale') {
-    next = next.not('sale_price', 'is', null) as Q
+    next = next.not('sale_price', 'is', null)
   }
   if (filters.sale === 'no_sale') {
-    next = next.is('sale_price', null) as Q
+    next = next.is('sale_price', null)
   }
   return next
 }
