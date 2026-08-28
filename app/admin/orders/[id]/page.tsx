@@ -3,9 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { formatPrice, statusColor, statusLabel } from '@/lib/utils'
 import Link from 'next/link'
-import { ArrowLeft, Package } from 'lucide-react'
+import { ArrowLeft, Package, Truck } from 'lucide-react'
 import Image from 'next/image'
 import { OrderStatusUpdater } from './OrderStatusUpdater'
+import { FalconSendButton } from './FalconSendButton'
 
 async function getOrder(id: string) {
   const supabase = await createClient()
@@ -118,6 +119,21 @@ export default async function OrderDetailPage({ params }: { params: { id: string
               <div><span className="text-text-muted">Adresa:</span> <span className="ml-1 font-medium">{order.address}</span></div>
               {order.notes && <div><span className="text-text-muted">Shënime:</span> <span className="ml-1 italic text-text-secondary">{order.notes}</span></div>}
             </div>
+          </div>
+
+          {/* Falcon Posta */}
+          <div className="admin-card p-5">
+            <h3 className="font-bold text-text-primary mb-4 flex items-center gap-1.5"><Truck size={15} /> Falcon Posta</h3>
+            {order.falcon_order_id ? (
+              <div className="space-y-2 text-sm">
+                <div><span className="text-text-muted">ID:</span> <span className="ml-1 font-mono font-medium">{order.falcon_order_id}</span></div>
+                {order.falcon_status_name && (
+                  <div><span className="text-text-muted">Statusi:</span> <span className="ml-1 font-medium">{order.falcon_status_name}</span></div>
+                )}
+              </div>
+            ) : (
+              <FalconSendButton orderId={order.id} />
+            )}
           </div>
 
           {/* Payment */}
