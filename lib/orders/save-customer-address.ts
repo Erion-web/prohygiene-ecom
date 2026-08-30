@@ -20,15 +20,7 @@ export async function saveCustomerAddressFromOrder(
   const address = (order.address ?? '').trim()
   if (!city || !address) return
 
-  let profileId = order.user_id ?? null
-  if (!profileId && order.customer_email) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id')
-      .ilike('email', order.customer_email)
-      .maybeSingle()
-    profileId = data?.id ?? null
-  }
+  const profileId = order.user_id ?? null
   if (!profileId) return
 
   const { data: profile } = await supabase

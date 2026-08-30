@@ -1,47 +1,81 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/auth'
 import { sendOrderConfirmationEmail, sendOrderNotificationEmail } from '@/lib/email'
 import { saveCustomerAddressFromOrder } from '@/lib/orders/save-customer-address'
+import { buildOrderFromItems } from '@/lib/orders/compute-order'
+import { createOrderSchema } from '@/lib/validation/schemas'
+import { apiError, handleApiError } from '@/lib/api/errors'
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { order, items } = body
-
-    if (!order || !items?.length) {
-      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+    const parsed = createOrderSchema.safeParse(body)
+    if (!parsed.success) {
+      return apiError(parsed.error.issues[0]?.message ?? 'Invalid payload', 400)
     }
 
-    // Use service role — bypasses RLS, works for both guests and logged-in users
+    const input = parsed.data
+    if (input.customer_type === 'business' && !input.business_name?.trim()) {
+      return apiError('Business name is required', 400)
+    }
+
+    const user = await getAuthUser()
     const supabase = await createServiceClient()
+
+    const { totals, error: computeError } = await buildOrderFromItems(supabase, input.items)
+    if (computeError || !totals) {
+      return apiError(computeError ?? 'Failed to compute order', 400)
+    }
 
     const { data: created, error: orderError } = await supabase
       .from('orders')
-      .insert(order)
+      .insert({
+        user_id: user?.id ?? null,
+        customer_name: input.customer_name,
+        customer_email: input.customer_email,
+        customer_phone: input.customer_phone,
+        customer_type: input.customer_type,
+        business_name: input.customer_type === 'business' ? input.business_name?.trim() || null : null,
+        fiscal_number: input.customer_type === 'business' ? input.fiscal_number?.trim() || null : null,
+        city: input.city,
+        address: input.address,
+        notes: input.notes?.trim() || null,
+        subtotal: totals.subtotal,
+        discount_amount: totals.discount_amount,
+        shipping_cost: totals.shipping_cost,
+        vat_amount: totals.vat_amount,
+        total: totals.total,
+        status: 'pending',
+        payment_method: input.payment_method,
+        payment_status: 'pending',
+      })
       .select()
       .single()
 
     if (orderError || !created) {
       console.error('Order insert error:', orderError)
-      return NextResponse.json({ error: orderError?.message ?? 'Failed to create order' }, { status: 500 })
+      return apiError('Failed to create order', 500)
     }
 
-    // Mock/seed products use non-UUID ids (e.g. "p-3"); product_id is a UUID FK,
-    // so coerce anything that isn't a valid UUID to null. The line snapshot
-    // (name, sku, price, qty) is preserved regardless.
-    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    const orderItems = items.map((item: Record<string, unknown>) => ({
-      ...item,
-      product_id: typeof item.product_id === 'string' && UUID_RE.test(item.product_id) ? item.product_id : null,
+    const orderItems = totals.lines.map(line => ({
       order_id: created.id,
+      product_id: line.product_id,
+      product_name_sq: line.product_name_sq,
+      product_name_en: line.product_name_en,
+      product_sku: line.product_sku,
+      product_image_url: line.product_image_url,
+      unit_price: line.unit_price,
+      sale_price: line.sale_price,
+      quantity: line.quantity,
+      subtotal: line.subtotal,
     }))
 
     const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
     if (itemsError) {
-      // Roll back the order if items fail
       await supabase.from('orders').delete().eq('id', created.id)
       console.error('Order items insert error:', itemsError)
-      return NextResponse.json({ error: itemsError.message }, { status: 500 })
+      return apiError('Failed to create order', 500)
     }
 
     saveCustomerAddressFromOrder(supabase, created).catch(err =>
@@ -55,7 +89,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ order: created })
   } catch (err) {
-    console.error('Order creation error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return handleApiError(err, 'Order creation error:')
   }
 }

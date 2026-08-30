@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { sanitizeSearch } from '@/lib/admin/sanitize-search'
+
+export { sanitizeSearch }
 
 function isAdminRole(role: unknown): boolean {
   return typeof role === 'string' && ['admin', 'manager'].includes(role)
@@ -18,8 +21,4 @@ export async function requireAdmin() {
   }
 
   return { supabase, user, authorized }
-}
-
-export function sanitizeSearch(q: string) {
-  return q.replace(/[%_,()]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80)
 }

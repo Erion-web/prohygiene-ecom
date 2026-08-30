@@ -27,22 +27,14 @@ export async function applyOrderStockChange(
   }
 
   for (const [productId, quantity] of grouped) {
-    const { data: product, error: fetchError } = await supabase
-      .from('products')
-      .select('stock')
-      .eq('id', productId)
-      .maybeSingle()
+    const change = quantity * delta
+    const { data: ok, error: rpcError } = await supabase.rpc('adjust_product_stock', {
+      p_product_id: productId,
+      p_delta: change,
+    })
 
-    if (fetchError) return { error: fetchError.message }
-    if (!product) continue
-
-    const nextStock = Math.max(0, (product.stock ?? 0) + quantity * delta)
-    const { error: updateError } = await supabase
-      .from('products')
-      .update({ stock: nextStock })
-      .eq('id', productId)
-
-    if (updateError) return { error: updateError.message }
+    if (rpcError) return { error: rpcError.message }
+    if (!ok) return { error: 'Insufficient stock' }
   }
 
   return { error: null }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
 import { createServiceClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/admin/require-admin'
 import type { ImportResult } from '@/types'
 
 // ── Column aliases ─────────────────────────────────────────────────────────
@@ -65,7 +66,11 @@ function parseInt2(val: unknown): number {
 }
 
 export async function POST(request: Request) {
-  // ── Env check ─────────────────────────────────────────────────────────────
+  const { authorized } = await requireAdmin()
+  if (!authorized) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json(
       { error: 'Supabase env vars missing. Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local' },
@@ -103,10 +108,8 @@ export async function POST(request: Request) {
     // Verify the products table is accessible
     const { error: tableError } = await supabase.from('products').select('id').limit(1)
     if (tableError) {
-      return NextResponse.json(
-        { error: `Database error: ${tableError.message} — Have you run supabase/schema.sql?` },
-        { status: 500 }
-      )
+      console.error('[import] Database error:', tableError)
+      return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
     // Load category slugs
@@ -194,9 +197,6 @@ export async function POST(request: Request) {
     return NextResponse.json(result)
   } catch (error) {
     console.error('Import error:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

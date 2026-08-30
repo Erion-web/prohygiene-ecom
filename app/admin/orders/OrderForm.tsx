@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
-import { CITIES } from '@/lib/cities'
+import { CITIES, isCity } from '@/lib/cities'
 import type { CustomerType, Order, PaymentMethod, PaymentStatus } from '@/types'
 
 interface Props {
@@ -116,7 +116,7 @@ export function OrderForm({ order }: Props) {
           <div>
             <label className="label">Qyteti *</label>
             <select value={form.city} onChange={e => update('city', e.target.value)} className="input" required>
-              {!CITIES.includes(form.city) && form.city && <option value={form.city}>{form.city}</option>}
+              {!isCity(form.city) && form.city && <option value={form.city}>{form.city}</option>}
               {CITIES.map(city => (
                 <option key={city} value={city}>{city}</option>
               ))}

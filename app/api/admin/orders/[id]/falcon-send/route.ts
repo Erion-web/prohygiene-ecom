@@ -1,35 +1,21 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/admin/require-admin'
 import { createFalconOrder, findFalconCityId } from '@/lib/falcon'
-
-function isAdminRole(role: unknown): boolean {
-  return typeof role === 'string' && ['admin', 'manager'].includes(role)
-}
+import { apiError, handleApiError } from '@/lib/api/errors'
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const jwtRole = (user.app_metadata as Record<string, unknown>)?.role
-  let authorized = isAdminRole(jwtRole)
+  const { supabase, authorized } = await requireAdmin()
   if (!authorized) {
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    authorized = isAdminRole(profile?.role)
-  }
-  if (!authorized) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return apiError('Forbidden', 403)
   }
 
   const { data: order } = await supabase.from('orders').select('*').eq('id', id).single()
   if (!order) {
-    return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    return apiError('Order not found', 404)
   }
   if (order.falcon_order_id) {
-    return NextResponse.json({ error: 'Kjo porosi është dërguar tashmë në Falcon Posta' }, { status: 400 })
+    return apiError('Kjo porosi është dërguar tashmë në Falcon Posta', 400)
   }
 
   const { data: items } = await supabase.from('order_items').select('*').eq('order_id', order.id)
@@ -37,7 +23,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try {
     const cityId = await findFalconCityId(order.city)
     if (!cityId) {
-      return NextResponse.json({ error: `Qyteti "${order.city}" nuk u gjet te Falcon Posta` }, { status: 400 })
+      return apiError(`Qyteti "${order.city}" nuk u gjet te Falcon Posta`, 400)
     }
 
     const itemList = items ?? []
@@ -61,7 +47,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       additionalInfo: order.notes ?? undefined,
     })
 
-    await supabase
+    const { error: updateError } = await supabase
       .from('orders')
       .update({
         falcon_order_id: falconOrder.id,
@@ -71,9 +57,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       })
       .eq('id', order.id)
 
+    if (updateError) {
+      console.error('[falcon send] Order update failed:', updateError)
+      return apiError('Failed to save Falcon order reference', 500)
+    }
+
     return NextResponse.json({ falconOrder })
   } catch (err) {
-    console.error('[falcon send] Error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Dërgimi dështoi' }, { status: 500 })
+    return handleApiError(err, '[falcon send] Error:')
   }
 }

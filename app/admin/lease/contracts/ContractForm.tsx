@@ -169,8 +169,8 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
       toast.error('Data e mbarimit duhet të jetë pas fillimit')
       return
     }
-    const contractNumber = parseInt(form.contract_number, 10)
-    if (!Number.isFinite(contractNumber) || contractNumber < 1) {
+    const contractNumber = editingId ? parseInt(form.contract_number, 10) : null
+    if (editingId && (!Number.isFinite(contractNumber!) || contractNumber! < 1)) {
       toast.error('Numri i kontratës duhet të jetë 1 ose më i madh')
       return
     }
@@ -180,7 +180,7 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
     const validDevices = deviceRows.filter(r => r.product_id && r.quantity)
     const deviceCount = validDevices.reduce((sum, r) => sum + (parseInt(r.quantity) || 1), 0)
     const payload = {
-      contract_number: contractNumber,
+      ...(editingId ? { contract_number: contractNumber! } : {}),
       client_id: form.client_id,
       duration_months: durationMonths,
       starts_at: form.starts_at,
@@ -271,17 +271,20 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
         <h3 className="admin-section-title border-b border-surface-border pb-4">Detajet e kontratës</h3>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label className="label">Nr. i kontratës *</label>
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={form.contract_number}
-              onChange={e => update('contract_number', e.target.value)}
-              className="input"
-            />
-            {!editingId && (
-              <p className="text-[11px] text-text-muted mt-1">Numri i sugjeruar: {nextContractNumber}</p>
+            <label className="label">Nr. i kontratës{editingId ? ' *' : ''}</label>
+            {editingId ? (
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={form.contract_number}
+                onChange={e => update('contract_number', e.target.value)}
+                className="input"
+              />
+            ) : (
+              <p className="input bg-surface-soft text-text-primary tabular-nums">
+                Caktohet automatikisht · i sugjeruar #{nextContractNumber}
+              </p>
             )}
           </div>
           <div>

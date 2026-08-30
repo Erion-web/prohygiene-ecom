@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { escapeHtml } from '@/lib/html-escape'
 
 const FROM = 'ProHygiene <info@prohygiene.shop>'
 const STORE_EMAIL = 'info@prohygiene.shop'
@@ -85,7 +86,7 @@ function orderItemsHtml(items: OrderItemInput[]) {
             : `<div style="width:44px;height:44px;border-radius:10px;background:#ecfafd;"></div>`
           }
         </td>
-        <td style="padding:10px 0 10px 12px;border-bottom:1px solid #eef2f5;color:#1e293b;">${item.product_name_sq} <span style="color:#94a3b8;">× ${item.quantity}</span></td>
+        <td style="padding:10px 0 10px 12px;border-bottom:1px solid #eef2f5;color:#1e293b;">${escapeHtml(item.product_name_sq)} <span style="color:#94a3b8;">× ${item.quantity}</span></td>
         <td style="padding:10px 0;border-bottom:1px solid #eef2f5;text-align:right;font-weight:600;color:#1e293b;">${formatPrice(item.subtotal)}</td>
       </tr>`
     )
@@ -97,8 +98,8 @@ export async function sendOrderConfirmationEmail(order: OrderInput, items: Order
   if (!resend) return
 
   const body = `
-    <p style="margin:0 0 4px;">${badge(`Porosia #${order.order_number}`, '#ecfafd', '#0e95bd')}</p>
-    <h1 style="margin:16px 0 8px;font-size:20px;color:#0b3346;">Faleminderit, ${order.customer_name}!</h1>
+    <p style="margin:0 0 4px;">${badge(`Porosia #${escapeHtml(order.order_number)}`, '#ecfafd', '#0e95bd')}</p>
+    <h1 style="margin:16px 0 8px;font-size:20px;color:#0b3346;">Faleminderit, ${escapeHtml(order.customer_name)}!</h1>
     <p style="margin:0 0 20px;color:#475569;">Porosia juaj u pranua dhe është duke u përpunuar. Do t&apos;ju kontaktojmë për dërgesën.</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">${orderItemsHtml(items)}</table>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 24px;">
@@ -106,7 +107,7 @@ export async function sendOrderConfirmationEmail(order: OrderInput, items: Order
     </table>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:12px;">
       <tr><td style="padding:16px 18px;font-size:13px;color:#475569;">
-        <strong style="color:#1e293b;">Dërgohet në:</strong> ${order.address}, ${order.city}
+        <strong style="color:#1e293b;">Dërgohet në:</strong> ${escapeHtml(order.address)}, ${escapeHtml(order.city)}
       </td></tr>
     </table>
     <p style="margin:24px 0 0;color:#64748b;font-size:13px;">Nëse keni pyetje, na kontaktoni në <strong>046 10 80 40</strong> ose <a href="mailto:info@prohygiene.shop" style="color:#0e95bd;">info@prohygiene.shop</a>.</p>
@@ -131,13 +132,13 @@ export async function sendOrderNotificationEmail(order: OrderInput, items: Order
 
   const body = `
     <p style="margin:0 0 4px;">${badge('Porosi e re', '#fef3c7', '#b45309')}</p>
-    <h1 style="margin:16px 0 16px;font-size:20px;color:#0b3346;">${order.customer_name}</h1>
+    <h1 style="margin:16px 0 16px;font-size:20px;color:#0b3346;">${escapeHtml(order.customer_name)}</h1>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:12px;margin-bottom:20px;">
       <tr><td style="padding:16px 18px;font-size:13px;color:#475569;line-height:1.8;">
-        <strong style="color:#1e293b;">Email:</strong> ${order.customer_email}<br/>
-        <strong style="color:#1e293b;">Telefoni:</strong> ${order.customer_phone}<br/>
-        <strong style="color:#1e293b;">Dërgesa:</strong> ${order.address}, ${order.city}<br/>
-        <strong style="color:#1e293b;">Pagesa:</strong> ${order.payment_method}
+        <strong style="color:#1e293b;">Email:</strong> ${escapeHtml(order.customer_email)}<br/>
+        <strong style="color:#1e293b;">Telefoni:</strong> ${escapeHtml(order.customer_phone)}<br/>
+        <strong style="color:#1e293b;">Dërgesa:</strong> ${escapeHtml(order.address)}, ${escapeHtml(order.city)}<br/>
+        <strong style="color:#1e293b;">Pagesa:</strong> ${escapeHtml(order.payment_method)}
       </td></tr>
     </table>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">${orderItemsHtml(items)}</table>
@@ -173,16 +174,16 @@ export async function sendContactFormEmail(form: ContactFormInput) {
 
   const body = `
     <p style="margin:0 0 4px;">${badge('Mesazh kontakti', '#ecfafd', '#0e95bd')}</p>
-    <h1 style="margin:16px 0 16px;font-size:20px;color:#0b3346;">${form.subject}</h1>
+    <h1 style="margin:16px 0 16px;font-size:20px;color:#0b3346;">${escapeHtml(form.subject)}</h1>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:12px;margin-bottom:20px;">
       <tr><td style="padding:16px 18px;font-size:13px;color:#475569;line-height:1.8;">
-        <strong style="color:#1e293b;">Emri:</strong> ${form.name}<br/>
-        <strong style="color:#1e293b;">Email:</strong> ${form.email}<br/>
-        ${form.phone ? `<strong style="color:#1e293b;">Telefoni:</strong> ${form.phone}<br/>` : ''}
+        <strong style="color:#1e293b;">Emri:</strong> ${escapeHtml(form.name)}<br/>
+        <strong style="color:#1e293b;">Email:</strong> ${escapeHtml(form.email)}<br/>
+        ${form.phone ? `<strong style="color:#1e293b;">Telefoni:</strong> ${escapeHtml(form.phone)}<br/>` : ''}
       </td></tr>
     </table>
     <p style="margin:0 0 8px;color:#1e293b;font-weight:600;">Mesazhi:</p>
-    <p style="white-space:pre-wrap;color:#475569;margin:0;">${form.message}</p>
+    <p style="white-space:pre-wrap;color:#475569;margin:0;">${escapeHtml(form.message)}</p>
   `
 
   await resend.emails.send({
@@ -213,14 +214,14 @@ export async function sendLeaseInquiryEmail(form: LeaseInquiryInput) {
     <p style="margin:0 0 16px;">Kërkesë e re për <strong>shfrytëzim pajisjeje</strong>.</p>
     <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:20px;">
       <tr><td style="padding:8px 0;border-bottom:1px solid #eef2f5;">
-        <strong style="color:#1e293b;">Pajisja:</strong> ${form.productName}<br/>
-        <strong style="color:#1e293b;">Emri:</strong> ${form.name}<br/>
-        <strong style="color:#1e293b;">Email:</strong> ${form.email}<br/>
-        ${form.phone ? `<strong style="color:#1e293b;">Telefoni:</strong> ${form.phone}<br/>` : ''}
-        ${form.company ? `<strong style="color:#1e293b;">Kompania:</strong> ${form.company}<br/>` : ''}
+        <strong style="color:#1e293b;">Pajisja:</strong> ${escapeHtml(form.productName)}<br/>
+        <strong style="color:#1e293b;">Emri:</strong> ${escapeHtml(form.name)}<br/>
+        <strong style="color:#1e293b;">Email:</strong> ${escapeHtml(form.email)}<br/>
+        ${form.phone ? `<strong style="color:#1e293b;">Telefoni:</strong> ${escapeHtml(form.phone)}<br/>` : ''}
+        ${form.company ? `<strong style="color:#1e293b;">Kompania:</strong> ${escapeHtml(form.company)}<br/>` : ''}
       </td></tr>
     </table>
-    ${form.message ? `<p style="white-space:pre-wrap;color:#475569;margin:0;">${form.message}</p>` : ''}
+    ${form.message ? `<p style="white-space:pre-wrap;color:#475569;margin:0;">${escapeHtml(form.message)}</p>` : ''}
   `
 
   await resend.emails.send({
@@ -244,8 +245,8 @@ export async function sendLeaseReminderEmail(params: {
   if (!resend) return { skipped: true }
 
   const body = `
-    <p style="margin:0 0 8px;font-size:16px;font-weight:700;color:#1e293b;">${params.title}</p>
-    <p style="white-space:pre-wrap;color:#475569;margin:0;">${params.message}</p>
+    <p style="margin:0 0 8px;font-size:16px;font-weight:700;color:#1e293b;">${escapeHtml(params.title)}</p>
+    <p style="white-space:pre-wrap;color:#475569;margin:0;">${escapeHtml(params.message)}</p>
   `
 
   await resend.emails.send({

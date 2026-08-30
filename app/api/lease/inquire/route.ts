@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendLeaseInquiryEmail } from '@/lib/email'
+import { leaseInquirySchema } from '@/lib/validation/schemas'
+import { apiError, handleApiError } from '@/lib/api/errors'
 
 export async function POST(req: Request) {
   try {
-    const { product_id, name, email, phone, company, message } = await req.json()
-
-    if (!name || !email) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    const body = await req.json()
+    const parsed = leaseInquirySchema.safeParse(body)
+    if (!parsed.success) {
+      return apiError(parsed.error.issues[0]?.message ?? 'Missing required fields', 400)
     }
 
+    const { product_id, name, email, phone, company, message } = parsed.data
     const supabase = await createServiceClient()
 
     let productName = 'Pajisje'
@@ -34,21 +37,20 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error('[lease/inquire] DB error:', error)
-      return NextResponse.json({ error: 'Failed to save inquiry' }, { status: 500 })
+      return apiError('Failed to save inquiry', 500)
     }
 
     await sendLeaseInquiryEmail({
       name,
       email,
-      phone,
-      company,
-      message,
+      phone: phone ?? undefined,
+      company: company ?? undefined,
+      message: message ?? undefined,
       productName,
     })
 
     return NextResponse.json({ ok: true })
   } catch (err) {
-    console.error('[lease/inquire] Failed:', err)
-    return NextResponse.json({ error: 'Failed to send inquiry' }, { status: 500 })
+    return handleApiError(err, '[lease/inquire] Failed:')
   }
 }

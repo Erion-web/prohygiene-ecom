@@ -31,7 +31,10 @@ export async function GET(req: Request) {
     let query = supabase.from('lease_clients').select('id, company_name').order('company_name').limit(40)
     if (q) query = query.ilike('company_name', `%${q}%`)
     const { data, error } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[admin/options]', type, error)
+      return NextResponse.json({ error: 'Failed to load options' }, { status: 500 })
+    }
     return NextResponse.json({
       options: (data ?? []).map(row => ({ value: row.id, label: row.company_name })),
     })
@@ -47,7 +50,10 @@ export async function GET(req: Request) {
       .limit(40)
     if (q) query = query.or(`name_sq.ilike.%${q}%,sku.ilike.%${q}%`)
     const { data, error } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[admin/options]', type, error)
+      return NextResponse.json({ error: 'Failed to load options' }, { status: 500 })
+    }
     return NextResponse.json({
       options: toLeaseDeviceOptions((data ?? []) as LeaseDeviceRow[]).map(d => ({
         value: d.id,
@@ -86,7 +92,10 @@ export async function GET(req: Request) {
       .limit(40)
     if (clientIds) query = query.in('client_id', clientIds)
     const { data, error } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[admin/options]', type, error)
+      return NextResponse.json({ error: 'Failed to load options' }, { status: 500 })
+    }
     return NextResponse.json({
       options: (data ?? []).map(row => {
         const client = Array.isArray(row.client) ? row.client[0] : row.client
@@ -106,7 +115,10 @@ export async function GET(req: Request) {
       .limit(40)
     if (q) query = query.or(`name_sq.ilike.%${q}%,sku.ilike.%${q}%`)
     const { data, error } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[admin/options]', type, error)
+      return NextResponse.json({ error: 'Failed to load options' }, { status: 500 })
+    }
     return NextResponse.json({
       options: (data ?? []).map(row => ({ value: row.id, label: `${row.name_sq} (${row.sku})` })),
     })
@@ -116,7 +128,10 @@ export async function GET(req: Request) {
     let query = supabase.from('categories').select('id, name_sq').eq('is_active', true).order('name_sq').limit(40)
     if (q) query = query.ilike('name_sq', `%${q}%`)
     const { data, error } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[admin/options]', type, error)
+      return NextResponse.json({ error: 'Failed to load options' }, { status: 500 })
+    }
     return NextResponse.json({
       options: (data ?? []).map(row => ({ value: row.id, label: row.name_sq })),
     })
@@ -125,7 +140,10 @@ export async function GET(req: Request) {
   let query = supabase.from('brands').select('id, name').eq('is_active', true).order('name').limit(40)
   if (q) query = query.ilike('name', `%${q}%`)
   const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[admin/options] brands', error)
+    return NextResponse.json({ error: 'Failed to load options' }, { status: 500 })
+  }
   return NextResponse.json({
     options: (data ?? []).map(row => ({ value: row.id, label: row.name })),
   })

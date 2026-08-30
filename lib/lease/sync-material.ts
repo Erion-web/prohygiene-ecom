@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { MaterialUnit } from '@/types'
+import { sanitizeSearch } from '@/lib/admin/sanitize-search'
 
 export const PRODUCT_UNITS: { value: MaterialUnit; label: string }[] = [
   { value: 'cope', label: 'copë' },
@@ -160,13 +161,14 @@ export async function listMaterialProductOptions(
   supabase: SupabaseClient,
   q = ''
 ): Promise<MaterialProductOption[]> {
+  const safeQ = sanitizeSearch(q)
   let query = supabase
     .from('products')
     .select('id, sku, name_sq, name_en, category_id, unit, is_active')
     .eq('is_material', true)
     .order('name_sq')
 
-  if (q) query = query.or(`name_sq.ilike.%${q}%,name_en.ilike.%${q}%,sku.ilike.%${q}%`)
+  if (safeQ) query = query.or(`name_sq.ilike.%${safeQ}%,name_en.ilike.%${safeQ}%,sku.ilike.%${safeQ}%`)
 
   const { data: products, error } = await query
   if (error || !products?.length) {

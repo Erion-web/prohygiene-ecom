@@ -9,9 +9,9 @@ import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
 import { t } from '@/lib/i18n'
-import { formatPrice, getProductName, generateOrderNumber } from '@/lib/utils'
+import { formatPrice, getProductName } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import { CITIES } from '@/lib/cities'
+import { CITIES, isCity } from '@/lib/cities'
 import type { CheckoutFormData, CustomerType, PaymentMethod } from '@/types'
 
 type RepeatFreq = 'weekly' | 'biweekly' | 'monthly' | 'custom'
@@ -78,6 +78,15 @@ function RepeatModal({ items, userId, customerName, customerEmail, redirectUrl, 
         setSaving(false)
         return
       }
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: customerEmail,
+        password,
+      })
+      if (signInError) {
+        toast.error('Llogaria u krijua por hyrja dështoi. Hyni manualisht dhe provoni përsëri.')
+        setSaving(false)
+        return
+      }
     }
 
     const orderDate = freq === 'custom' ? customDate : nextDate(freq as Exclude<RepeatFreq, 'custom'>)
@@ -86,7 +95,7 @@ function RepeatModal({ items, userId, customerName, customerEmail, redirectUrl, 
     const res = await fetch('/api/subscriptions/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: uid, items, frequency: dbFreq, next_order_date: orderDate }),
+      body: JSON.stringify({ items, frequency: dbFreq, next_order_date: orderDate }),
     })
     const data = await res.json()
     if (!res.ok || data.error) {
@@ -305,44 +314,25 @@ export default function CheckoutPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
-      const orderPayload = {
-        user_id: user?.id ?? null,
-        customer_name: form.customer_name,
-        customer_email: form.customer_email,
-        customer_phone: form.customer_phone,
-        customer_type: form.customer_type,
-        business_name: form.business_name || null,
-        fiscal_number: form.fiscal_number || null,
-        city: form.city,
-        address: form.address,
-        notes: form.notes || null,
-        subtotal: total + discount,
-        discount_amount: discount + couponDiscount,
-        shipping_cost: shipping,
-        vat_amount: finalTotal * 0.18,
-        total: finalTotal,
-        status: 'pending',
-        payment_method: form.payment_method,
-        payment_status: 'pending',
-      }
-
-      const orderItems = items.map(item => ({
-        product_id: item.product.id,
-        product_name_sq: item.product.name_sq,
-        product_name_en: item.product.name_en,
-        product_sku: item.product.sku,
-        product_image_url: item.product.image_url,
-        unit_price: item.product.price,
-        sale_price: item.effectivePrice < item.product.price ? item.effectivePrice : null,
-        quantity: item.quantity,
-        subtotal: item.effectivePrice * item.quantity,
-      }))
-
-      // Create order via server API (uses service role — works for guests too)
       const orderRes = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: orderPayload, items: orderItems }),
+        body: JSON.stringify({
+          customer_name: form.customer_name,
+          customer_email: form.customer_email,
+          customer_phone: form.customer_phone,
+          customer_type: form.customer_type,
+          business_name: form.business_name || null,
+          fiscal_number: form.fiscal_number || null,
+          city: form.city,
+          address: form.address,
+          notes: form.notes || null,
+          payment_method: form.payment_method,
+          items: items.map(item => ({
+            product_id: item.product.id,
+            quantity: item.quantity,
+          })),
+        }),
       })
       const orderData = await orderRes.json()
       if (!orderRes.ok || orderData.error) throw new Error(orderData.error ?? 'Failed to create order')
@@ -357,9 +347,9 @@ export default function CheckoutPage() {
           body: JSON.stringify({
             order_id: order.id,
             order_number: order.order_number,
-            amount: finalTotal,
             email: form.customer_email,
             lang,
+            customer_name: form.customer_name,
           }),
         })
         const paymentData = await res.json()
@@ -564,7 +554,7 @@ export default function CheckoutPage() {
                       className={`input ${errors.city ? 'input-error' : ''}`}
                     >
                       <option value="">{tr.checkout.selectCity}</option>
-                      {!CITIES.includes(form.city) && form.city && <option value={form.city}>{form.city}</option>}
+                      {!isCity(form.city) && form.city && <option value={form.city}>{form.city}</option>}
                       {CITIES.map(city => (
                         <option key={city} value={city}>{city}</option>
                       ))}

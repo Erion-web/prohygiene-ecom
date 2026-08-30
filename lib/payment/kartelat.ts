@@ -28,7 +28,10 @@ export function verifyCallbackSignature(
   received: string
 ): boolean {
   const expected = hmac512([merchantId, orderReference, amount, currency].join(';'), secretKey)
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(received))
+  const expectedBuf = Buffer.from(expected)
+  const receivedBuf = Buffer.from(received)
+  if (expectedBuf.length !== receivedBuf.length) return false
+  return crypto.timingSafeEqual(expectedBuf, receivedBuf)
 }
 
 export interface PurchaseParams {

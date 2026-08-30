@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server'
 import { sendContactFormEmail } from '@/lib/email'
+import { contactFormSchema } from '@/lib/validation/schemas'
+import { apiError, handleApiError } from '@/lib/api/errors'
 
 export async function POST(req: Request) {
   try {
-    const { name, email, phone, subject, message } = await req.json()
-
-    if (!name || !email || !subject || !message) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    const body = await req.json()
+    const parsed = contactFormSchema.safeParse(body)
+    if (!parsed.success) {
+      return apiError(parsed.error.issues[0]?.message ?? 'Missing required fields', 400)
     }
 
-    await sendContactFormEmail({ name, email, phone, subject, message })
+    await sendContactFormEmail(parsed.data)
     return NextResponse.json({ ok: true })
   } catch (err) {
-    console.error('[contact] Failed to send:', err)
-    return NextResponse.json({ error: 'Failed to send message' }, { status: 500 })
+    return handleApiError(err, '[contact] Failed to send:')
   }
 }
