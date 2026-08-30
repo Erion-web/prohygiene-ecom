@@ -221,30 +221,41 @@ export default function CheckoutPage() {
     notes: '',
     payment_method: 'card',
   })
+  const [savedAddresses, setSavedAddresses] = useState<Array<{ id: string; label: string; city: string; address: string }>>([])
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
       setForm(prev => ({ ...prev, customer_email: user.email ?? prev.customer_email }))
-      supabase
-        .from('profiles')
-        .select('full_name, phone, city, address, customer_type, business_name, fiscal_number')
-        .eq('id', user.id)
-        .single()
-        .then(({ data: profile }) => {
-          if (!profile) return
-          setForm(prev => ({
-            ...prev,
-            customer_name: profile.full_name ?? prev.customer_name,
-            customer_phone: profile.phone ?? prev.customer_phone,
-            city: profile.city ?? prev.city,
-            address: profile.address ?? prev.address,
-            customer_type: (profile.customer_type as CustomerType) ?? prev.customer_type,
-            business_name: profile.business_name ?? prev.business_name,
-            fiscal_number: profile.fiscal_number ?? prev.fiscal_number,
-          }))
-        })
+      Promise.all([
+        supabase
+          .from('profiles')
+          .select('full_name, phone, city, address, customer_type, business_name, fiscal_number')
+          .eq('id', user.id)
+          .single(),
+        supabase
+          .from('user_addresses')
+          .select('id, label, city, address, is_primary')
+          .eq('user_id', user.id)
+          .order('is_primary', { ascending: false }),
+      ]).then(([profileRes, addressesRes]) => {
+        const profile = profileRes.data
+        const addresses = addressesRes.data ?? []
+        setSavedAddresses(addresses)
+        const primary = addresses.find(a => a.is_primary) ?? addresses[0]
+        if (!profile && !primary) return
+        setForm(prev => ({
+          ...prev,
+          customer_name: profile?.full_name ?? prev.customer_name,
+          customer_phone: profile?.phone ?? prev.customer_phone,
+          city: primary?.city || profile?.city || prev.city,
+          address: primary?.address || profile?.address || prev.address,
+          customer_type: (profile?.customer_type as CustomerType) ?? prev.customer_type,
+          business_name: profile?.business_name ?? prev.business_name,
+          fiscal_number: profile?.fiscal_number ?? prev.fiscal_number,
+        }))
+      })
     })
   }, [])
 
@@ -519,6 +530,31 @@ export default function CheckoutPage() {
                   {tr.checkout.deliveryInfo}
                 </h2>
 
+                {savedAddresses.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {savedAddresses.map(addr => {
+                      const active = form.city === addr.city && form.address === addr.address
+                      return (
+                        <button
+                          key={addr.id}
+                          type="button"
+                          onClick={() => {
+                            update('city', addr.city)
+                            update('address', addr.address)
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+                            active
+                              ? 'bg-brand-50 border-brand-400 text-brand-700'
+                              : 'bg-white border-surface-border text-text-secondary hover:border-brand-300'
+                          }`}
+                        >
+                          {addr.label}: {addr.city}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="label">{tr.checkout.city} *</label>
@@ -528,6 +564,7 @@ export default function CheckoutPage() {
                       className={`input ${errors.city ? 'input-error' : ''}`}
                     >
                       <option value="">{tr.checkout.selectCity}</option>
+                      {!CITIES.includes(form.city) && form.city && <option value={form.city}>{form.city}</option>}
                       {CITIES.map(city => (
                         <option key={city} value={city}>{city}</option>
                       ))}

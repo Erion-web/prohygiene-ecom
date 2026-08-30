@@ -19,12 +19,36 @@ interface OrderSummary {
   status: string
   created_at: string
   customer_email: string
+  customer_name?: string | null
+  customer_phone?: string | null
+  customer_type?: string | null
+  city?: string | null
+  address?: string | null
+}
+
+export interface GuestCustomer {
+  email: string
+  name: string
+  phone: string | null
+  city: string
+  address: string
+  customer_type: 'individual' | 'business'
+  created_at: string
+}
+
+export interface CustomerAddressRow {
+  user_id: string
+  label: string
+  city: string
+  address: string
+  is_primary: boolean
 }
 
 interface Props {
   customers: Profile[]
   leaseClients: LeaseClient[]
   orders: OrderSummary[]
+  userAddresses: CustomerAddressRow[]
 }
 
 const defaultForm = {
@@ -80,13 +104,13 @@ function exportCSV(customers: Profile[], leaseClients: LeaseClient[]) {
   toast.success(`${customers.length} klientë u exportuan`)
 }
 
-export function CustomersClient({ customers, leaseClients, orders }: Props) {
+export function CustomersClient({ customers, leaseClients, orders, userAddresses }: Props) {
   const refresh = useScrollPreservingRefresh()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(defaultForm)
   const [loading, setLoading] = useState(false)
   const [cityFilter, setCityFilter] = useState('')
-  const [selectedDetail, setSelectedDetail] = useState<{ type: 'profile' | 'lease'; id: string } | null>(null)
+  const [selectedDetail, setSelectedDetail] = useState<{ type: 'profile' | 'lease' | 'guest'; id: string } | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [editKind, setEditKind] = useState<'profile' | 'lease'>('profile')
   const [editId, setEditId] = useState('')
@@ -102,16 +126,50 @@ export function CustomersClient({ customers, leaseClients, orders }: Props) {
   const extraLease = leaseClients.filter(l => !matchedIds.has(l.id))
   const leaseCount = customers.filter(c => leaseForProfile(c, leaseClients)).length + extraLease.length
 
+  const firstOrderByEmail = useMemo(() => {
+    const map = new Map<string, OrderSummary>()
+    for (const order of orders) {
+      const email = order.customer_email?.trim().toLowerCase()
+      if (!email) continue
+      const current = map.get(email)
+      if (!current || order.created_at < current.created_at) map.set(email, order)
+    }
+    return map
+  }, [orders])
+
+  const guests = useMemo<GuestCustomer[]>(() => {
+    const known = new Set([
+      ...customers.map(c => c.email.toLowerCase()),
+      ...leaseClients.map(l => l.email.toLowerCase()),
+    ])
+    return Array.from(firstOrderByEmail.entries()).flatMap(([email, order]) => {
+      if (known.has(email)) return []
+      return [{
+        email: order.customer_email,
+        name: order.customer_name?.trim() || email,
+        phone: order.customer_phone ?? null,
+        city: order.city ?? '',
+        address: order.address ?? '',
+        customer_type: order.customer_type === 'business' ? 'business' as const : 'individual' as const,
+        created_at: order.created_at,
+      }]
+    })
+  }, [customers, leaseClients, firstOrderByEmail])
+
   const filteredCustomers = cityFilter
-    ? customers.filter(c => c.city === cityFilter)
+    ? customers.filter(c => (c.city || firstOrderByEmail.get(c.email.toLowerCase())?.city) === cityFilter)
     : customers
   const filteredExtra = cityFilter
     ? extraLease.filter(l => l.city === cityFilter)
     : extraLease
+  const filteredGuests = cityFilter
+    ? guests.filter(g => g.city === cityFilter)
+    : guests
 
   const tableRows = useMemo<CustomerTableRow[]>(() => [
     ...filteredCustomers.map(c => {
       const lease = leaseForProfile(c, leaseClients)
+      const firstOrder = firstOrderByEmail.get(c.email.toLowerCase())
       return {
         id: c.id,
         kind: 'profile' as const,
@@ -122,9 +180,13 @@ export function CustomersClient({ customers, leaseClients, orders }: Props) {
         businessName: c.business_name,
         role: c.role,
         isLease: Boolean(lease),
-        city: c.city,
+        city: c.city || firstOrder?.city || null,
         createdAt: c.created_at,
-        profile: c,
+        profile: {
+          ...c,
+          city: c.city || firstOrder?.city || c.city,
+          address: c.address || firstOrder?.address || c.address,
+        },
         lease,
       }
     }),
@@ -141,18 +203,57 @@ export function CustomersClient({ customers, leaseClients, orders }: Props) {
       createdAt: l.created_at,
       lease: l,
     })),
-  ], [filteredCustomers, filteredExtra, leaseClients])
+    ...filteredGuests.map(g => ({
+      id: g.email,
+      kind: 'guest' as const,
+      name: g.name,
+      phone: g.phone,
+      email: g.email,
+      customerType: g.customer_type,
+      isLease: false,
+      city: g.city || null,
+      createdAt: g.created_at,
+    })),
+  ], [filteredCustomers, filteredExtra, filteredGuests, leaseClients, firstOrderByEmail])
 
-  const selectedProfile = selectedDetail?.type === 'profile'
+  const selectedGuest = selectedDetail?.type === 'guest'
+    ? guests.find(g => g.email === selectedDetail.id)
+    : undefined
+  const rawProfile = selectedDetail?.type === 'profile'
     ? customers.find(c => c.id === selectedDetail.id)
     : undefined
+  const firstForProfile = rawProfile ? firstOrderByEmail.get(rawProfile.email.toLowerCase()) : undefined
+  const selectedProfile = rawProfile
+    ? {
+        ...rawProfile,
+        city: rawProfile.city || firstForProfile?.city || rawProfile.city,
+        address: rawProfile.address || firstForProfile?.address || rawProfile.address,
+      }
+    : selectedGuest
+      ? {
+          id: selectedGuest.email,
+          email: selectedGuest.email,
+          full_name: selectedGuest.name,
+          phone: selectedGuest.phone,
+          city: selectedGuest.city,
+          address: selectedGuest.address,
+          role: 'customer' as const,
+          customer_type: selectedGuest.customer_type,
+          business_name: null,
+          fiscal_number: null,
+          created_at: selectedGuest.created_at,
+          updated_at: selectedGuest.created_at,
+        }
+      : undefined
   const selectedLeaseOnly = selectedDetail?.type === 'lease'
     ? leaseClients.find(l => l.id === selectedDetail.id)
     : undefined
-  const selectedLease = selectedProfile
-    ? leaseForProfile(selectedProfile, leaseClients)
-    : selectedLeaseOnly
-  const detailEmail = (selectedProfile?.email ?? selectedLeaseOnly?.email ?? '').toLowerCase()
+  const selectedLease = selectedDetail?.type === 'guest'
+    ? undefined
+    : selectedProfile && selectedDetail?.type === 'profile'
+      ? leaseForProfile(selectedProfile, leaseClients)
+      : selectedLeaseOnly
+  const detailEmail = (selectedGuest?.email ?? selectedProfile?.email ?? selectedLeaseOnly?.email ?? '').toLowerCase()
   const detailOrders = detailEmail
     ? orders.filter(o => o.customer_email?.toLowerCase() === detailEmail)
     : []
@@ -348,8 +449,21 @@ export function CustomersClient({ customers, leaseClients, orders }: Props) {
           profile={selectedProfile}
           leaseClient={selectedLease}
           orders={detailOrders}
-          onEdit={() => {
-            if (selectedProfile) startEditProfile(selectedProfile, selectedLease)
+          addresses={[
+            ...(selectedProfile
+              ? userAddresses.filter(a => a.user_id === selectedProfile.id)
+              : []),
+            ...detailOrders
+              .filter(o => o.city || o.address)
+              .map((o, i) => ({
+                label: `Porosi ${i + 1}`,
+                city: o.city ?? '',
+                address: o.address ?? '',
+                is_primary: false,
+              })),
+          ]}
+          onEdit={selectedGuest ? undefined : () => {
+            if (rawProfile) startEditProfile(rawProfile, selectedLease)
             else if (selectedLeaseOnly) startEditLease(selectedLeaseOnly)
           }}
           onClose={() => setSelectedDetail(null)}
@@ -362,7 +476,7 @@ export function CustomersClient({ customers, leaseClients, orders }: Props) {
         <div className="flex gap-3 text-sm text-text-secondary flex-wrap">
           <span className="flex items-center gap-1.5">
             <Users size={14} />
-            {customers.length} gjithsej
+            {customers.length + guests.length} gjithsej
           </span>
           <span className="flex items-center gap-1.5">
             <Building2 size={14} />
@@ -480,13 +594,16 @@ export function CustomersClient({ customers, leaseClients, orders }: Props) {
         rows={tableRows}
         emptyMessage={cityFilter ? 'Asnjë klient në këtë qytet' : 'Nuk ka klientë ende'}
         onRowClick={row => {
-          if (row.kind === 'profile' && row.profile) {
+          if (row.kind === 'guest') {
+            setSelectedDetail({ type: 'guest', id: row.email })
+          } else if (row.kind === 'profile' && row.profile) {
             setSelectedDetail({ type: 'profile', id: row.profile.id })
           } else if (row.lease) {
             setSelectedDetail({ type: 'lease', id: row.lease.id })
           }
         }}
         onToggleLease={row => {
+          if (row.kind === 'guest') return
           if (row.kind === 'profile' && row.profile) {
             toggleLease(row.profile, row.lease)
           } else if (row.lease) {
@@ -494,6 +611,7 @@ export function CustomersClient({ customers, leaseClients, orders }: Props) {
           }
         }}
         onEdit={row => {
+          if (row.kind === 'guest') return
           if (row.kind === 'profile' && row.profile) {
             startEditProfile(row.profile, row.lease)
           } else if (row.lease) {
@@ -501,6 +619,7 @@ export function CustomersClient({ customers, leaseClients, orders }: Props) {
           }
         }}
         onDelete={row => {
+          if (row.kind === 'guest') return
           if (row.kind === 'profile') {
             handleDelete('profile', row.id)
           } else {

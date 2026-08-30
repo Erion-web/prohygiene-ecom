@@ -118,13 +118,13 @@ export default async function HomePage() {
               </Suspense>
 
               {/* Business promo in sidebar */}
-              <div className="mt-4 p-3 rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 text-white">
-                <Building2 size={18} className="text-brand-200 mb-2" />
-                <p className="text-xs font-bold mb-1">Jeni Biznes?</p>
-                <p className="text-[11px] text-brand-100 leading-snug mb-2.5">Çmime ekskluzive për HORECA & shumicë</p>
+              <div className="mt-4 p-3 rounded-xl bg-surface-soft border border-surface-border">
+                <Building2 size={18} className="text-black mb-2" />
+                <p className="text-xs font-bold mb-1 text-black">Jeni Biznes?</p>
+                <p className="text-[11px] text-black leading-snug mb-2.5">Çmime ekskluzive për HORECA & shumicë</p>
                 <Link
                   href="/contact"
-                  className="flex items-center gap-1 text-[11px] font-bold text-white hover:text-brand-100 transition-colors"
+                  className="flex items-center gap-1 text-[11px] font-bold text-black hover:underline"
                 >
                   Kontaktoni <ArrowRight size={11} />
                 </Link>

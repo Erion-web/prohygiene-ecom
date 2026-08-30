@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendOrderConfirmationEmail, sendOrderNotificationEmail } from '@/lib/email'
+import { saveCustomerAddressFromOrder } from '@/lib/orders/save-customer-address'
 
 export async function POST(req: Request) {
   try {
@@ -43,7 +44,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: itemsError.message }, { status: 500 })
     }
 
-    // Fire-and-forget: a failed email must never fail an already-placed order.
+    saveCustomerAddressFromOrder(supabase, created).catch(err =>
+      console.error('[order] Address persist failed:', err)
+    )
+
     Promise.all([
       sendOrderConfirmationEmail(created, orderItems),
       sendOrderNotificationEmail(created, orderItems),

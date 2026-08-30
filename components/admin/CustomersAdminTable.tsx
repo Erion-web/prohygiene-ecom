@@ -8,7 +8,7 @@ import type { LeaseClient, Profile } from '@/types'
 
 export interface CustomerTableRow {
   id: string
-  kind: 'profile' | 'lease'
+  kind: 'profile' | 'lease' | 'guest'
   name: string
   phone?: string | null
   email: string
@@ -124,20 +124,24 @@ export function CustomersAdminTable({
       meta: { align: 'right' },
       cell: ({ row }) => (
         <div className="flex justify-end gap-1" onClick={e => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => onEdit(row.original)}
-            className="p-1.5 hover:bg-brand-50 rounded-lg"
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(row.original)}
-            className="p-1.5 hover:bg-red-50 rounded-lg text-red-500"
-          >
-            <Trash2 size={14} />
-          </button>
+          {row.original.kind !== 'guest' && (
+            <>
+              <button
+                type="button"
+                onClick={() => onEdit(row.original)}
+                className="p-1.5 hover:bg-brand-50 rounded-lg"
+              >
+                <Pencil size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(row.original)}
+                className="p-1.5 hover:bg-red-50 rounded-lg text-red-500"
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
