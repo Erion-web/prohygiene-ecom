@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { ProductForm } from '../ProductForm'
 import Link from 'next/link'
@@ -14,10 +14,11 @@ export default async function NewProductPage({
   const isLease = lease === '1'
 
   const supabase = await createClient()
+  const materialsDb = process.env.SUPABASE_SERVICE_ROLE_KEY ? await createServiceClient() : supabase
   const [{ data: categories }, { data: brands }, materials] = await Promise.all([
     supabase.from('categories').select('id, name_sq, name_en').eq('is_active', true).order('sort_order'),
     supabase.from('brands').select('id, name').eq('is_active', true).order('sort_order'),
-    listMaterialProductOptions(supabase),
+    listMaterialProductOptions(materialsDb),
   ])
 
   return (

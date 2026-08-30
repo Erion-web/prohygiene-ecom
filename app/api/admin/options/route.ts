@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin, sanitizeSearch } from '@/lib/admin/require-admin'
 import { CITIES } from '@/lib/cities'
+import { createServiceClient } from '@/lib/supabase/server'
 import { LEASE_DEVICE_QUERY, toLeaseDeviceOptions, type LeaseDeviceRow } from '@/lib/lease/device-select'
 import { listMaterialProductOptions, materialOptionLabel } from '@/lib/lease/sync-material'
 
@@ -57,11 +58,12 @@ export async function GET(req: Request) {
   }
 
   if (type === 'materials') {
-    const materials = await listMaterialProductOptions(supabase, q)
+    const db = process.env.SUPABASE_SERVICE_ROLE_KEY ? await createServiceClient() : supabase
+    const materials = await listMaterialProductOptions(db, q)
     return NextResponse.json({
       options: materials.map(m => ({
         value: m.id,
-        label: materialOptionLabel(m.name_sq, m.unit, m.is_active),
+        label: materialOptionLabel(m.name_sq, m.unit, m.is_active, m.sku),
       })),
     })
   }

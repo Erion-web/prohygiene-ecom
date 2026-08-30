@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { ProductForm } from '../../ProductForm'
 import { notFound } from 'next/navigation'
@@ -9,6 +9,7 @@ import type { DeviceMaterial } from '@/types'
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
+  const materialsDb = process.env.SUPABASE_SERVICE_ROLE_KEY ? await createServiceClient() : supabase
   const { id } = await params
 
   const [productRes, deviceMaterialsRes, categoriesRes, brandsRes, materials] = await Promise.all([
@@ -16,7 +17,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     supabase.from('device_materials').select('*, material:materials(*)').eq('product_id', id),
     supabase.from('categories').select('id, name_sq, name_en').eq('is_active', true).order('sort_order'),
     supabase.from('brands').select('id, name').eq('is_active', true).order('sort_order'),
-    listMaterialProductOptions(supabase),
+    listMaterialProductOptions(materialsDb),
   ])
 
   if (!productRes.data) notFound()

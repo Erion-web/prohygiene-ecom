@@ -357,7 +357,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
                         next[idx] = { ...next[idx], material_id: id }
                         setDeviceMaterialRows(next)
                       }}
-                      options={materials.map(m => ({ value: m.id, label: materialOptionLabel(m.name_sq, m.unit, m.is_active) }))}
+                      options={materials.map(m => ({ value: m.id, label: materialOptionLabel(m.name_sq, m.unit, m.is_active, m.sku) }))}
                       searchType="materials"
                       placeholder="Zgjedh..."
                       searchPlaceholder="Kërko materialin..."

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { LEASE_DEVICE_QUERY, toLeaseDeviceOptions, type LeaseDeviceOption } from '@/lib/lease/device-select'
 import { listMaterialProductOptions, type MaterialProductOption } from '@/lib/lease/sync-material'
 import type { LeaseClientAddress, LeaseContract } from '@/types'
@@ -17,6 +17,7 @@ export async function loadContractFormOptions(): Promise<{
   materials: MaterialProductOption[]
 }> {
   const supabase = await createClient()
+  const materialsDb = process.env.SUPABASE_SERVICE_ROLE_KEY ? await createServiceClient() : supabase
   const [clientsRes, productsRes, materials, addressesRes] = await Promise.all([
     supabase.from('lease_clients').select('id, company_name, city, address').order('company_name'),
     supabase
@@ -25,7 +26,7 @@ export async function loadContractFormOptions(): Promise<{
       .eq('available_for_lease', true)
       .eq('is_active', true)
       .order('name_sq'),
-    listMaterialProductOptions(supabase),
+    listMaterialProductOptions(materialsDb),
     supabase.from('lease_client_addresses').select('*'),
   ])
 

@@ -12,7 +12,7 @@ import { materialOptionLabel } from '@/lib/lease/sync-material'
 import { DeployedDevicesTable } from './DeployedDevicesTable'
 import type { DeployedDevice, DeployedDeviceStatus } from '@/types'
 
-interface MaterialOption { id: string; name_sq: string; unit: string; is_active?: boolean }
+interface MaterialOption { id: string; name_sq: string; sku?: string; unit: string; is_active?: boolean }
 
 interface Props {
   initialDevices: DeployedDevice[]
@@ -201,7 +201,7 @@ export function DeployedDevicesClient({ initialDevices, materials }: Props) {
               onChange={setRefillMaterialId}
               options={materials.map(m => ({
                 value: m.id,
-                label: materialOptionLabel(m.name_sq, m.unit, m.is_active ?? true),
+                label: materialOptionLabel(m.name_sq, m.unit, m.is_active ?? true, m.sku),
               }))}
               searchType="materials"
               placeholder="Materiali..."

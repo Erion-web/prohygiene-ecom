@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { AdminHeader } from '@/components/admin/AdminHeader'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { DeployedDevicesClient } from './DeployedDevicesClient'
 import { listMaterialProductOptions } from '@/lib/lease/sync-material'
 import type { DeployedDevice } from '@/types'
 
 export default async function DeployedDevicesPage() {
   const supabase = await createClient()
+  const materialsDb = process.env.SUPABASE_SERVICE_ROLE_KEY ? await createServiceClient() : supabase
   const [devicesRes, materialsRes] = await Promise.all([
     supabase
       .from('deployed_devices')
@@ -18,7 +19,7 @@ export default async function DeployedDevicesPage() {
         consumable_levels:device_consumable_levels(*, material:materials(*))
       `)
       .order('installed_at', { ascending: false }),
-    listMaterialProductOptions(supabase),
+    listMaterialProductOptions(materialsDb),
   ])
 
   return (

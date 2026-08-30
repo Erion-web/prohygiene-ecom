@@ -14,7 +14,7 @@ import { materialOptionLabel } from '@/lib/lease/sync-material'
 import type { ContractFormClient } from '@/lib/lease/contract-form-data'
 import type { LeaseClientAddress, LeaseContract, LeaseContractStatus, MaterialUnit, ReminderPeriod } from '@/types'
 
-interface MaterialOption { id: string; name_sq: string; unit: string; is_active?: boolean }
+interface MaterialOption { id: string; name_sq: string; sku?: string; unit: string; is_active?: boolean }
 interface DeviceRow { product_id: string; quantity: string; address_id: string }
 interface MaterialRow { material_id: string; quantity: string }
 
@@ -121,7 +121,7 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
   const clientOptions = clients.map(c => ({ value: c.id, label: c.company_name }))
   const materialOptions = materials.map(m => ({
     value: m.id,
-    label: materialOptionLabel(m.name_sq, m.unit, m.is_active ?? true),
+    label: materialOptionLabel(m.name_sq, m.unit, m.is_active ?? true, m.sku),
   }))
 
   const selectedAddresses = addressesForClient(clients, form.client_id)
