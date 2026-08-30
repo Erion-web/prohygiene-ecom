@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, Package, MapPin, CreditCard, Truck } from 'lucide-react'
 import { formatPrice, statusColor, statusLabel } from '@/lib/utils'
+import { orderStatusMessage } from '@/lib/orders/status'
 
 const PAYMENT_LABELS: Record<string, string> = {
   card:             'Kartë',
@@ -51,14 +52,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <Truck size={18} className="flex-shrink-0" />
         <div>
           <p className="font-bold text-sm">{statusLabel(order.status, 'sq')}</p>
-          <p className="text-xs opacity-80">
-            {order.status === 'pending' && 'Porosia juaj është marrë dhe po procesohet.'}
-            {order.status === 'confirmed' && 'Porosia u konfirmua dhe po përgatitet.'}
-            {order.status === 'processing' && 'Porosia po paketohet.'}
-            {order.status === 'shipped' && 'Porosia është dërguar dhe po vjen drejt jush.'}
-            {order.status === 'delivered' && 'Porosia u dorëzua me sukses.'}
-            {order.status === 'cancelled' && 'Porosia u anulua.'}
-          </p>
+          <p className="text-xs opacity-80">{orderStatusMessage(order.status)}</p>
         </div>
       </div>
 

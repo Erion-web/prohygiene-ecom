@@ -218,7 +218,7 @@ create table public.orders (
   shipping_cost numeric(10,2) not null default 0,
   vat_amount numeric(10,2) not null default 0,
   total numeric(10,2) not null,
-  status text not null default 'pending' check (status in ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled')),
+  status text not null default 'pending' check (status in ('pending', 'processing', 'completed')),
   payment_method text not null check (payment_method in ('card', 'cash_on_delivery')),
   payment_status text not null default 'pending' check (payment_status in ('pending', 'approved', 'declined', 'cancelled', 'needs_clarification')),
   created_at timestamptz not null default now(),

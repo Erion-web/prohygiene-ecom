@@ -13,6 +13,7 @@ interface AdminHeaderProps {
 const BACK_MAP: Record<string, string> = {
   '/admin/products/new':    '/admin/products',
   '/admin/brands/new':      '/admin/brands',
+  '/admin/lease/contracts/new': '/admin/lease/contracts',
   '/admin/campaigns':       '/admin',
   '/admin/categories':      '/admin',
   '/admin/brands':          '/admin',
@@ -28,6 +29,7 @@ function getBackHref(pathname: string): string | null {
   if (/\/admin\/products\/[^/]+\/edit/.test(pathname)) return '/admin/products'
   if (/\/admin\/brands\/[^/]+\/edit/.test(pathname)) return '/admin/brands'
   if (/\/admin\/orders\/[^/]+/.test(pathname)) return '/admin/orders'
+  if (/\/admin\/lease\/contracts\/[^/]+\/edit/.test(pathname)) return '/admin/lease/contracts'
   return null
 }
 

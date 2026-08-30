@@ -45,10 +45,10 @@ export async function POST(request: Request) {
 
     if (status === 'approved') {
       paymentStatus = 'approved'
-      orderStatus   = 'confirmed'
+      orderStatus   = 'processing'
     } else if (status === 'declined') {
       paymentStatus = 'declined'
-      orderStatus   = 'cancelled'
+      orderStatus   = 'pending'
     } else {
       paymentStatus = 'needs_clarification'
       orderStatus   = undefined

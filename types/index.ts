@@ -2,7 +2,7 @@ export type Lang = 'sq' | 'en'
 
 export type AudienceType = 'home' | 'business' | 'both'
 
-export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+export type OrderStatus = 'pending' | 'processing' | 'completed'
 
 export type PaymentStatus = 'pending' | 'approved' | 'declined' | 'cancelled' | 'needs_clarification'
 

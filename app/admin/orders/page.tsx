@@ -1,10 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { AdminHeader } from '@/components/admin/AdminHeader'
+import { ORDER_STATUSES } from '@/lib/orders/status'
 import { statusColor, statusLabel } from '@/lib/utils'
 import Link from 'next/link'
 import { OrdersPageClient } from './OrdersPageClient'
-
-const ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']
 
 async function getOrders(status?: string) {
   const supabase = await createClient()

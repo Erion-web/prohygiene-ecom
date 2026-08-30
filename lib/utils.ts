@@ -60,11 +60,12 @@ export function audienceLabel(type: AudienceType, lang: Lang): string {
 export function statusLabel(status: string, lang: Lang): string {
   const labels: Record<string, { sq: string; en: string }> = {
     pending: { sq: 'Në pritje', en: 'Pending' },
-    confirmed: { sq: 'Konfirmuar', en: 'Confirmed' },
+    confirmed: { sq: 'Në përpunim', en: 'Processing' },
     processing: { sq: 'Në përpunim', en: 'Processing' },
-    shipped: { sq: 'Dërguar', en: 'Shipped' },
-    delivered: { sq: 'Dorëzuar', en: 'Delivered' },
-    cancelled: { sq: 'Anuluar', en: 'Cancelled' },
+    shipped: { sq: 'Në përpunim', en: 'Processing' },
+    delivered: { sq: 'Përfunduar', en: 'Completed' },
+    completed: { sq: 'Përfunduar', en: 'Completed' },
+    cancelled: { sq: 'Në pritje', en: 'Pending' },
     approved: { sq: 'Aprovuar', en: 'Approved' },
     declined: { sq: 'Refuzuar', en: 'Declined' },
     needs_clarification: { sq: 'Kërkon sqarim', en: 'Needs clarification' },
@@ -75,11 +76,12 @@ export function statusLabel(status: string, lang: Lang): string {
 export function statusColor(status: string): string {
   const colors: Record<string, string> = {
     pending: 'text-amber-600 bg-amber-50 border-amber-200',
-    confirmed: 'text-blue-600 bg-blue-50 border-blue-200',
+    confirmed: 'text-indigo-600 bg-indigo-50 border-indigo-200',
     processing: 'text-indigo-600 bg-indigo-50 border-indigo-200',
-    shipped: 'text-purple-600 bg-purple-50 border-purple-200',
+    shipped: 'text-indigo-600 bg-indigo-50 border-indigo-200',
     delivered: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-    cancelled: 'text-red-600 bg-red-50 border-red-200',
+    completed: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+    cancelled: 'text-amber-600 bg-amber-50 border-amber-200',
     approved: 'text-emerald-600 bg-emerald-50 border-emerald-200',
     declined: 'text-red-600 bg-red-50 border-red-200',
     needs_clarification: 'text-orange-600 bg-orange-50 border-orange-200',

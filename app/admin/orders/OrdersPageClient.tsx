@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ShoppingBag } from 'lucide-react'
 import { OrdersAdminTable, type OrderTableRow } from '@/components/admin/OrdersAdminTable'
 import { formatPrice, statusColor, statusLabel } from '@/lib/utils'
+import { normalizeOrderStatus } from '@/lib/orders/status'
 
 interface OrdersPageClientProps {
   orders: OrderTableRow[]
@@ -29,9 +30,8 @@ export function OrdersPageClient({ orders }: OrdersPageClientProps) {
             className="admin-row-card active:scale-[0.99]"
           >
             <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-              order.status === 'delivered' ? 'bg-emerald-500' :
-              order.status === 'cancelled' ? 'bg-red-400' :
-              order.status === 'shipped' ? 'bg-blue-500' :
+              normalizeOrderStatus(order.status) === 'completed' ? 'bg-emerald-500' :
+              normalizeOrderStatus(order.status) === 'processing' ? 'bg-indigo-500' :
               'bg-amber-400'
             }`} />
             <div className="flex-1 min-w-0">

@@ -8,15 +8,17 @@ import Link from 'next/link'
 import { ShoppingBag, TrendingUp, Users, Package } from 'lucide-react'
 import { DashboardRecentOrders } from '@/components/admin/DashboardRecentOrders'
 import { formatPrice, statusLabel } from '@/lib/utils'
+import { normalizeOrderStatus } from '@/lib/orders/status'
 
 const MONTH_LABELS = ['Jan', 'Shk', 'Mar', 'Pri', 'Maj', 'Qer', 'Kor', 'Gus', 'Sht', 'Tet', 'Nën', 'Dhj']
 const STATUS_COLORS: Record<string, string> = {
   pending: '#f59e0b',
-  confirmed: '#0e95bd',
   processing: '#6366f1',
-  shipped: '#8b5cf6',
+  completed: '#10b981',
+  confirmed: '#6366f1',
+  shipped: '#6366f1',
   delivered: '#10b981',
-  cancelled: '#ef4444',
+  cancelled: '#f59e0b',
 }
 
 function pctChange(current: number, previous: number): string | null {
@@ -94,7 +96,8 @@ async function getDashboardData() {
 
   const statusCounts = new Map<string, number>()
   for (const row of statusOrdersRes.data ?? []) {
-    statusCounts.set(row.status, (statusCounts.get(row.status) ?? 0) + 1)
+    const status = normalizeOrderStatus(row.status)
+    statusCounts.set(status, (statusCounts.get(status) ?? 0) + 1)
   }
 
   const statusData = Array.from(statusCounts.entries())
