@@ -9,10 +9,14 @@ import {
   dailyConsumptionRate,
 } from '@/lib/lease/utils'
 
+function isAuthorizedCron(req: Request): boolean {
+  if (req.headers.get('x-vercel-cron') === '1') return true
+  if (process.env.NODE_ENV === 'development') return true
+  return false
+}
+
 export async function POST(req: Request) {
-  const authHeader = req.headers.get('authorization')
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!isAuthorizedCron(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

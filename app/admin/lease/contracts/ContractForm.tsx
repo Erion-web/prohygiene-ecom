@@ -4,10 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Save, X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { saveContractAction } from '@/lib/actions/contracts'
 import type { LeaseDeviceOption } from '@/lib/lease/device-select'
 import { LeaseDeviceSelect, LeaseDeviceSelectFooter } from '@/components/admin/lease/LeaseDeviceSelect'
-import { seedDeployedDevices } from '@/lib/lease/seed-deployed-devices'
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { formatClientAddress, primaryClientAddress } from '@/lib/lease/addresses'
 import { materialOptionLabel } from '@/lib/lease/sync-material'
@@ -175,12 +174,14 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
       return
     }
     setLoading(true)
-    const supabase = createClient()
     const durationMonths = parseInt(form.duration_months) || 12
     const validDevices = deviceRows.filter(r => r.product_id && r.quantity)
     const deviceCount = validDevices.reduce((sum, r) => sum + (parseInt(r.quantity) || 1), 0)
-    const payload = {
-      ...(editingId ? { contract_number: contractNumber! } : {}),
+    const validMaterials = materialRows.filter(r => r.material_id)
+
+    const result = await saveContractAction({
+      id: editingId ?? undefined,
+      contract_number: contractNumber ?? undefined,
       client_id: form.client_id,
       duration_months: durationMonths,
       starts_at: form.starts_at,
@@ -195,68 +196,23 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
       consumption_period: form.consumption_period,
       status: form.status,
       notes: form.notes.trim() || null,
-    }
+      devices: validDevices.map(row => {
+        const addr = selectedAddresses.find(a => a.id === row.address_id) ?? primaryClientAddress(selectedAddresses)
+        return {
+          product_id: row.product_id,
+          quantity: parseInt(row.quantity) || 1,
+          location: addr ? formatClientAddress(addr) : '',
+          city: addr?.city,
+          address: addr?.address,
+        }
+      }),
+      materials: validMaterials.map(r => ({
+        material_id: r.material_id,
+        quantity: parseFloat(r.quantity) || 0,
+      })),
+    })
 
-    let contractId = editingId
-    let error
-
-    if (editingId) {
-      const res = await supabase.from('lease_contracts').update(payload).eq('id', editingId)
-      error = res.error
-    } else {
-      const res = await supabase.from('lease_contracts').insert(payload).select('id').single()
-      error = res.error
-      contractId = res.data?.id ?? null
-    }
-
-    if (!error && contractId) {
-      await supabase.from('contract_devices').delete().eq('contract_id', contractId)
-      await supabase.from('contract_materials').delete().eq('contract_id', contractId)
-
-      if (validDevices.length > 0) {
-        const { error: dErr } = await supabase.from('contract_devices').insert(
-          validDevices.map(r => ({
-            contract_id: contractId,
-            product_id: r.product_id,
-            quantity: parseInt(r.quantity) || 1,
-          }))
-        )
-        if (dErr) error = dErr
-      }
-
-      if (!error) {
-        const seedErr = await seedDeployedDevices(supabase, {
-          contractId,
-          clientId: form.client_id,
-          startsAt: form.starts_at,
-          devices: validDevices.map(row => {
-            const addr = selectedAddresses.find(a => a.id === row.address_id) ?? primaryClientAddress(selectedAddresses)
-            return {
-              product_id: row.product_id,
-              quantity: row.quantity,
-              location: addr ? formatClientAddress(addr) : '',
-              city: addr?.city,
-              address: addr?.address,
-            }
-          }),
-        })
-        if (seedErr) error = seedErr
-      }
-
-      const validMaterials = materialRows.filter(r => r.material_id)
-      if (validMaterials.length > 0) {
-        const { error: mErr } = await supabase.from('contract_materials').insert(
-          validMaterials.map(r => ({
-            contract_id: contractId,
-            material_id: r.material_id,
-            quantity: parseFloat(r.quantity) || 0,
-          }))
-        )
-        if (mErr) error = mErr
-      }
-    }
-
-    if (error) toast.error(error.message)
+    if (!result.ok) toast.error(result.error)
     else {
       toast.success(editingId ? 'Kontrata u përditësua' : 'Kontrata u krijua')
       router.push(returnTo)

@@ -4,9 +4,9 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Droplets, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { materialOptionLabel } from '@/lib/lease/sync-material'
+import { recordRefillAction } from '@/lib/actions/refills'
 import type { ContractDeviceChoice } from '@/lib/lease/contract-activity'
 
 export function ContractRefillCard({
@@ -42,30 +42,20 @@ export function ContractRefillCard({
       return
     }
     setLoading(true)
-    const supabase = createClient()
-    const { error: refillErr } = await supabase.from('refill_events').insert({
+    const capacity = selected?.materials.find(m => m.id === materialId)?.capacity
+    const result = await recordRefillAction({
       deployed_device_id: deviceId,
       material_id: materialId,
       amount: parsed,
+      capacity: capacity && capacity > 0 ? capacity : null,
     })
-    if (refillErr) {
-      toast.error(refillErr.message)
-      setLoading(false)
+    setLoading(false)
+    if (!result.ok) {
+      toast.error(result.error)
       return
     }
-    const capacity = selected?.materials.find(m => m.id === materialId)?.capacity
-    await supabase
-      .from('device_consumable_levels')
-      .update({
-        current_level: capacity && capacity > 0 ? capacity : parsed,
-        last_refilled_at: new Date().toISOString(),
-      })
-      .eq('deployed_device_id', deviceId)
-      .eq('material_id', materialId)
-
     toast.success('Rimbushja u regjistrua')
     setAmount('')
-    setLoading(false)
     router.refresh()
   }
 

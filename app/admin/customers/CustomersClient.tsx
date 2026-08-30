@@ -1,11 +1,14 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Download, Users, Building2, User, Plus, X, Save, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
 import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 import { CITIES } from '@/lib/cities'
+import { customerFormSchema } from '@/lib/validation/admin-schemas'
+import { enableLeaseClientAction, disableLeaseClientAction } from '@/lib/actions/customers'
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { CustomerDetailPanel } from '@/components/admin/CustomerDetailPanel'
@@ -107,7 +110,11 @@ function exportCSV(customers: Profile[], leaseClients: LeaseClient[]) {
 export function CustomersClient({ customers, leaseClients, orders, userAddresses }: Props) {
   const refresh = useScrollPreservingRefresh()
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState(defaultForm)
+  const createForm = useForm({
+    resolver: zodResolver(customerFormSchema),
+    defaultValues: defaultForm,
+  })
+  const createCustomerType = createForm.watch('customer_type')
   const [loading, setLoading] = useState(false)
   const [cityFilter, setCityFilter] = useState('')
   const [selectedDetail, setSelectedDetail] = useState<{ type: 'profile' | 'lease' | 'guest'; id: string } | null>(null)
@@ -258,26 +265,17 @@ export function CustomersClient({ customers, leaseClients, orders, userAddresses
     ? orders.filter(o => o.customer_email?.toLowerCase() === detailEmail)
     : []
 
-  const update = (key: string, value: string | boolean) => {
-    setForm(prev => ({ ...prev, [key]: value }))
-  }
-
   const reset = () => {
     setShowForm(false)
-    setForm(defaultForm)
+    createForm.reset(defaultForm)
   }
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.full_name || !form.email || !form.city) {
-      toast.error('Plotësoni emrin, emailin dhe qytetin')
-      return
-    }
+  const handleCreate = createForm.handleSubmit(async values => {
     setLoading(true)
     const res = await fetch('/api/admin/customers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify(values),
     })
     const data = await res.json()
     setLoading(false)
@@ -288,67 +286,31 @@ export function CustomersClient({ customers, leaseClients, orders, userAddresses
     toast.success('Klienti u krijua')
     reset()
     refresh()
-  }
+  })
 
   const enableLease = async (profile: Profile) => {
-    const supabase = createClient()
     const existing = leaseForProfile(profile, leaseClients)
     if (existing) {
-      if (!existing.profile_id) {
-        const { error } = await supabase
-          .from('lease_clients')
-          .update({ profile_id: profile.id })
-          .eq('id', existing.id)
-        if (error) {
-          toast.error(error.message)
-          return
-        }
+      const result = await enableLeaseClientAction(profile.id)
+      if (!result.ok) {
+        toast.error(result.error)
+        return
       }
       refresh()
       return
     }
 
-    const { data: created, error } = await supabase.from('lease_clients').insert({
-      profile_id: profile.id,
-      company_name: profile.business_name || profile.full_name || profile.email,
-      contact_name: profile.full_name || profile.email,
-      email: profile.email,
-      phone: profile.phone,
-      city: profile.city,
-      address: profile.address,
-      employee_count: 0,
-      payment_status: 'paid',
-    }).select('id').single()
-    if (error) toast.error(error.message)
+    const result = await enableLeaseClientAction(profile.id)
+    if (!result.ok) toast.error(result.error)
     else {
-      if (created?.id && (profile.city || profile.address)) {
-        await supabase.from('lease_client_addresses').insert({
-          client_id: created.id,
-          label: 'Kryesore',
-          city: profile.city || 'Prishtinë',
-          address: profile.address || '',
-          is_primary: true,
-        })
-      }
       toast.success('Klienti u shënua si shfrytëzues')
       refresh()
     }
   }
 
   const disableLease = async (lease: LeaseClient) => {
-    const supabase = createClient()
-    const { count } = await supabase
-      .from('lease_contracts')
-      .select('id', { count: 'exact', head: true })
-      .eq('client_id', lease.id)
-
-    if ((count ?? 0) > 0) {
-      toast.error('Ky klient ka kontrata. Hiq kontrata para se ta çaktivizosh.')
-      return
-    }
-
-    const { error } = await supabase.from('lease_clients').delete().eq('id', lease.id)
-    if (error) toast.error(error.message)
+    const result = await disableLeaseClientAction(lease.id)
+    if (!result.ok) toast.error(result.error)
     else {
       toast.success('Klienti nuk është më shfrytëzues')
       refresh()
@@ -525,57 +487,78 @@ export function CustomersClient({ customers, leaseClients, orders, userAddresses
           <form onSubmit={handleCreate} className="grid sm:grid-cols-2 gap-3">
             <div>
               <label className="label">Emri *</label>
-              <input value={form.full_name} onChange={e => update('full_name', e.target.value)} className="input" required />
+              <input {...createForm.register('full_name')} className="input" />
+              {createForm.formState.errors.full_name && (
+                <p className="text-red-500 text-xs mt-1">{createForm.formState.errors.full_name.message}</p>
+              )}
             </div>
             <div>
               <label className="label">Email *</label>
-              <input type="email" value={form.email} onChange={e => update('email', e.target.value)} className="input" required />
+              <input type="email" {...createForm.register('email')} className="input" />
+              {createForm.formState.errors.email && (
+                <p className="text-red-500 text-xs mt-1">{createForm.formState.errors.email.message}</p>
+              )}
             </div>
             <div>
               <label className="label">Telefoni</label>
-              <input value={form.phone} onChange={e => update('phone', e.target.value)} className="input" />
+              <input {...createForm.register('phone')} className="input" />
             </div>
             <div>
               <label className="label">Qyteti *</label>
-              <SearchableSelect
-                value={form.city}
-                onChange={city => update('city', city)}
-                options={CITIES.map(city => ({ value: city, label: city }))}
-                placeholder="Zgjedh qytetin..."
-                searchPlaceholder="Kërko qytetin..."
+              <Controller
+                control={createForm.control}
+                name="city"
+                render={({ field }) => (
+                  <SearchableSelect
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={CITIES.map(city => ({ value: city, label: city }))}
+                    placeholder="Zgjedh qytetin..."
+                    searchPlaceholder="Kërko qytetin..."
+                  />
+                )}
               />
+              {createForm.formState.errors.city && (
+                <p className="text-red-500 text-xs mt-1">{createForm.formState.errors.city.message}</p>
+              )}
             </div>
             <div className="sm:col-span-2">
               <label className="label">Adresa</label>
-              <input value={form.address} onChange={e => update('address', e.target.value)} className="input" />
+              <input {...createForm.register('address')} className="input" />
             </div>
             <div>
               <label className="label">Tipi</label>
-              <select value={form.customer_type} onChange={e => update('customer_type', e.target.value)} className="input">
+              <select {...createForm.register('customer_type')} className="input">
                 <option value="individual">Individual</option>
                 <option value="business">Biznes</option>
               </select>
             </div>
             <div>
               <label className="label">Shfrytëzues</label>
-              <select
-                value={form.is_lease ? 'po' : 'jo'}
-                onChange={e => update('is_lease', e.target.value === 'po')}
-                className="input"
-              >
-                <option value="jo">JO</option>
-                <option value="po">PO</option>
-              </select>
+              <Controller
+                control={createForm.control}
+                name="is_lease"
+                render={({ field }) => (
+                  <select
+                    value={field.value ? 'po' : 'jo'}
+                    onChange={e => field.onChange(e.target.value === 'po')}
+                    className="input"
+                  >
+                    <option value="jo">JO</option>
+                    <option value="po">PO</option>
+                  </select>
+                )}
+              />
             </div>
-            {form.customer_type === 'business' && (
+            {createCustomerType === 'business' && (
               <>
                 <div>
                   <label className="label">Biznesi</label>
-                  <input value={form.business_name} onChange={e => update('business_name', e.target.value)} className="input" />
+                  <input {...createForm.register('business_name')} className="input" />
                 </div>
                 <div>
                   <label className="label">Nr. Fiskal</label>
-                  <input value={form.fiscal_number} onChange={e => update('fiscal_number', e.target.value)} className="input" />
+                  <input {...createForm.register('fiscal_number')} className="input" />
                 </div>
               </>
             )}

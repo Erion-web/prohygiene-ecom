@@ -7,9 +7,10 @@ import { X, Loader2, Save, ImagePlus, Star, Home, Building2, Users } from 'lucid
 import toast from 'react-hot-toast'
 import { useDropzone } from 'react-dropzone'
 import { createClient } from '@/lib/supabase/client'
+import { saveProductAction } from '@/lib/actions/products'
 import { slugify } from '@/lib/utils'
 import { SearchableSelect } from '@/components/ui/searchable-select'
-import { PRODUCT_UNITS, syncProductMaterial, normalizeMaterialUnit, materialOptionLabel, type MaterialProductOption } from '@/lib/lease/sync-material'
+import { PRODUCT_UNITS, normalizeMaterialUnit, materialOptionLabel, type MaterialProductOption } from '@/lib/lease/sync-material'
 import type { Product, AudienceType, DeviceMaterial } from '@/types'
 
 interface Category { id: string; name_sq: string; name_en: string }
@@ -158,9 +159,10 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
     }
     setLoading(true)
 
-    const [coverImage, ...galleryImages] = images
+    const validRows = deviceMaterialRows.filter(r => r.material_id && r.capacity)
 
-    const payload = {
+    const result = await saveProductAction({
+      id: product?.id,
       sku: form.sku,
       name_sq: form.name_sq,
       name_en: form.name_en,
@@ -169,70 +171,31 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
       description_en: form.description_en || null,
       category_id: form.category_id || null,
       audience_type: form.audience_type,
-      listing_type: form.for_sale ? 'sale' : 'lease',
-      available_for_lease: form.for_lease,
+      for_sale: form.for_sale,
+      for_lease: form.for_lease,
       price: parseFloat(form.price),
       sale_price: form.sale_price ? parseFloat(form.sale_price) : null,
-      stock: parseInt(form.stock),
+      stock: parseInt(form.stock, 10) || 0,
       unit: normalizeMaterialUnit(form.unit),
-      vat_rate: parseFloat(form.vat_rate),
-      image_url: coverImage ?? null,
-      gallery_urls: galleryImages,
+      vat_rate: parseFloat(form.vat_rate) || 18,
       brand_id: form.brand_id || null,
       is_featured: form.is_featured,
       is_best_seller: form.is_best_seller,
       is_active: form.is_active,
       is_material: form.is_material,
-    }
-
-    let error
-    let productId = product?.id
-    let syncError: string | null = null
-
-    if (product) {
-      const res = await supabase.from('products').update(payload).eq('id', product.id)
-      error = res.error
-    } else {
-      const res = await supabase.from('products').insert(payload).select('id').single()
-      error = res.error
-      productId = res.data?.id
-    }
-
-    if (!error && form.for_lease && productId) {
-      await supabase.from('device_materials').delete().eq('product_id', productId)
-      const validRows = deviceMaterialRows.filter(r => r.material_id && r.capacity)
-      if (validRows.length > 0) {
-        const { error: dmError } = await supabase.from('device_materials').insert(
-          validRows.map(r => ({
-            product_id: productId,
+      images,
+      device_materials: form.for_lease
+        ? validRows.map(r => ({
             material_id: r.material_id,
             capacity: parseFloat(r.capacity),
           }))
-        )
-        if (dmError) error = dmError
-      }
-    } else if (!error && productId && !form.for_lease) {
-      await supabase.from('device_materials').delete().eq('product_id', productId)
-    }
-
-    if (!error && productId) {
-      const materialSync = await syncProductMaterial(supabase, productId, {
-        is_material: form.is_material,
-        name_sq: form.name_sq,
-        name_en: form.name_en,
-        category_id: form.category_id || null,
-        unit: form.unit,
-        is_active: form.is_active,
-      })
-      if (materialSync.error) syncError = materialSync.error
-    }
+        : [],
+    })
 
     setLoading(false)
 
-    if (error) {
-      toast.error(error.message)
-    } else if (syncError) {
-      toast.error(syncError)
+    if (!result.ok) {
+      toast.error(result.error)
     } else {
       toast.success(product ? 'Produkti u përditësua' : 'Produkti u shtua')
       router.push(returnTo ?? '/admin/products')

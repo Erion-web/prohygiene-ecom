@@ -1,10 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronLeft, ChevronRight, History, Send, Users } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { CITIES } from '@/lib/cities'
+import { pageNumbers } from '@/lib/admin/pagination'
+import { newsletterFormSchema } from '@/lib/validation/admin-schemas'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import {
   Dialog,
@@ -30,21 +34,19 @@ function campaignText(value: string) {
 
 const PAGE_SIZE = 20
 
-function pageNumbers(current: number, total: number): Array<number | 'gap'> {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-  const set = new Set([1, total, current, current - 1, current + 1])
-  const sorted = Array.from(set).filter(p => p >= 1 && p <= total).sort((a, b) => a - b)
-  const out: Array<number | 'gap'> = []
-  for (let i = 0; i < sorted.length; i++) {
-    if (i > 0 && sorted[i] - sorted[i - 1] > 1) out.push('gap')
-    out.push(sorted[i])
-  }
-  return out
-}
-
 export function NewsletterClient({ recipients, history }: NewsletterClientProps) {
-  const [subject, setSubject] = useState('')
-  const [message, setMessage] = useState('')
+  const {
+    register,
+    handleSubmit,
+    reset: resetCompose,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(newsletterFormSchema),
+    defaultValues: { subject: '', message: '' },
+  })
+  const subject = watch('subject')
+  const message = watch('message')
   const [sending, setSending] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [search, setSearch] = useState('')
@@ -139,7 +141,7 @@ export function NewsletterClient({ recipients, history }: NewsletterClientProps)
 
   const clearSelected = () => setSelected(new Set())
 
-  const handleSend = async () => {
+  const handleSend = handleSubmit(async ({ subject, message }) => {
     if (selectedCount === 0) {
       toast.error('Zgjidhni të paktën një marrës')
       return
@@ -157,8 +159,7 @@ export function NewsletterClient({ recipients, history }: NewsletterClientProps)
       if (data.campaign) {
         setCampaigns(prev => [data.campaign as NewsletterCampaign, ...prev.filter(item => item.id !== data.campaign.id)])
       }
-      setSubject('')
-      setMessage('')
+      resetCompose()
       setConfirming(false)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Dërgimi dështoi.')
@@ -166,7 +167,7 @@ export function NewsletterClient({ recipients, history }: NewsletterClientProps)
       setSending(false)
       setConfirming(false)
     }
-  }
+  })
 
   return (
     <div>
@@ -338,20 +339,20 @@ export function NewsletterClient({ recipients, history }: NewsletterClientProps)
           <input
             type="text"
             className="input"
-            value={subject}
-            onChange={e => setSubject(e.target.value)}
+            {...register('subject')}
             placeholder="p.sh. Ofertë e re -20% në detergjentë"
           />
+          {errors.subject && <p className="text-red-500 text-xs mt-1">{errors.subject.message}</p>}
         </div>
 
         <div>
           <label className="label">Mesazhi (HTML lejohet)</label>
           <textarea
             className="input resize-none h-48"
-            value={message}
-            onChange={e => setMessage(e.target.value)}
+            {...register('message')}
             placeholder="Shkruani mesazhin e newsletter-it..."
           />
+          {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message.message}</p>}
         </div>
 
         {!confirming ? (

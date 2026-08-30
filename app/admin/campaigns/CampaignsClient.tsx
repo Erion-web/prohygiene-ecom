@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Plus, Edit, Trash2, Tag, Clock, Loader2, X, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { saveCampaignAction, deleteCampaignAction } from '@/lib/actions/campaigns'
 import { slugify, formatPrice } from '@/lib/utils'
 import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 import { Badge } from '@/components/ui/Badge'
@@ -59,34 +59,26 @@ export function CampaignsClient({ initialCampaigns, products }: { initialCampaig
       return
     }
     setLoading(true)
-    const supabase = createClient()
 
-    const payload = {
-      ...form,
+    const result = await saveCampaignAction({
+      id: editingId ?? undefined,
+      title_sq: form.title_sq,
+      title_en: form.title_en,
+      description_sq: form.description_sq || null,
+      description_en: form.description_en || null,
+      slug: form.slug,
+      discount_type: form.discount_type,
       discount_value: parseFloat(form.discount_value),
-    }
-
-    let campaignId = editingId
-    let error
-
-    if (editingId) {
-      const res = await supabase.from('campaigns').update(payload).eq('id', editingId)
-      error = res.error
-    } else {
-      const res = await supabase.from('campaigns').insert(payload).select().single()
-      error = res.error
-      campaignId = res.data?.id ?? null
-    }
-
-    if (!error && campaignId && selectedProducts.length > 0) {
-      await supabase.from('campaign_products').delete().eq('campaign_id', campaignId)
-      await supabase.from('campaign_products').insert(
-        selectedProducts.map(pid => ({ campaign_id: campaignId!, product_id: pid }))
-      )
-    }
+      audience_type: form.audience_type,
+      starts_at: form.starts_at,
+      ends_at: form.ends_at,
+      is_active: form.is_active,
+      show_on_homepage: form.show_on_homepage,
+      product_ids: selectedProducts,
+    })
 
     setLoading(false)
-    if (error) toast.error(error.message)
+    if (!result.ok) toast.error(result.error)
     else {
       toast.success(editingId ? 'Kampanja u përditësua' : 'Kampanja u krijua')
       reset()
@@ -96,9 +88,8 @@ export function CampaignsClient({ initialCampaigns, products }: { initialCampaig
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Fshi kampanjën "${title}"?`)) return
-    const supabase = createClient()
-    const { error } = await supabase.from('campaigns').delete().eq('id', id)
-    if (error) toast.error(error.message)
+    const result = await deleteCampaignAction(id)
+    if (!result.ok) toast.error(result.error)
     else { toast.success('Kampanja u fshi'); refresh() }
   }
 
