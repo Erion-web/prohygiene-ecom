@@ -46,7 +46,7 @@ export async function syncProductMaterial(
     name_sq: data.name_sq,
     name_en: data.name_en || data.name_sq,
     unit,
-    is_active: data.is_active,
+    is_active: true,
   }
 
   if (existing?.id) {
@@ -62,12 +62,92 @@ export type MaterialProductOption = {
   id: string
   product_id: string
   name_sq: string
+  sku?: string
   unit: MaterialUnit
   is_active: boolean
 }
 
-export function materialOptionLabel(name: string, unit: string, isActive = true) {
-  return isActive ? `${name} (${unit})` : `${name} (${unit}) · Joaktiv`
+export function materialOptionLabel(name: string, unit: string, isActive = true, sku?: string) {
+  const base = sku ? `${name} (${unit}) · ${sku}` : `${name} (${unit})`
+  return isActive ? base : `${base} · Joaktiv`
+}
+
+async function ensureMaterialRows(
+  supabase: SupabaseClient,
+  products: Array<{
+    id: string
+    name_sq: string
+    name_en: string | null
+    category_id: string | null
+    unit: string
+  }>
+) {
+  const byProduct = new Map<string, string>()
+  if (products.length === 0) return byProduct
+
+  const { data: existing } = await supabase
+    .from('materials')
+    .select('id, product_id')
+    .in('product_id', products.map(p => p.id))
+
+  for (const row of existing ?? []) {
+    if (row.product_id) byProduct.set(row.product_id, row.id)
+  }
+
+  const missing = products.filter(p => !byProduct.has(p.id))
+  if (missing.length === 0) return byProduct
+
+  let fallbackCategory = missing.find(p => p.category_id)?.category_id ?? null
+  if (!fallbackCategory) {
+    const { data: category } = await supabase.from('categories').select('id').limit(1).maybeSingle()
+    fallbackCategory = category?.id ?? null
+  }
+
+  for (const product of missing) {
+    const categoryId = product.category_id || fallbackCategory
+    if (!categoryId) continue
+
+    const payload = {
+      product_id: product.id,
+      category_id: categoryId,
+      name_sq: product.name_sq,
+      name_en: product.name_en || product.name_sq,
+      unit: normalizeMaterialUnit(product.unit),
+      is_active: true,
+    }
+
+    const { data: upserted } = await supabase
+      .from('materials')
+      .upsert(payload, { onConflict: 'product_id' })
+      .select('id, product_id')
+      .maybeSingle()
+
+    if (upserted?.product_id && upserted.id) {
+      byProduct.set(upserted.product_id, upserted.id)
+      continue
+    }
+
+    const { data: inserted } = await supabase
+      .from('materials')
+      .insert(payload)
+      .select('id, product_id')
+      .maybeSingle()
+
+    if (inserted?.product_id && inserted.id) {
+      byProduct.set(inserted.product_id, inserted.id)
+      continue
+    }
+
+    const { data: found } = await supabase
+      .from('materials')
+      .select('id, product_id')
+      .eq('product_id', product.id)
+      .maybeSingle()
+
+    if (found?.product_id && found.id) byProduct.set(found.product_id, found.id)
+  }
+
+  return byProduct
 }
 
 export async function listMaterialProductOptions(
@@ -76,57 +156,19 @@ export async function listMaterialProductOptions(
 ): Promise<MaterialProductOption[]> {
   let query = supabase
     .from('products')
-    .select('id, name_sq, name_en, category_id, unit, is_active')
+    .select('id, sku, name_sq, name_en, category_id, unit, is_active')
     .eq('is_material', true)
     .order('name_sq')
 
   if (q) query = query.or(`name_sq.ilike.%${q}%,name_en.ilike.%${q}%,sku.ilike.%${q}%`)
 
-  const { data: products } = await query
-  if (!products?.length) return []
-
-  const productIds = products.map(p => p.id)
-  const { data: existing } = await supabase
-    .from('materials')
-    .select('id, product_id')
-    .in('product_id', productIds)
-
-  const byProduct = new Map(
-    (existing ?? []).filter(m => m.product_id).map(m => [m.product_id as string, m.id as string])
-  )
-  const missing = products.filter(p => !byProduct.has(p.id) && p.category_id)
-
-  if (missing.length > 0) {
-    const { data: upserted } = await supabase
-      .from('materials')
-      .upsert(
-        missing.map(p => ({
-          product_id: p.id,
-          category_id: p.category_id,
-          name_sq: p.name_sq,
-          name_en: p.name_en || p.name_sq,
-          unit: normalizeMaterialUnit(p.unit),
-          is_active: true,
-        })),
-        { onConflict: 'product_id' }
-      )
-      .select('id, product_id')
-
-    for (const row of upserted ?? []) {
-      if (row.product_id) byProduct.set(row.product_id, row.id)
-    }
+  const { data: products, error } = await query
+  if (error || !products?.length) {
+    if (error) console.error('[materials] product list failed', error.message)
+    return []
   }
 
-  const unresolved = products.filter(p => !byProduct.has(p.id)).map(p => p.id)
-  if (unresolved.length > 0) {
-    const { data: again } = await supabase
-      .from('materials')
-      .select('id, product_id')
-      .in('product_id', unresolved)
-    for (const row of again ?? []) {
-      if (row.product_id) byProduct.set(row.product_id, row.id)
-    }
-  }
+  const byProduct = await ensureMaterialRows(supabase, products)
 
   return products
     .filter(p => byProduct.has(p.id))
@@ -134,6 +176,7 @@ export async function listMaterialProductOptions(
       id: byProduct.get(p.id) as string,
       product_id: p.id,
       name_sq: p.name_sq,
+      sku: p.sku,
       unit: normalizeMaterialUnit(p.unit),
       is_active: Boolean(p.is_active),
     }))

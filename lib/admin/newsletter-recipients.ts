@@ -1,5 +1,13 @@
 export type NewsletterRecipientSource = 'customer' | 'lease' | 'guest' | 'subscriber'
 
+export type NewsletterCampaign = {
+  id: string
+  subject: string
+  message: string
+  audience_count: number
+  sent_at: string
+}
+
 export type NewsletterRecipient = {
   email: string
   name: string
