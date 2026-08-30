@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { ProductCard } from '@/components/store/ProductCard'
 import { Badge } from '@/components/ui/Badge'
 import { Clock, Tag } from 'lucide-react'
@@ -8,7 +8,7 @@ import { Clock, Tag } from 'lucide-react'
 interface Props { params: Promise<{ slug: string }> }
 
 async function getCampaign(slug: string) {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data: campaign } = await supabase
     .from('campaigns')
     .select('*')

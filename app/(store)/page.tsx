@@ -2,14 +2,12 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Truck, ShieldCheck, Building2, FileText, Star, Tag, Home, ChefHat } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/store/ProductCard'
 import { CategorySidebarNav } from '@/components/store/CategorySidebarNav'
 import { HeroCarousel } from '@/components/store/HeroCarousel'
 import { BundlesSection } from '@/components/store/BundlesSection'
 import { ProductGridSkeleton } from '@/components/ui/Skeleton'
-import { mockCategories, mockFeaturedProducts, mockBestSellers } from '@/lib/data/mock'
-import type { Product, Category } from '@/types'
+import { getHomeCatalog } from '@/lib/store/catalog'
 
 export const metadata: Metadata = {
   title: 'Detergjente & Produkte Higjiene Online | Dërgim 24h Kosovë',
@@ -26,43 +24,9 @@ const lang = 'sq' as const
 
 async function getHomeData() {
   try {
-    const supabase = await createClient()
-    const [productsRes, categoriesRes, bannersRes] = await Promise.all([
-      supabase
-        .from('products')
-        .select('*, category:categories(*)')
-        .eq('is_active', true)
-        .eq('listing_type', 'sale')
-        .order('created_at', { ascending: false })
-        .limit(24),
-      supabase
-        .from('categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order'),
-      supabase
-        .from('banners')
-        .select('id, image_url, campaign:campaigns(slug, title_sq, title_en, ends_at)')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true }),
-    ])
-    const products: Product[] = productsRes.data ?? []
-    const categories: Category[] = categoriesRes.data ?? []
-
-    return {
-      featured: products.filter(p => p.is_featured).slice(0, 8).length > 0
-        ? products.filter(p => p.is_featured).slice(0, 8)
-        : mockFeaturedProducts,
-      bestSellers: products.filter(p => p.is_best_seller).slice(0, 8).length > 0
-        ? products.filter(p => p.is_best_seller).slice(0, 8)
-        : mockBestSellers,
-      categories: categories.length > 0 ? categories : mockCategories,
-      banners: (bannersRes.data ?? []).map(b => ({
-        ...b,
-        campaign: Array.isArray(b.campaign) ? (b.campaign[0] ?? null) : (b.campaign ?? null),
-      })),
-    }
+    return await getHomeCatalog()
   } catch {
+    const { mockCategories, mockFeaturedProducts, mockBestSellers } = await import('@/lib/data/mock')
     return {
       featured: mockFeaturedProducts,
       bestSellers: mockBestSellers,

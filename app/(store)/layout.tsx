@@ -1,18 +1,7 @@
 import { Navbar } from '@/components/store/Navbar'
 import { Footer } from '@/components/store/Footer'
-import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
-import type { Category } from '@/types'
-
-async function getCategories(): Promise<Category[]> {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('is_active', true)
-    .order('sort_order')
-  return data ?? []
-}
+import { getActiveCategories } from '@/lib/store/catalog'
 
 export default async function StoreLayout({
   children,
@@ -20,7 +9,7 @@ export default async function StoreLayout({
   children: React.ReactNode
 }) {
   const [categories, user] = await Promise.all([
-    getCategories(),
+    getActiveCategories(),
     getAuthUser(),
   ])
 

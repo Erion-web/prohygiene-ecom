@@ -3,6 +3,7 @@ import { AdminHeader } from '@/components/admin/AdminHeader'
 import { ORDER_STATUSES } from '@/lib/orders/status'
 import { statusColor, statusLabel } from '@/lib/utils'
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import { OrdersPageClient } from './OrdersPageClient'
 
 async function getOrders(status?: string) {
@@ -23,7 +24,16 @@ export default async function OrdersAdminPage({
 
   return (
     <div>
-      <AdminHeader title="Porositë" subtitle={`${orders.length} porosi`} />
+      <AdminHeader
+        title="Porositë"
+        subtitle={`${orders.length} porosi`}
+        actions={
+          <Link href="/admin/orders/new" className="btn-primary gap-2 text-sm py-2">
+            <Plus size={15} />
+            Krijo
+          </Link>
+        }
+      />
 
       <div className="admin-page">
         <div className="admin-filter-bar mb-1 overflow-x-auto pb-1 no-scrollbar">

@@ -7,7 +7,7 @@ import {
   Users, Settings, LogOut, ChevronLeft, Menu, Award, PercentCircle,
   RefreshCw, Image, Mail, Handshake, ChevronDown,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { isNavActive, shouldStartNav, useAdminNav } from '@/components/admin/AdminNavContext'
@@ -49,13 +49,6 @@ export function AdminSidebar() {
   const router = useRouter()
 
   const isActive = (href: string, exact = false) => isNavActive(displayPath, href, exact)
-
-  useEffect(() => {
-    for (const item of navItems) {
-      router.prefetch(item.href)
-      item.children?.forEach(child => router.prefetch(child.href))
-    }
-  }, [router])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -122,6 +115,7 @@ export function AdminSidebar() {
                         <Link
                           key={child.href}
                           href={child.href}
+                          prefetch={false}
                           onClick={(e) => {
                             if (shouldStartNav(e, child.href, displayPath)) startNav(child.href)
                           }}
@@ -145,6 +139,7 @@ export function AdminSidebar() {
               <Link
                 key={href}
                 href={href}
+                prefetch={false}
                 title={collapsed ? label : undefined}
                 onClick={(e) => {
                   if (shouldStartNav(e, href, displayPath)) startNav(href)

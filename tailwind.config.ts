@@ -36,7 +36,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['var(--font-poppins)', 'system-ui', '-apple-system', 'sans-serif'],
       },
       borderRadius: {
         '2xl': '1rem',

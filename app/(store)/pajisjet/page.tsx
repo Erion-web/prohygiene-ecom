@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { PajisjetClient } from './PajisjetClient'
 import type { Product } from '@/types'
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 }
 
 async function getLeaseProducts(): Promise<Product[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('products')
     .select('*, category:categories(*)')

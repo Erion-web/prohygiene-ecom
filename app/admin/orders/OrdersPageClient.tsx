@@ -17,6 +17,9 @@ export function OrdersPageClient({ orders }: OrdersPageClientProps) {
       <div className="admin-card p-12 text-center text-text-muted">
         <ShoppingBag size={32} className="mx-auto mb-3 opacity-30" />
         <p>Nuk ka porosi</p>
+        <Link href="/admin/orders/new" className="btn-primary mt-4 inline-flex">
+          Krijo porosi
+        </Link>
       </div>
     )
   }

@@ -1,27 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { getActiveCategories } from '@/lib/store/catalog'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Navbar } from '@/components/store/Navbar'
 import { Footer } from '@/components/store/Footer'
 import { LogoutButton } from './LogoutButton'
 import { AccountNav } from './AccountNav'
-import type { Category } from '@/types'
-
-async function getCategories(): Promise<Category[]> {
-  const supabase = await createClient()
-  const { data } = await supabase.from('categories').select('*').eq('is_active', true).order('sort_order')
-  return data ?? []
-}
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const user = await getAuthUser()
+  const [supabase, user] = await Promise.all([createClient(), getAuthUser()])
   if (!user) redirect('/auth/login?redirect=/account')
 
   const [{ data: profile }, categories] = await Promise.all([
     supabase.from('profiles').select('full_name, email, role').eq('id', user.id).single(),
-    getCategories(),
+    getActiveCategories(),
   ])
 
   const name = profile?.full_name || user.email?.split('@')[0] || 'Profili'

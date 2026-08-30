@@ -44,7 +44,8 @@ export function ContractPrintDocument({
   const paymentDay = Number(contract.starts_at.split('-')[2] || '') || null
 
   return (
-    <article className="mx-auto max-w-[210mm] bg-white px-8 py-10 text-[13px] leading-relaxed text-slate-800 print:max-w-none print:px-0 print:py-0">
+    <article className="mx-auto max-w-[210mm] bg-white px-8 py-10 text-[13px] leading-relaxed text-slate-800 print:max-w-none print:px-[16mm] print:py-[16mm]">
+      <style>{`@page { size: A4; margin: 0; }`}</style>
       <h1 className="text-center text-lg font-extrabold tracking-tight text-slate-900 mb-6">
         KONTRATË PËR SHËRBIMIN E AROMATIZIMIT PROFESIONAL
       </h1>

@@ -1,7 +1,15 @@
 import type { Metadata } from 'next'
+import { Poppins } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import { CookieConsent } from '@/components/CookieConsent'
+
+const poppins = Poppins({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-poppins',
+})
 
 const APP_URL = 'https://prohygiene.shop'
 
@@ -61,11 +69,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="sq" suppressHydrationWarning data-scroll-behavior="smooth">
+    <html lang="sq" suppressHydrationWarning data-scroll-behavior="smooth" className={poppins.variable}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         {/* JSON-LD Organization */}
         <script
@@ -109,7 +114,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="antialiased">
+      <body className={`${poppins.className} antialiased`}>
         {children}
         <CookieConsent />
         <Toaster

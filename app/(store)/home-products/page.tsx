@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { CategoryCard } from '@/components/store/CategoryCard'
 import { Home } from 'lucide-react'
 import { fetchShopProductsPage } from '@/lib/shop/products'
@@ -18,7 +18,7 @@ const HOME_FILTERS: ShopListFilters = {
 }
 
 export default async function HomeProductsPage() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const [productsResult, categoriesRes] = await Promise.all([
     fetchShopProductsPage(supabase, HOME_FILTERS, SHOP_PAGE_SIZE),

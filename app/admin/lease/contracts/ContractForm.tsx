@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Save, X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -22,6 +22,28 @@ interface Props {
   leaseDevices: LeaseDeviceOption[]
   materials: MaterialOption[]
   contract?: LeaseContract
+}
+
+function addressesForClient(clients: ContractFormClient[], clientId: string): LeaseClientAddress[] {
+  const client = clients.find(c => c.id === clientId)
+  if (client?.addresses?.length) return client.addresses
+  if (client && (client.city || client.address)) {
+    return [{
+      id: `legacy-${client.id}`,
+      client_id: client.id,
+      label: 'Kryesore',
+      city: client.city ?? '',
+      address: client.address ?? '',
+      is_primary: true,
+      created_at: '',
+    }]
+  }
+  return []
+}
+
+function defaultAddressId(addresses: LeaseClientAddress[]) {
+  if (addresses.length === 1) return addresses[0].id
+  return primaryClientAddress(addresses)?.id ?? ''
 }
 
 function computeEndsAt(startsAt: string, months: number): string {
@@ -78,9 +100,7 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
     }
   })
   const [deviceRows, setDeviceRows] = useState<DeviceRow[]>(() => {
-    const primaryId = primaryClientAddress(
-      clients.find(c => c.id === (contract?.client_id ?? ''))?.addresses
-    )?.id ?? ''
+    const primaryId = defaultAddressId(addressesForClient(clients, contract?.client_id ?? ''))
     if (contract?.contract_devices?.length) {
       return contract.contract_devices.map(d => ({
         product_id: d.product_id,
@@ -100,25 +120,21 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
   const clientOptions = clients.map(c => ({ value: c.id, label: c.company_name }))
   const materialOptions = materials.map(m => ({ value: m.id, label: `${m.name_sq} (${m.unit})` }))
 
-  const addressesFor = (clientId: string): LeaseClientAddress[] => {
-    const client = clients.find(c => c.id === clientId)
-    if (client?.addresses?.length) return client.addresses
-    if (client?.city || client?.address) {
-      return [{
-        id: `legacy-${client.id}`,
-        client_id: client.id,
-        label: 'Kryesore',
-        city: client.city ?? '',
-        address: client.address ?? '',
-        is_primary: true,
-        created_at: '',
-      }]
-    }
-    return []
-  }
-
-  const selectedAddresses = addressesFor(form.client_id)
+  const selectedAddresses = addressesForClient(clients, form.client_id)
   const addressOptions = selectedAddresses.map(a => ({ value: a.id, label: formatClientAddress(a) }))
+
+  useEffect(() => {
+    if (!form.client_id) return
+    const addrs = addressesForClient(clients, form.client_id)
+    const fallback = defaultAddressId(addrs)
+    if (!fallback) return
+    setDeviceRows(rows => {
+      const next = rows.map(row => (
+        addrs.some(a => a.id === row.address_id) ? row : { ...row, address_id: fallback }
+      ))
+      return next.every((row, i) => row.address_id === rows[i].address_id) ? rows : next
+    })
+  }, [form.client_id, clients])
 
   const update = (key: string, value: string) => {
     setForm(prev => {
@@ -132,8 +148,8 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
 
   const applyClient = (clientId: string) => {
     update('client_id', clientId)
-    const primary = primaryClientAddress(addressesFor(clientId))
-    setDeviceRows(rows => rows.map(row => ({ ...row, address_id: primary?.id ?? '' })))
+    const addressId = defaultAddressId(addressesForClient(clients, clientId))
+    setDeviceRows(rows => rows.map(row => ({ ...row, address_id: addressId })))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -328,7 +344,7 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
           <h3 className="admin-section-title">Pajisjet në kontratë</h3>
           <button
             type="button"
-            onClick={() => setDeviceRows(p => [...p, { product_id: '', quantity: '1', address_id: primaryClientAddress(selectedAddresses)?.id ?? '' }])}
+            onClick={() => setDeviceRows(p => [...p, { product_id: '', quantity: '1', address_id: defaultAddressId(selectedAddresses) }])}
             className="btn-secondary text-xs py-1.5 px-3"
           >
             + Pajisje

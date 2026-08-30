@@ -20,7 +20,7 @@ export type SearchableOption = {
   group?: string
 }
 
-export type SearchableType = 'clients' | 'devices' | 'materials' | 'contracts' | 'cities' | 'categories' | 'brands'
+export type SearchableType = 'clients' | 'devices' | 'materials' | 'contracts' | 'cities' | 'categories' | 'brands' | 'products'
 
 interface Props {
   value: string

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 function isAdminRole(role: unknown): boolean {
   return typeof role === 'string' && ['admin', 'manager'].includes(role)
@@ -6,7 +7,7 @@ function isAdminRole(role: unknown): boolean {
 
 export async function requireAdmin() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) return { supabase, user: null, authorized: false }
 
   const jwtRole = (user.app_metadata as Record<string, unknown>)?.role

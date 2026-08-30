@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { ProductCard } from '@/components/store/ProductCard'
 import { CategoryCard } from '@/components/store/CategoryCard'
 import { Building2, ArrowRight, Phone, CheckCircle } from 'lucide-react'
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 }
 
 export default async function BusinessPage() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const [productsRes, categoriesRes] = await Promise.all([
     supabase

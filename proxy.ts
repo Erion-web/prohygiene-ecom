@@ -9,25 +9,21 @@ function isProtectedPath(pathname: string) {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    if (isProtectedPath(pathname)) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      return NextResponse.redirect(url)
-    }
+  if (!isProtectedPath(pathname)) {
     return NextResponse.next()
   }
 
-  const signedIn = hasAuthCookie(request.cookies.getAll())
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    return NextResponse.redirect(url)
+  }
 
-  if (!signedIn) {
-    if (isProtectedPath(pathname)) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      url.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(url)
-    }
-    return NextResponse.next()
+  if (!hasAuthCookie(request.cookies.getAll())) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    url.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(url)
   }
 
   let supabaseResponse = NextResponse.next({ request })
@@ -58,53 +54,43 @@ export async function proxy(request: NextRequest) {
     const { data } = await supabase.auth.getUser()
     user = data.user
   } catch {
-    if (isProtectedPath(pathname)) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      url.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(url)
-    }
-    return supabaseResponse
-  }
-
-  if (pathname.startsWith('/account') && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     url.searchParams.set('redirect', pathname)
     return NextResponse.redirect(url)
   }
 
-  if (pathname.startsWith('/admin')) {
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      url.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(url)
-    }
+  if (!user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    url.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(url)
+  }
 
-    const jwtRole = (user.app_metadata as Record<string, unknown>)?.role
-    if (typeof jwtRole === 'string' && ['admin', 'manager'].includes(jwtRole)) {
-      return supabaseResponse
-    }
+  if (pathname.startsWith('/account')) {
+    return supabaseResponse
+  }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+  const jwtRole = (user.app_metadata as Record<string, unknown>)?.role
+  if (typeof jwtRole === 'string' && ['admin', 'manager'].includes(jwtRole)) {
+    return supabaseResponse
+  }
 
-    if (!profile || !['admin', 'manager'].includes(profile.role as string)) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/'
-      return NextResponse.redirect(url)
-    }
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || !['admin', 'manager'].includes(profile.role as string)) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    return NextResponse.redirect(url)
   }
 
   return supabaseResponse
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/admin', '/admin/:path*', '/account', '/account/:path*'],
 }

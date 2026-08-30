@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { cache } from 'react'
-import { createClient } from '@/lib/supabase/server'
 import { mockProducts } from '@/lib/data/mock'
+import { createPublicClient } from '@/lib/supabase/public'
+import { getProductBySlug } from '@/lib/store/catalog'
 import { ProductPageClient } from './ProductPageClient'
 import type { Product } from '@/types'
 
@@ -10,24 +10,17 @@ interface Props {
   params: Promise<{ slug: string }>
 }
 
-const getProduct = cache(async function getProduct(slug: string): Promise<Product | null> {
+async function getProduct(slug: string): Promise<Product | null> {
   try {
-    const supabase = await createClient()
-    const { data } = await supabase
-      .from('products')
-      .select('*, category:categories(*)')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single()
-    if (data) return data
+    const product = await getProductBySlug(slug)
+    if (product) return product
   } catch {}
   return mockProducts.find(p => p.slug === slug) ?? null
-})
+}
 
 async function getRelatedProducts(product: Product): Promise<Product[]> {
   try {
-    const supabase = await createClient()
-    const { data } = await supabase
+    const { data } = await createPublicClient()
       .from('products')
       .select('*, category:categories(*)')
       .eq('is_active', true)
@@ -35,7 +28,7 @@ async function getRelatedProducts(product: Product): Promise<Product[]> {
       .neq('id', product.id)
       .eq('listing_type', (product.listing_type ?? 'sale') === 'sale' ? 'sale' : 'lease')
       .limit(4)
-    if (data && data.length > 0) return data
+    if (data && data.length > 0) return data as Product[]
   } catch {}
   return mockProducts.filter(p => p.category_id === product.category_id && p.id !== product.id).slice(0, 4)
 }

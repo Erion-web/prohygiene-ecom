@@ -80,6 +80,7 @@ export function AdminBottomNav() {
                 <Link
                   key={href}
                   href={href}
+                  prefetch={false}
                   onClick={(e) => {
                     if (shouldStartNav(e, href, displayPath)) startNav(href)
                     setOpen(false)
@@ -120,6 +121,7 @@ export function AdminBottomNav() {
               <Link
                 key={href}
                 href={href}
+                prefetch={false}
                 onClick={(e) => {
                   if (shouldStartNav(e, href, displayPath)) startNav(href)
                 }}
