@@ -83,8 +83,10 @@ export function SearchableSelect({
 
   const items = useMemo(() => {
     if (!remoteEnabled || remote == null) return options
-    if (remote.length === 0 && !debouncedQuery) return options
-    return remote
+    if (remote.length > 0) return remote
+    if (!debouncedQuery) return options
+    const needle = debouncedQuery.toLowerCase()
+    return options.filter(item => item.label.toLowerCase().includes(needle))
   }, [remoteEnabled, remote, options, debouncedQuery])
 
   const selected =

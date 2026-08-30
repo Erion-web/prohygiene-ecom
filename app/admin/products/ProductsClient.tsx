@@ -21,6 +21,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
+import { Sheet, SheetBody, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DeleteProductButton } from "./DeleteProductButton";
 import {
   hasProductListFilters,
@@ -51,9 +52,9 @@ interface Props {
 }
 
 const AUDIENCE_LABELS: Record<string, string> = {
-  home: "🏠 Shtëpi",
-  business: "🏢 Biznes",
-  both: "👥 Të Gjithë",
+  home: "Shtëpi",
+  business: "Biznes",
+  both: "Të Gjithë",
 };
 
 function getScrollEl() {
@@ -132,14 +133,18 @@ export function ProductsClient({
   }, [search]);
 
   const hasFilters = hasProductListFilters(filters);
-  const hasDropdownFilters = Boolean(
-    filters.categoryId ||
-      filters.brandId ||
-      filters.audience ||
-      filters.status ||
-      filters.stock ||
-      filters.listingType
-  );
+  const sheetFilterCount = [
+    filters.categoryId,
+    filters.brandId,
+    filters.audience,
+    filters.status,
+    filters.stock,
+    filters.listingType,
+    filters.material,
+    filters.onSale,
+    filters.featured,
+    filters.bestSeller,
+  ].filter(Boolean).length;
 
   const totalPages = Math.max(1, Math.ceil(matched / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -162,6 +167,7 @@ export function ProductsClient({
       status: "",
       stock: "",
       listingType: "",
+      material: "",
       onSale: false,
       featured: false,
       bestSeller: false,
@@ -176,6 +182,7 @@ export function ProductsClient({
     status,
     stock,
     listingType,
+    material,
     onSale,
     featured,
     bestSeller,
@@ -253,9 +260,7 @@ export function ProductsClient({
         ))}
       </div>
 
-      {/* ── FILTER BAR ── */}
       <div className="admin-card-flush overflow-hidden">
-        {/* Search row — always visible */}
         <div className="flex items-center gap-2 p-2.5">
           <div className="relative flex-1">
             <Search
@@ -271,6 +276,7 @@ export function ProductsClient({
             />
             {search && (
               <button
+                type="button"
                 onClick={() => {
                   setSearch("");
                   setFilter({ q: "" });
@@ -282,232 +288,176 @@ export function ProductsClient({
             )}
           </div>
 
-          {/* Toggle filters — mobile only */}
           <button
-            onClick={() => setFiltersOpen((v) => !v)}
-            className={`md:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
-              filtersOpen || hasDropdownFilters
+            type="button"
+            onClick={() => setFiltersOpen(true)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all shrink-0 ${
+              sheetFilterCount
                 ? "border-brand-400 bg-brand-50 text-brand-700"
-                : "border-gray-200 text-gray-500"
+                : "border-gray-200 text-gray-500 hover:border-brand-300"
             }`}
           >
             <SlidersHorizontal size={13} />
             Filtra
-            {hasDropdownFilters && (
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+            {sheetFilterCount > 0 && (
+              <span className="min-w-4 h-4 px-1 rounded-full bg-brand-600 text-white text-[10px] leading-4 text-center">
+                {sheetFilterCount}
+              </span>
             )}
           </button>
-
-          {/* Desktop dropdowns — always visible on md+ */}
-          <div className="hidden md:flex items-center gap-2">
-            {[
-              {
-                val: categoryId,
-                set: (v: string) => setFilter({ categoryId: v }),
-                placeholder: "Kategoria",
-                opts: categories.map((c) => ({ v: c.id, l: c.name_sq })),
-              },
-              ...(brands.length > 0
-                ? [
-                    {
-                      val: brandId,
-                      set: (v: string) => setFilter({ brandId: v }),
-                      placeholder: "Brendi",
-                      opts: brands.map((b) => ({ v: b.id, l: b.name })),
-                    },
-                  ]
-                : []),
-              {
-                val: audience,
-                set: (v: string) => setFilter({ audience: v }),
-                placeholder: "Audienca",
-                opts: [
-                  { v: "home", l: "🏠 Shtëpi" },
-                  { v: "business", l: "🏢 Biznes" },
-                  { v: "both", l: "👥 Të Gjithë" },
-                ],
-              },
-              {
-                val: status,
-                set: (v: string) => setFilter({ status: v }),
-                placeholder: "Statusi",
-                opts: [
-                  { v: "active", l: "✅ Aktiv" },
-                  { v: "inactive", l: "⛔ Joaktiv" },
-                ],
-              },
-              {
-                val: stock,
-                set: (v: string) => setFilter({ stock: v }),
-                placeholder: "Stoku",
-                opts: [
-                  { v: "in", l: "✅ I disponueshëm" },
-                  { v: "low", l: "⚠️ I ulët" },
-                  { v: "out", l: "❌ Nuk ka në stok" },
-                ],
-              },
-              {
-                val: listingType,
-                set: (v: string) => setFilter({ listingType: v }),
-                placeholder: "Listimi",
-                opts: [
-                  { v: "sale", l: "🛒 Shitje" },
-                  { v: "lease", l: "🔧 Shfrytëzim" },
-                ],
-              },
-            ].map(({ val, set, placeholder, opts }) => (
-              <div key={placeholder} className="relative">
-                <select
-                  value={val}
-                  onChange={(e) => set(e.target.value)}
-                  className={`appearance-none pl-2.5 pr-6 py-1.5 text-xs border rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-400 cursor-pointer ${
-                    val
-                      ? "border-brand-400 bg-brand-50 text-brand-700 font-semibold"
-                      : "border-gray-200 bg-gray-50 text-gray-600"
-                  }`}
-                >
-                  <option value="">{placeholder}</option>
-                  {opts.map((o) => (
-                    <option key={o.v} value={o.v}>
-                      {o.l}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={10}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            ))}
-          </div>
         </div>
 
-        {/* Mobile expanded filters */}
-        {filtersOpen && (
-          <div className="md:hidden border-t border-gray-100 p-2.5 grid grid-cols-2 gap-2">
-            {[
-              {
-                val: categoryId,
-                set: (v: string) => setFilter({ categoryId: v }),
-                placeholder: "Kategoria",
-                opts: categories.map((c) => ({ v: c.id, l: c.name_sq })),
-              },
-              ...(brands.length > 0
-                ? [
-                    {
-                      val: brandId,
-                      set: (v: string) => setFilter({ brandId: v }),
-                      placeholder: "Brendi",
-                      opts: brands.map((b) => ({ v: b.id, l: b.name })),
-                    },
-                  ]
-                : []),
-              {
-                val: audience,
-                set: (v: string) => setFilter({ audience: v }),
-                placeholder: "Audienca",
-                opts: [
-                  { v: "home", l: "🏠 Shtëpi" },
-                  { v: "business", l: "🏢 Biznes" },
-                  { v: "both", l: "👥 Të Gjithë" },
-                ],
-              },
-              {
-                val: status,
-                set: (v: string) => setFilter({ status: v }),
-                placeholder: "Statusi",
-                opts: [
-                  { v: "active", l: "✅ Aktiv" },
-                  { v: "inactive", l: "⛔ Joaktiv" },
-                ],
-              },
-              {
-                val: stock,
-                set: (v: string) => setFilter({ stock: v }),
-                placeholder: "Stoku",
-                opts: [
-                  { v: "in", l: "✅ I disponueshëm" },
-                  { v: "low", l: "⚠️ I ulët" },
-                  { v: "out", l: "❌ Nuk ka në stok" },
-                ],
-              },
-              {
-                val: listingType,
-                set: (v: string) => setFilter({ listingType: v }),
-                placeholder: "Listimi",
-                opts: [
-                  { v: "sale", l: "🛒 Shitje" },
-                  { v: "lease", l: "🔧 Shfrytëzim" },
-                ],
-              },
-            ].map(({ val, set, placeholder, opts }) => (
-              <div key={placeholder} className="relative">
-                <select
-                  value={val}
-                  onChange={(e) => set(e.target.value)}
-                  className={`w-full appearance-none pl-3 pr-7 py-2 text-xs border rounded-xl focus:outline-none cursor-pointer ${
-                    val
-                      ? "border-brand-400 bg-brand-50 text-brand-700 font-semibold"
-                      : "border-gray-200 bg-gray-50 text-gray-600"
-                  }`}
-                >
-                  <option value="">{placeholder}</option>
-                  {opts.map((o) => (
-                    <option key={o.v} value={o.v}>
-                      {o.l}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={10}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Chips + count */}
-        <div className="flex items-center gap-1.5 px-2.5 pb-2.5">
-          {(
-            [
-              { label: "⭐ I Zgjedhur", state: featured, toggle: () => setFilter({ featured: !featured }) },
-              { label: "🔥 Bestseller", state: bestSeller, toggle: () => setFilter({ bestSeller: !bestSeller }) },
-              { label: "🏷️ Zbritje", state: onSale, toggle: () => setFilter({ onSale: !onSale }) },
-            ] as const
-          ).map(({ label, state, toggle }) => (
-            <button
-              key={label}
-              onClick={toggle}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${
-                state
-                  ? "bg-brand-600 text-white border-brand-600"
-                  : "bg-white text-gray-500 border-gray-200 hover:border-brand-300"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-gray-400">
-              <span className="font-bold text-gray-700">
-                {matched === 0 ? 0 : `${pageStart}–${pageEnd}`}
-              </span>
-              <span> / {matched}</span>
-              {hasFilters && <span className="text-gray-300"> · {stats.total}</span>}
-              <span className="hidden sm:inline"> produkte</span>
+        <div className="flex items-center gap-2 px-2.5 pb-2.5">
+          <span className="text-xs text-gray-400">
+            <span className="font-bold text-gray-700">
+              {matched === 0 ? 0 : `${pageStart}–${pageEnd}`}
             </span>
-            {hasFilters && (
-              <button
-                onClick={clearAll}
-                className="flex items-center gap-1 text-[11px] font-semibold text-red-500 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
-              >
-                <X size={11} /> Pastro
-              </button>
-            )}
-          </div>
+            <span> / {matched}</span>
+            {hasFilters && <span className="text-gray-300"> · {stats.total}</span>}
+            <span className="hidden sm:inline"> produkte</span>
+          </span>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-red-500 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              <X size={11} /> Pastro
+            </button>
+          )}
         </div>
       </div>
+
+      <Sheet modal open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Filtra</SheetTitle>
+          </SheetHeader>
+          <SheetBody className="space-y-4">
+            {[
+              {
+                val: categoryId,
+                set: (v: string) => setFilter({ categoryId: v }),
+                label: "Kategoria",
+                opts: categories.map((c) => ({ v: c.id, l: c.name_sq })),
+              },
+              {
+                val: brandId,
+                set: (v: string) => setFilter({ brandId: v }),
+                label: "Brendi",
+                opts: brands.map((b) => ({ v: b.id, l: b.name })),
+              },
+              {
+                val: audience,
+                set: (v: string) => setFilter({ audience: v }),
+                label: "Audienca",
+                opts: [
+                  { v: "home", l: "Shtëpi" },
+                  { v: "business", l: "Biznes" },
+                  { v: "both", l: "Të Gjithë" },
+                ],
+              },
+              {
+                val: status,
+                set: (v: string) => setFilter({ status: v }),
+                label: "Statusi",
+                opts: [
+                  { v: "active", l: "Aktiv" },
+                  { v: "inactive", l: "Joaktiv" },
+                ],
+              },
+              {
+                val: stock,
+                set: (v: string) => setFilter({ stock: v }),
+                label: "Stoku",
+                opts: [
+                  { v: "in", l: "I disponueshëm" },
+                  { v: "low", l: "I ulët" },
+                  { v: "out", l: "Nuk ka në stok" },
+                ],
+              },
+              {
+                val: listingType,
+                set: (v: string) => setFilter({ listingType: v }),
+                label: "Listimi",
+                opts: [
+                  { v: "sale", l: "Shitje" },
+                  { v: "lease", l: "Shfrytëzim" },
+                ],
+              },
+              {
+                val: material,
+                set: (v: string) => setFilter({ material: v }),
+                label: "Lëndë e parë",
+                opts: [
+                  { v: "yes", l: "Po" },
+                  { v: "no", l: "Jo" },
+                ],
+              },
+            ].map(({ val, set, label, opts }) => (
+              <div key={label}>
+                <label className="label">{label}</label>
+                <div className="relative">
+                  <select
+                    value={val}
+                    onChange={(e) => set(e.target.value)}
+                    className={`input appearance-none pr-8 ${
+                      val ? "border-brand-400 bg-brand-50 text-brand-700 font-semibold" : ""
+                    }`}
+                  >
+                    <option value="">Të gjitha</option>
+                    {opts.map((o) => (
+                      <option key={o.v} value={o.v}>
+                        {o.l}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+                  />
+                </div>
+              </div>
+            ))}
+
+            <div>
+              <p className="label">Etiketa</p>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    { label: "⭐ I Zgjedhur", state: featured, toggle: () => setFilter({ featured: !featured }) },
+                    { label: "🔥 Bestseller", state: bestSeller, toggle: () => setFilter({ bestSeller: !bestSeller }) },
+                    { label: "🏷️ Zbritje", state: onSale, toggle: () => setFilter({ onSale: !onSale }) },
+                  ] as const
+                ).map(({ label, state, toggle }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={toggle}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                      state
+                        ? "bg-brand-600 text-white border-brand-600"
+                        : "bg-white text-gray-500 border-gray-200 hover:border-brand-300"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </SheetBody>
+          <SheetFooter>
+            {hasFilters && (
+              <button type="button" onClick={clearAll} className="btn-secondary text-sm">
+                Pastro
+              </button>
+            )}
+            <button type="button" onClick={() => setFiltersOpen(false)} className="btn-primary text-sm">
+              Shfaq {matched}
+            </button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       {/* ── MOBILE CARDS (< md) ── */}
       <div className={`md:hidden space-y-2 ${isPending ? "opacity-50" : ""}`}>

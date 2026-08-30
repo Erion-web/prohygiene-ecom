@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAdmin, sanitizeSearch } from '@/lib/admin/require-admin'
 import { CITIES } from '@/lib/cities'
 import { LEASE_DEVICE_QUERY, toLeaseDeviceOptions, type LeaseDeviceRow } from '@/lib/lease/device-select'
+import { listMaterialProductOptions, materialOptionLabel } from '@/lib/lease/sync-material'
 
 const TYPES = ['clients', 'devices', 'materials', 'contracts', 'cities', 'categories', 'brands', 'products'] as const
 type OptionType = (typeof TYPES)[number]
@@ -56,22 +57,12 @@ export async function GET(req: Request) {
   }
 
   if (type === 'materials') {
-    let query = supabase
-      .from('products')
-      .select('id, name_sq, unit, material:materials!product_id(id)')
-      .eq('is_material', true)
-      .eq('is_active', true)
-      .order('name_sq')
-      .limit(40)
-    if (q) query = query.or(`name_sq.ilike.%${q}%,sku.ilike.%${q}%`)
-    const { data, error } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const materials = await listMaterialProductOptions(supabase, q)
     return NextResponse.json({
-      options: (data ?? []).flatMap(row => {
-        const material = Array.isArray(row.material) ? row.material[0] : row.material
-        if (!material?.id) return []
-        return [{ value: material.id as string, label: `${row.name_sq} (${row.unit})` }]
-      }),
+      options: materials.map(m => ({
+        value: m.id,
+        label: materialOptionLabel(m.name_sq, m.unit, m.is_active),
+      })),
     })
   }
 

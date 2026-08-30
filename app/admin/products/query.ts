@@ -8,6 +8,7 @@ export type ProductListFilters = {
   status: string
   stock: string
   listingType: string
+  material: string
   onSale: boolean
   featured: boolean
   bestSeller: boolean
@@ -31,6 +32,7 @@ export function parseProductListParams(
     status: first(sp, "status"),
     stock: first(sp, "stock"),
     listingType: first(sp, "listing"),
+    material: first(sp, "material"),
     onSale: first(sp, "sale") === "1",
     featured: first(sp, "featured") === "1",
     bestSeller: first(sp, "bestseller") === "1",
@@ -47,6 +49,7 @@ export function productListSearchParams(filters: ProductListFilters) {
   if (filters.status) params.set("status", filters.status)
   if (filters.stock) params.set("stock", filters.stock)
   if (filters.listingType) params.set("listing", filters.listingType)
+  if (filters.material) params.set("material", filters.material)
   if (filters.onSale) params.set("sale", "1")
   if (filters.featured) params.set("featured", "1")
   if (filters.bestSeller) params.set("bestseller", "1")
@@ -67,6 +70,7 @@ export function hasProductListFilters(filters: ProductListFilters) {
       filters.status ||
       filters.stock ||
       filters.listingType ||
+      filters.material ||
       filters.onSale ||
       filters.featured ||
       filters.bestSeller

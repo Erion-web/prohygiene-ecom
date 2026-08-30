@@ -9,7 +9,7 @@ import { useDropzone } from 'react-dropzone'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
 import { SearchableSelect } from '@/components/ui/searchable-select'
-import { PRODUCT_UNITS, syncProductMaterial, normalizeMaterialUnit, type MaterialProductOption } from '@/lib/lease/sync-material'
+import { PRODUCT_UNITS, syncProductMaterial, normalizeMaterialUnit, materialOptionLabel, type MaterialProductOption } from '@/lib/lease/sync-material'
 import type { Product, AudienceType, DeviceMaterial } from '@/types'
 
 interface Category { id: string; name_sq: string; name_en: string }
@@ -357,7 +357,7 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
                         next[idx] = { ...next[idx], material_id: id }
                         setDeviceMaterialRows(next)
                       }}
-                      options={materials.map(m => ({ value: m.id, label: `${m.name_sq} (${m.unit})` }))}
+                      options={materials.map(m => ({ value: m.id, label: materialOptionLabel(m.name_sq, m.unit, m.is_active) }))}
                       searchType="materials"
                       placeholder="Zgjedh..."
                       searchPlaceholder="Kërko materialin..."

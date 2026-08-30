@@ -10,10 +10,11 @@ import { LeaseDeviceSelect, LeaseDeviceSelectFooter } from '@/components/admin/l
 import { seedDeployedDevices } from '@/lib/lease/seed-deployed-devices'
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { formatClientAddress, primaryClientAddress } from '@/lib/lease/addresses'
+import { materialOptionLabel } from '@/lib/lease/sync-material'
 import type { ContractFormClient } from '@/lib/lease/contract-form-data'
 import type { LeaseClientAddress, LeaseContract, LeaseContractStatus, MaterialUnit, ReminderPeriod } from '@/types'
 
-interface MaterialOption { id: string; name_sq: string; unit: string }
+interface MaterialOption { id: string; name_sq: string; unit: string; is_active?: boolean }
 interface DeviceRow { product_id: string; quantity: string; address_id: string }
 interface MaterialRow { material_id: string; quantity: string }
 
@@ -118,7 +119,10 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
   const [loading, setLoading] = useState(false)
 
   const clientOptions = clients.map(c => ({ value: c.id, label: c.company_name }))
-  const materialOptions = materials.map(m => ({ value: m.id, label: `${m.name_sq} (${m.unit})` }))
+  const materialOptions = materials.map(m => ({
+    value: m.id,
+    label: materialOptionLabel(m.name_sq, m.unit, m.is_active ?? true),
+  }))
 
   const selectedAddresses = addressesForClient(clients, form.client_id)
   const addressOptions = selectedAddresses.map(a => ({ value: a.id, label: formatClientAddress(a) }))

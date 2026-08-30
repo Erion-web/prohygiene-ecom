@@ -37,6 +37,8 @@ async function getData(filters: ProductListFilters) {
   if (filters.bestSeller) listQuery = listQuery.eq('is_best_seller', true)
   if (filters.listingType === 'sale') listQuery = listQuery.eq('listing_type', 'sale')
   if (filters.listingType === 'lease') listQuery = listQuery.eq('available_for_lease', true)
+  if (filters.material === 'yes') listQuery = listQuery.eq('is_material', true)
+  if (filters.material === 'no') listQuery = listQuery.eq('is_material', false)
 
   const [
     productsRes,
