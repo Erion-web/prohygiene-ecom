@@ -176,6 +176,7 @@ export interface LeaseClient {
 
 export interface LeaseContract {
   id: string
+  contract_number: number | null
   client_id: string
   duration_months: number
   starts_at: string

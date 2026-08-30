@@ -5,7 +5,7 @@ import { loadContractFormOptions } from '@/lib/lease/contract-form-data'
 import { ContractForm } from '../ContractForm'
 
 export default async function NewContractPage() {
-  const { clients, leaseDevices, materials } = await loadContractFormOptions()
+  const { clients, leaseDevices, materials, nextContractNumber } = await loadContractFormOptions()
 
   return (
     <div>
@@ -20,7 +20,7 @@ export default async function NewContractPage() {
         }
       />
       <div className="admin-page">
-        <ContractForm clients={clients} leaseDevices={leaseDevices} materials={materials} />
+        <ContractForm clients={clients} leaseDevices={leaseDevices} materials={materials} nextContractNumber={nextContractNumber} />
       </div>
     </div>
   )

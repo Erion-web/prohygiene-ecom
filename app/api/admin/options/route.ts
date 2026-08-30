@@ -81,7 +81,7 @@ export async function GET(req: Request) {
     }
     let query = supabase
       .from('lease_contracts')
-      .select('id, status, client:lease_clients(company_name)')
+      .select('id, status, contract_number, client:lease_clients(company_name)')
       .order('created_at', { ascending: false })
       .limit(40)
     if (clientIds) query = query.in('client_id', clientIds)
@@ -91,7 +91,8 @@ export async function GET(req: Request) {
       options: (data ?? []).map(row => {
         const client = Array.isArray(row.client) ? row.client[0] : row.client
         const name = (client as { company_name?: string } | null)?.company_name ?? `Kontratë ${row.id.slice(0, 8)}`
-        return { value: row.id, label: `${name} · ${row.status}` }
+        const number = (row as { contract_number?: number | null }).contract_number
+        return { value: row.id, label: `${number != null ? `#${number} · ` : ''}${name} · ${row.status}` }
       }),
     })
   }

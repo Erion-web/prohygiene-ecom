@@ -2,22 +2,14 @@
 
 import { useState } from 'react'
 import { AdminSectionTitle } from '@/components/admin/AdminSectionTitle'
-import { Save, X, Loader2, Droplets } from 'lucide-react'
+import { Save, X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 import { CITIES } from '@/lib/cities'
 import { SearchableSelect } from '@/components/ui/searchable-select'
-import { materialOptionLabel } from '@/lib/lease/sync-material'
 import { DeployedDevicesTable } from './DeployedDevicesTable'
 import type { DeployedDevice, DeployedDeviceStatus } from '@/types'
-
-interface MaterialOption { id: string; name_sq: string; sku?: string; unit: string; is_active?: boolean }
-
-interface Props {
-  initialDevices: DeployedDevice[]
-  materials: MaterialOption[]
-}
 
 const defaultForm = {
   contract_id: '',
@@ -30,13 +22,10 @@ const defaultForm = {
   status: 'active' as DeployedDeviceStatus,
 }
 
-export function DeployedDevicesClient({ initialDevices, materials }: Props) {
+export function DeployedDevicesClient({ initialDevices }: { initialDevices: DeployedDevice[] }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(defaultForm)
   const [loading, setLoading] = useState(false)
-  const [refillDeviceId, setRefillDeviceId] = useState<string | null>(null)
-  const [refillMaterialId, setRefillMaterialId] = useState('')
-  const [refillAmount, setRefillAmount] = useState('')
   const refresh = useScrollPreservingRefresh()
 
   const update = (key: string, value: string) => {
@@ -99,46 +88,6 @@ export function DeployedDevicesClient({ initialDevices, materials }: Props) {
     }
   }
 
-  const handleRefill = async () => {
-    if (!refillDeviceId || !refillMaterialId || !refillAmount) {
-      toast.error('Plotësoni fushat e rimbushjes')
-      return
-    }
-    const supabase = createClient()
-    const amount = parseFloat(refillAmount)
-    const device = initialDevices.find(d => d.id === refillDeviceId)
-    const level = device?.consumable_levels?.find(l => l.material_id === refillMaterialId)
-
-    const { error: refillErr } = await supabase.from('refill_events').insert({
-      deployed_device_id: refillDeviceId,
-      material_id: refillMaterialId,
-      amount,
-    })
-
-    if (refillErr) {
-      toast.error(refillErr.message)
-      return
-    }
-
-    const { error: levelErr } = await supabase
-      .from('device_consumable_levels')
-      .update({
-        current_level: level?.capacity ?? amount,
-        last_refilled_at: new Date().toISOString(),
-      })
-      .eq('deployed_device_id', refillDeviceId)
-      .eq('material_id', refillMaterialId)
-
-    if (levelErr) toast.error(levelErr.message)
-    else {
-      toast.success('Rimbushja u regjistrua')
-      setRefillDeviceId(null)
-      setRefillMaterialId('')
-      setRefillAmount('')
-      refresh()
-    }
-  }
-
   return (
     <div className="space-y-3">
       <AdminSectionTitle>Pajisjet në lokacion</AdminSectionTitle>
@@ -192,33 +141,8 @@ export function DeployedDevicesClient({ initialDevices, materials }: Props) {
         </div>
       )}
 
-      {refillDeviceId && (
-        <div className="admin-card p-5 border-2 border-brand-200">
-          <h4 className="font-bold mb-3 flex items-center gap-2"><Droplets size={16} /> Rimbushje</h4>
-          <div className="grid sm:grid-cols-3 gap-3">
-            <SearchableSelect
-              value={refillMaterialId}
-              onChange={setRefillMaterialId}
-              options={materials.map(m => ({
-                value: m.id,
-                label: materialOptionLabel(m.name_sq, m.unit, m.is_active ?? true, m.sku),
-              }))}
-              searchType="materials"
-              placeholder="Materiali..."
-              searchPlaceholder="Kërko materialin..."
-            />
-            <input type="number" min="0" step="0.01" value={refillAmount} onChange={e => setRefillAmount(e.target.value)} className="input" placeholder="Sasia" />
-            <div className="flex gap-2">
-              <button type="button" onClick={handleRefill} className="btn-primary text-sm flex-1">Regjistro</button>
-              <button type="button" onClick={() => setRefillDeviceId(null)} className="btn-secondary text-sm">Anulo</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <DeployedDevicesTable
         devices={initialDevices}
-        onRefill={setRefillDeviceId}
         onEdit={startEdit}
         onDelete={handleDelete}
       />

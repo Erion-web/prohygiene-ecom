@@ -15,10 +15,11 @@ export async function loadContractFormOptions(): Promise<{
   clients: ContractFormClient[]
   leaseDevices: LeaseDeviceOption[]
   materials: MaterialProductOption[]
+  nextContractNumber: number
 }> {
   const supabase = await createClient()
   const materialsDb = process.env.SUPABASE_SERVICE_ROLE_KEY ? await createServiceClient() : supabase
-  const [clientsRes, productsRes, materials, addressesRes] = await Promise.all([
+  const [clientsRes, productsRes, materials, addressesRes, numbersRes] = await Promise.all([
     supabase.from('lease_clients').select('id, company_name, city, address').order('company_name'),
     supabase
       .from('products')
@@ -28,6 +29,7 @@ export async function loadContractFormOptions(): Promise<{
       .order('name_sq'),
     listMaterialProductOptions(materialsDb),
     supabase.from('lease_client_addresses').select('*'),
+    supabase.from('lease_contracts').select('contract_number').order('contract_number', { ascending: false }).limit(1),
   ])
 
   const addressesByClient = new Map<string, LeaseClientAddress[]>()
@@ -44,6 +46,7 @@ export async function loadContractFormOptions(): Promise<{
     })),
     leaseDevices: toLeaseDeviceOptions((productsRes.data ?? []) as import('@/lib/lease/device-select').LeaseDeviceRow[]),
     materials,
+    nextContractNumber: (numbersRes.data?.[0]?.contract_number ?? 0) + 1,
   }
 }
 

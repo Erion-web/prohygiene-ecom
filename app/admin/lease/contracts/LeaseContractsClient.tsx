@@ -33,7 +33,8 @@ export function LeaseContractsClient({ initialContracts }: Props) {
       if (!q) return true
       const name = c.client?.company_name?.toLowerCase() ?? ''
       const notes = c.notes?.toLowerCase() ?? ''
-      return name.includes(q) || notes.includes(q)
+      const number = c.contract_number != null ? String(c.contract_number) : ''
+      return name.includes(q) || notes.includes(q) || number.includes(q)
     })
   }, [initialContracts, debouncedSearch, statusFilter, fromDate, toDate])
 
@@ -60,7 +61,7 @@ export function LeaseContractsClient({ initialContracts }: Props) {
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="input pl-8"
-              placeholder="Kërko klient ose shënim..."
+              placeholder="Kërko nr, klient ose shënim..."
             />
           </div>
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input sm:w-40">
@@ -104,6 +105,7 @@ export function LeaseContractsClient({ initialContracts }: Props) {
         <table className="w-full admin-table">
           <thead>
             <tr className="bg-surface-soft border-b border-surface-border">
+              <th className="text-left">Nr.</th>
               <th className="text-left">Klienti</th>
               <th className="text-left">Periudha</th>
               <th className="text-left">Pajisje</th>
@@ -115,12 +117,13 @@ export function LeaseContractsClient({ initialContracts }: Props) {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-10 text-center text-sm text-text-muted">
+                <td colSpan={7} className="py-10 text-center text-sm text-text-muted">
                   {hasFilters ? 'Asnjë kontratë nuk përputhet me filtrat' : 'Nuk ka kontrata ende'}
                 </td>
               </tr>
             ) : filtered.map(c => (
               <tr key={c.id} className="hover:bg-surface-soft">
+                <td className="text-sm font-semibold tabular-nums">{c.contract_number != null ? `#${c.contract_number}` : '—'}</td>
                 <td className="text-sm font-medium">{c.client?.company_name ?? '—'}</td>
                 <td className="text-sm text-text-secondary">
                   {c.starts_at} → {c.ends_at}

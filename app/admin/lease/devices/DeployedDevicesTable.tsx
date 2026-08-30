@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { type LegacyColumnDef } from '@tanstack/react-table/legacy'
-import { Edit, Trash2, Droplets } from 'lucide-react'
+import { Edit, Trash2 } from 'lucide-react'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { dailyConsumptionRate, daysUntilEmpty } from '@/lib/lease/utils'
 import type { DeployedDevice } from '@/types'
@@ -15,14 +15,12 @@ const STATUS_LABELS: Record<DeployedDevice['status'], { label: string; className
 
 interface DeployedDevicesTableProps {
   devices: DeployedDevice[]
-  onRefill: (id: string) => void
   onEdit: (device: DeployedDevice) => void
   onDelete: (device: DeployedDevice) => void
 }
 
 export function DeployedDevicesTable({
   devices,
-  onRefill,
   onEdit,
   onDelete,
 }: DeployedDevicesTableProps) {
@@ -34,6 +32,15 @@ export function DeployedDevicesTable({
         cell: ({ row }) => (
           <p className="text-sm font-medium text-text-primary max-w-[200px] truncate" title={row.original.product?.name_sq ?? undefined}>
             {row.original.product?.name_sq ?? 'Pajisje'}
+          </p>
+        ),
+      },
+      {
+        id: 'contract',
+        header: 'Kontrata',
+        cell: ({ row }) => (
+          <p className="text-sm font-semibold tabular-nums text-text-primary">
+            {row.original.contract?.contract_number != null ? `#${row.original.contract.contract_number}` : '—'}
           </p>
         ),
       },
@@ -127,14 +134,6 @@ export function DeployedDevicesTable({
         meta: { align: 'right' },
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
-            <button
-              type="button"
-              onClick={() => onRefill(row.original.id)}
-              className="btn-secondary text-xs py-1 px-2 gap-1"
-            >
-              <Droplets size={13} />
-              Rimbush
-            </button>
             <button type="button" onClick={() => onEdit(row.original)} className="btn-ghost p-1.5">
               <Edit size={14} />
             </button>
@@ -145,7 +144,7 @@ export function DeployedDevicesTable({
         ),
       },
     ],
-    [onRefill, onEdit, onDelete]
+    [onEdit, onDelete]
   )
 
   return (
