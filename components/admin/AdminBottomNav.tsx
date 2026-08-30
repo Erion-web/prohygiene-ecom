@@ -51,7 +51,7 @@ export function AdminBottomNav() {
   }
 
   return (
-    <>
+    <div className="print:hidden">
       {open && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
           <div
@@ -148,6 +148,6 @@ export function AdminBottomNav() {
           </button>
         </div>
       </nav>
-    </>
+    </div>
   )
 }

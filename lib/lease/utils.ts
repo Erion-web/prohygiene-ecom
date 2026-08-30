@@ -39,9 +39,11 @@ export function daysUntilContractEnd(endsAt: string): number {
   return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-export function shouldAlertContractExpiry(endsAt: string, surplusDays: number): boolean {
+export const CONTRACT_EXPIRY_NOTICE_DAYS = 30
+
+export function shouldAlertContractExpiry(endsAt: string, noticeDays = CONTRACT_EXPIRY_NOTICE_DAYS): boolean {
   const daysLeft = daysUntilContractEnd(endsAt)
-  return daysLeft <= surplusDays && daysLeft >= 0
+  return daysLeft <= noticeDays && daysLeft >= 0
 }
 
 export function formatMaterialUnit(unit: string, lang: 'sq' | 'en' = 'sq'): string {

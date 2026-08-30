@@ -13,7 +13,7 @@ function AdminChrome({ children }: { children: ReactNode }) {
     <>
       <AdminSidebar />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <div id="admin-main" className="flex-1 overflow-y-auto pb-16 md:pb-0 admin-shell">
+        <div id="admin-main" className="flex-1 overflow-y-auto pb-16 md:pb-0 admin-shell print:overflow-visible print:h-auto print:pb-0">
           {pending ? <AdminPageSkeleton /> : children}
         </div>
       </div>
@@ -25,7 +25,7 @@ function AdminChrome({ children }: { children: ReactNode }) {
 export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <AdminNavProvider>
-      <div className="flex h-screen overflow-hidden bg-surface-soft">
+      <div className="flex h-screen overflow-hidden bg-surface-soft print:h-auto print:overflow-visible print:bg-white">
         <AdminChrome>{children}</AdminChrome>
       </div>
     </AdminNavProvider>

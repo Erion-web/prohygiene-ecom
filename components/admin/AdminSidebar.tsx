@@ -65,7 +65,7 @@ export function AdminSidebar() {
 
   return (
     <aside className={cn(
-      'hidden md:flex flex-col bg-white border-r border-surface-border transition-all duration-300 flex-shrink-0',
+      'hidden md:flex flex-col bg-white border-r border-surface-border transition-all duration-300 flex-shrink-0 print:hidden',
       collapsed ? 'w-[4.5rem]' : 'w-52'
     )}>
       <div className="flex items-center justify-between h-14 px-4 border-b border-surface-border">

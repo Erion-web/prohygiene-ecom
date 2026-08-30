@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Plus, Edit, Trash2, Search } from 'lucide-react'
+import { PrintContractButton } from './PrintContractButton'
 import toast from 'react-hot-toast'
 import { useDebouncedValue } from '@tanstack/react-pacer'
 import { createClient } from '@/lib/supabase/client'
@@ -132,7 +133,8 @@ export function LeaseContractsClient({ initialContracts }: Props) {
                 </td>
                 <td>
                   <div className="flex justify-end gap-1.5">
-                    <Link href={`/admin/lease/contracts/${c.id}/edit`} className="p-1.5 hover:bg-brand-50 rounded-lg">
+                    <PrintContractButton contractId={c.id} iconOnly />
+                    <Link href={`/admin/lease/contracts/${c.id}/edit`} className="p-1.5 hover:bg-brand-50 rounded-lg" title="Modifiko">
                       <Edit size={14} />
                     </Link>
                     <button type="button" onClick={() => handleDelete(c)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500">

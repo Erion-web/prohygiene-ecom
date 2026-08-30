@@ -24,10 +24,23 @@ interface Props {
   contract?: LeaseContract
 }
 
+function computeEndsAt(startsAt: string, months: number): string {
+  const [year, month, day] = startsAt.split('-').map(Number)
+  const d = new Date(year, (month || 1) - 1, day || 1)
+  d.setMonth(d.getMonth() + months)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const dayNum = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${dayNum}`
+}
+
+const defaultStartsAt = new Date().toISOString().slice(0, 10)
+
 const defaultForm = {
   client_id: '',
   duration_months: '12',
-  starts_at: new Date().toISOString().slice(0, 10),
+  starts_at: defaultStartsAt,
+  ends_at: computeEndsAt(defaultStartsAt, 12),
   device_count: '1',
   employee_count: '0',
   monthly_fee: '0',
@@ -38,12 +51,6 @@ const defaultForm = {
   consumption_period: 'month' as ReminderPeriod,
   status: 'draft' as LeaseContractStatus,
   notes: '',
-}
-
-function computeEndsAt(startsAt: string, months: number): string {
-  const d = new Date(startsAt)
-  d.setMonth(d.getMonth() + months)
-  return d.toISOString().slice(0, 10)
 }
 
 export function ContractForm({ clients, leaseDevices: deviceOptions, materials, contract }: Props) {
@@ -57,6 +64,7 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
       client_id: contract.client_id,
       duration_months: contract.duration_months.toString(),
       starts_at: contract.starts_at,
+      ends_at: contract.ends_at,
       device_count: contract.device_count.toString(),
       employee_count: contract.employee_count.toString(),
       monthly_fee: contract.monthly_fee.toString(),
@@ -113,7 +121,13 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
   const addressOptions = selectedAddresses.map(a => ({ value: a.id, label: formatClientAddress(a) }))
 
   const update = (key: string, value: string) => {
-    setForm(prev => ({ ...prev, [key]: value }))
+    setForm(prev => {
+      const next = { ...prev, [key]: value }
+      if (key === 'starts_at' || key === 'duration_months') {
+        next.ends_at = computeEndsAt(next.starts_at, parseInt(next.duration_months) || 12)
+      }
+      return next
+    })
   }
 
   const applyClient = (clientId: string) => {
@@ -124,8 +138,12 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.client_id || !form.starts_at) {
+    if (!form.client_id || !form.starts_at || !form.ends_at) {
       toast.error('Plotësoni fushat e detyrueshme')
+      return
+    }
+    if (form.ends_at <= form.starts_at) {
+      toast.error('Data e mbarimit duhet të jetë pas fillimit')
       return
     }
     setLoading(true)
@@ -137,7 +155,7 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
       client_id: form.client_id,
       duration_months: durationMonths,
       starts_at: form.starts_at,
-      ends_at: computeEndsAt(form.starts_at, durationMonths),
+      ends_at: form.ends_at || computeEndsAt(form.starts_at, durationMonths),
       device_count: deviceCount || parseInt(form.device_count) || 1,
       employee_count: parseInt(form.employee_count) || 0,
       monthly_fee: parseFloat(form.monthly_fee) || 0,
@@ -241,6 +259,10 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
           <div>
             <label className="label">Fillimi</label>
             <input type="date" value={form.starts_at} onChange={e => update('starts_at', e.target.value)} className="input" />
+          </div>
+          <div>
+            <label className="label">Mbarimi</label>
+            <input type="date" value={form.ends_at} readOnly tabIndex={-1} className="input bg-surface-soft text-text-secondary cursor-default pointer-events-none" />
           </div>
           <div>
             <label className="label">Nr. punonjësve</label>
@@ -413,7 +435,7 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
         ))}
       </div>
 
-      <div className="admin-card sticky bottom-4 z-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 border-brand-100 shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
         <button type="button" onClick={() => router.push(returnTo)} className="btn-secondary py-2.5 px-5">
           Anulo
         </button>

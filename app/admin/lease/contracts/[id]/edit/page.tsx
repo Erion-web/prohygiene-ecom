@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { loadContract, loadContractFormOptions } from '@/lib/lease/contract-form-data'
 import { ContractForm } from '../../ContractForm'
+import { PrintContractButton } from '../../PrintContractButton'
 
 export default async function EditContractPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -20,10 +21,13 @@ export default async function EditContractPage({ params }: { params: Promise<{ i
         title="Modifiko Kontratën"
         subtitle={contract.client?.company_name ?? 'Marrëveshja me klientin'}
         actions={
-          <Link href="/admin/lease/contracts" className="btn-ghost gap-1.5 text-sm">
-            <ArrowLeft size={15} />
-            Kthehu
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <PrintContractButton contractId={contract.id} />
+            <Link href="/admin/lease/contracts" className="btn-ghost gap-1.5 text-sm">
+              <ArrowLeft size={15} />
+              Kthehu
+            </Link>
+          </div>
         }
       />
       <div className="admin-page">

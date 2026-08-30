@@ -44,11 +44,11 @@ export function OrderStatusUpdater({ orderId, currentStatus }: { orderId: string
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <select
         value={status}
         onChange={e => setStatus(e.target.value as OrderStatus)}
-        className="input text-sm"
+        className="input text-sm py-2"
       >
         {ORDER_STATUSES.map(s => (
           <option key={s} value={s}>{statusLabel(s, 'sq')}</option>
@@ -57,7 +57,7 @@ export function OrderStatusUpdater({ orderId, currentStatus }: { orderId: string
       <button
         onClick={handleSave}
         disabled={loading || status === normalizeOrderStatus(currentStatus)}
-        className="btn-primary w-full py-2.5 gap-2 text-sm justify-center"
+        className="btn-primary w-full py-2 gap-2 text-sm justify-center"
       >
         {loading ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
         Ruaj Statusin

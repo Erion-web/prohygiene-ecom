@@ -108,50 +108,52 @@ export async function POST(req: Request) {
         emailsSent++
       }
     }
+  }
 
-    if (shouldAlertContractExpiry(contract.ends_at, contract.surplus_days)) {
-      const daysLeft = daysUntilContractEnd(contract.ends_at)
-      const title = `Kontrata po skadon — ${client?.company_name ?? 'Klient'}`
-      const message = `Kontrata për ${product?.name_sq ?? 'pajisje'} skadon më ${contract.ends_at} (${daysLeft} ditë).`
+  const { data: expiringContracts } = await supabase
+    .from('lease_contracts')
+    .select('id, ends_at, client:lease_clients(id, company_name, contact_name, email, phone)')
+    .eq('status', 'active')
 
-      const { data: inserted, error } = await supabase
-        .from('lease_notifications')
-        .insert({
-          notification_type: 'contract_expiry',
-          deployed_device_id: device.id,
-          contract_id: contract.id,
-          client_id: client?.id ?? null,
-          title,
-          message,
-          due_date: contract.ends_at,
-          email_sent: false,
-        })
-        .select('id')
-        .maybeSingle()
+  for (const contract of expiringContracts ?? []) {
+    if (!shouldAlertContractExpiry(contract.ends_at)) continue
 
-      if (error?.code === '23505') continue
-      if (error) continue
+    const client = Array.isArray(contract.client) ? contract.client[0] : contract.client
+    const daysLeft = daysUntilContractEnd(contract.ends_at)
+    const title = `Kontrata po skadon — ${client?.company_name ?? 'Klient'}`
+    const message = `Kontrata e shfrytëzimit për ${client?.company_name ?? 'klientin'} skadon më ${contract.ends_at} (mbeten ${daysLeft} ditë).${client?.contact_name ? `\nKontakti: ${client.contact_name}` : ''}${client?.email ? `\nEmail: ${client.email}` : ''}${client?.phone ? `\nTel: ${client.phone}` : ''}`
 
-      if (inserted) {
-        created++
-        await sendLeaseReminderEmail({
-          to: 'info@prohygiene.shop',
-          subject: title,
-          title,
-          message,
-        })
-        if (client?.email) {
-          await sendLeaseReminderEmail({
-            to: client.email,
-            subject: title,
-            title,
-            message,
-          })
-        }
-        await supabase.from('lease_notifications').update({ email_sent: true }).eq('id', inserted.id)
-        emailsSent++
-      }
+    const { data: inserted, error } = await supabase
+      .from('lease_notifications')
+      .insert({
+        notification_type: 'contract_expiry',
+        contract_id: contract.id,
+        client_id: client?.id ?? null,
+        title,
+        message,
+        due_date: contract.ends_at,
+        email_sent: false,
+      })
+      .select('id')
+      .maybeSingle()
+
+    if (error?.code === '23505') continue
+    if (error) {
+      console.error('[cron/lease-reminders] expiry insert error:', error)
+      continue
     }
+
+    if (!inserted) continue
+
+    created++
+    await sendLeaseReminderEmail({
+      to: 'info@prohygiene.shop',
+      subject: title,
+      title,
+      message,
+    })
+    await supabase.from('lease_notifications').update({ email_sent: true }).eq('id', inserted.id)
+    emailsSent++
   }
 
   return NextResponse.json({ ok: true, notifications_created: created, emails_sent: emailsSent })

@@ -16,6 +16,7 @@ import {
   dailyConsumptionRate,
   daysUntilEmpty,
   daysUntilContractEnd,
+  CONTRACT_EXPIRY_NOTICE_DAYS,
   LEASE_PAYMENT_LABELS,
 } from '@/lib/lease/utils'
 import type { DeployedDevice, LeaseClient, LeaseContract, LeaseInquiry } from '@/types'
@@ -117,7 +118,7 @@ export function LeaseDashboardClient({
 
     for (const contract of activeContracts) {
       const days = daysUntilContractEnd(contract.ends_at)
-      if (days <= 30) {
+      if (days <= CONTRACT_EXPIRY_NOTICE_DAYS) {
         items.push({
           id: `contract-${contract.id}`,
           href: '/admin/lease/contracts',

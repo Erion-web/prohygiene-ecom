@@ -17,8 +17,8 @@ export async function loadContractFormOptions(): Promise<{
   materials: MaterialProductOption[]
 }> {
   const supabase = await createClient()
-  const [clientsRes, productsRes, materials] = await Promise.all([
-    supabase.from('lease_clients').select('id, company_name, city, address, addresses:lease_client_addresses(*)').order('company_name'),
+  const [clientsRes, productsRes, materials, addressesRes] = await Promise.all([
+    supabase.from('lease_clients').select('id, company_name, city, address').order('company_name'),
     supabase
       .from('products')
       .select(LEASE_DEVICE_QUERY)
@@ -26,10 +26,21 @@ export async function loadContractFormOptions(): Promise<{
       .eq('is_active', true)
       .order('name_sq'),
     listMaterialProductOptions(supabase),
+    supabase.from('lease_client_addresses').select('*'),
   ])
 
+  const addressesByClient = new Map<string, LeaseClientAddress[]>()
+  for (const address of (addressesRes.data ?? []) as LeaseClientAddress[]) {
+    const list = addressesByClient.get(address.client_id) ?? []
+    list.push(address)
+    addressesByClient.set(address.client_id, list)
+  }
+
   return {
-    clients: clientsRes.data ?? [],
+    clients: (clientsRes.data ?? []).map(client => ({
+      ...client,
+      addresses: addressesByClient.get(client.id) ?? [],
+    })),
     leaseDevices: toLeaseDeviceOptions((productsRes.data ?? []) as import('@/lib/lease/device-select').LeaseDeviceRow[]),
     materials,
   }
@@ -37,16 +48,27 @@ export async function loadContractFormOptions(): Promise<{
 
 export async function loadContract(id: string): Promise<LeaseContract | null> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('lease_contracts')
     .select(`
       *,
       client:lease_clients(*),
-      contract_devices(*, product:products(id, name_sq, sku)),
+      contract_devices(*, product:products(id, name_sq, sku, price)),
       contract_materials(*, material:materials(id, name_sq, unit))
     `)
     .eq('id', id)
     .maybeSingle()
 
-  return (data as LeaseContract | null) ?? null
+  if (error || !data) return null
+
+  const contract = data as LeaseContract
+  if (contract.client) {
+    const { data: addresses } = await supabase
+      .from('lease_client_addresses')
+      .select('*')
+      .eq('client_id', contract.client_id)
+    contract.client.addresses = addresses ?? []
+  }
+
+  return contract
 }

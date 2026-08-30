@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Eye } from 'lucide-react'
+import { Eye, Pencil } from 'lucide-react'
 import { type LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { formatPrice, statusColor, statusLabel } from '@/lib/utils'
@@ -155,12 +155,20 @@ const fullColumns: LegacyColumnDef<OrderTableRow, unknown>[] = [
     header: '',
     meta: { align: 'right' },
     cell: ({ row }) => (
-      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex justify-end gap-1">
         <Link
           href={`/admin/orders/${row.original.id}`}
           className="p-1.5 text-text-muted hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all"
+          title="Shiko"
         >
           <Eye size={14} />
+        </Link>
+        <Link
+          href={`/admin/orders/${row.original.id}/edit`}
+          className="p-1.5 text-text-muted hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all"
+          title="Modifiko"
+        >
+          <Pencil size={14} />
         </Link>
         <DeleteOrderButton id={row.original.id} orderNumber={row.original.order_number} />
       </div>

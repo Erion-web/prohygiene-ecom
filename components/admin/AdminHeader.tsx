@@ -29,7 +29,7 @@ function getBackHref(pathname: string): string | null {
   if (/\/admin\/products\/[^/]+\/edit/.test(pathname)) return '/admin/products'
   if (/\/admin\/brands\/[^/]+\/edit/.test(pathname)) return '/admin/brands'
   if (/\/admin\/orders\/[^/]+/.test(pathname)) return '/admin/orders'
-  if (/\/admin\/lease\/contracts\/[^/]+\/edit/.test(pathname)) return '/admin/lease/contracts'
+  if (/\/admin\/lease\/contracts\/[^/]+\/(edit|print)/.test(pathname)) return '/admin/lease/contracts'
   return null
 }
 
