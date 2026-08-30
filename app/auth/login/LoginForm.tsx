@@ -18,17 +18,36 @@ export function LoginForm() {
   const [fullName, setFullName] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading]   = useState(false)
-  const initialMode = searchParams.get('mode') === 'register' ? 'register' : 'login'
-  const [mode, setMode]         = useState<'login' | 'register'>(initialMode)
+  const modeParam = searchParams.get('mode')
+  const initialMode = modeParam === 'register' ? 'register' : modeParam === 'forgot' ? 'forgot' : 'login'
+  const [mode, setMode]         = useState<'login' | 'register' | 'forgot'>(initialMode)
+  const [sent, setSent]         = useState(false)
 
   useEffect(() => {
-    setMode(searchParams.get('mode') === 'register' ? 'register' : 'login')
+    const next = searchParams.get('mode')
+    setMode(next === 'register' ? 'register' : next === 'forgot' ? 'forgot' : 'login')
   }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     const supabase = createClient()
+
+    if (mode === 'forgot') {
+      const origin = window.location.origin
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${origin}/auth/callback?next=/auth/update-password`,
+      })
+      if (error) {
+        toast.error(error.message)
+        setLoading(false)
+        return
+      }
+      setSent(true)
+      toast.success('Nëse ky email ekziston, do të merrni një link për rivendosje.')
+      setLoading(false)
+      return
+    }
 
     if (mode === 'login') {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -113,27 +132,32 @@ export function LoginForm() {
 
         <div className="card p-8">
           {/* Mode tabs */}
-          <div className="flex gap-1 bg-surface-muted rounded-xl p-1 mb-7">
-            {(['login', 'register'] as const).map(m => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  mode === m ? 'bg-white shadow-soft text-text-primary' : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                {m === 'login' ? 'Kyçu' : 'Regjistrohu'}
-              </button>
-            ))}
-          </div>
+          {mode !== 'forgot' && (
+            <div className="flex gap-1 bg-surface-muted rounded-xl p-1 mb-7">
+              {(['login', 'register'] as const).map(m => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => { setMode(m); setSent(false) }}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                    mode === m ? 'bg-white shadow-soft text-text-primary' : 'text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  {m === 'login' ? 'Kyçu' : 'Regjistrohu'}
+                </button>
+              ))}
+            </div>
+          )}
 
           <h1 className="text-xl font-extrabold text-text-primary mb-1">
-            {mode === 'login' ? 'Mirë se erdhe!' : 'Krijo llogari falas'}
+            {mode === 'login' ? 'Mirë se erdhe!' : mode === 'register' ? 'Krijo llogari falas' : 'Rivendos fjalëkalimin'}
           </h1>
           <p className="text-text-muted text-sm mb-6">
             {mode === 'login'
               ? 'Kyçu për të parë porositë tuaja dhe për të blerë shpejt.'
-              : 'Regjistrohu dhe shijo blerje të shpejta çdo herë.'}
+              : mode === 'register'
+                ? 'Regjistrohu dhe shijo blerje të shpejta çdo herë.'
+                : 'Shkruani email-in dhe do t’ju dërgojmë një link për fjalëkalim të ri.'}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -169,35 +193,64 @@ export function LoginForm() {
               />
             </div>
 
-            <div>
-              <label className="label">Fjalëkalimi</label>
-              <div className="relative">
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="input pr-11"
-                  placeholder="••••••••"
-                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary p-0.5"
-                >
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+            {mode !== 'forgot' && (
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="label mb-0">Fjalëkalimi</label>
+                  {mode === 'login' && (
+                    <button
+                      type="button"
+                      onClick={() => { setMode('forgot'); setSent(false) }}
+                      className="text-xs font-semibold text-brand-600 hover:text-brand-700"
+                    >
+                      Keni harruar fjalëkalimin?
+                    </button>
+                  )}
+                </div>
+                <div className="relative mt-1">
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="input pr-11"
+                    placeholder="••••••••"
+                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary p-0.5"
+                  >
+                    {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {mode === 'forgot' && sent && (
+              <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5">
+                Nëse ky email ekziston, dërguam një link. Kontrolloni edhe spam.
+              </p>
+            )}
 
             <button type="submit" disabled={loading} className="btn-primary w-full py-3 justify-center text-base">
               {loading
                 ? <><Loader2 size={18} className="animate-spin" /> Duke procesuar...</>
-                : mode === 'login' ? 'Kyçu' : 'Krijo Llogarinë'
+                : mode === 'login' ? 'Kyçu' : mode === 'register' ? 'Krijo Llogarinë' : 'Dërgo linkun'
               }
             </button>
+
+            {mode === 'forgot' && (
+              <button
+                type="button"
+                onClick={() => { setMode('login'); setSent(false) }}
+                className="w-full text-sm font-semibold text-text-secondary hover:text-text-primary"
+              >
+                ← Kthehu te kyçja
+              </button>
+            )}
           </form>
 
           <div className="mt-5 flex items-center gap-2 text-xs text-text-muted">
