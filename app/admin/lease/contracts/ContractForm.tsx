@@ -7,7 +7,6 @@ import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import type { LeaseDeviceOption } from '@/lib/lease/device-select'
 import { LeaseDeviceSelect, LeaseDeviceSelectFooter } from '@/components/admin/lease/LeaseDeviceSelect'
-import { LeaseFlowHint } from '@/components/admin/lease/LeaseFlowHint'
 import { seedDeployedDevices } from '@/lib/lease/seed-deployed-devices'
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { formatClientAddress, primaryClientAddress } from '@/lib/lease/addresses'
@@ -221,8 +220,6 @@ export function ContractForm({ clients, leaseDevices: deviceOptions, materials, 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <LeaseFlowHint step="contract" />
-
       <div className="admin-card space-y-5">
         <h3 className="admin-section-title border-b border-surface-border pb-4">Detajet e kontratës</h3>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

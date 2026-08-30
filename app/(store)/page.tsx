@@ -149,7 +149,9 @@ export default async function HomePage() {
           {/* LEFT SIDEBAR — hidden on mobile, visible lg+ */}
           <aside className="hidden lg:block w-56 xl:w-64 flex-shrink-0">
             <div className="sticky top-20 bg-white border border-surface-border rounded-2xl p-3 shadow-soft">
-              <CategorySidebarNav categories={categories} lang={lang} />
+              <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-surface-muted" />}>
+                <CategorySidebarNav categories={categories} lang={lang} />
+              </Suspense>
 
               {/* Business promo in sidebar */}
               <div className="mt-4 p-3 rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 text-white">

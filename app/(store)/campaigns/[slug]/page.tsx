@@ -5,7 +5,7 @@ import { ProductCard } from '@/components/store/ProductCard'
 import { Badge } from '@/components/ui/Badge'
 import { Clock, Tag } from 'lucide-react'
 
-interface Props { params: { slug: string } }
+interface Props { params: Promise<{ slug: string }> }
 
 async function getCampaign(slug: string) {
   const supabase = await createClient()
@@ -27,13 +27,15 @@ async function getCampaign(slug: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const data = await getCampaign(params.slug)
+  const { slug } = await params
+  const data = await getCampaign(slug)
   if (!data) return { title: 'Kampanjë | ProHygiene' }
   return { title: `${data.campaign.title_sq} | ProHygiene` }
 }
 
 export default async function CampaignPage({ params }: Props) {
-  const data = await getCampaign(params.slug)
+  const { slug } = await params
+  const data = await getCampaign(slug)
   if (!data) notFound()
   const { campaign, products } = data
 

@@ -6,7 +6,7 @@ function isProtectedPath(pathname: string) {
   return pathname.startsWith('/admin') || pathname.startsWith('/account')
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {

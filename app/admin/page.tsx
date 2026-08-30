@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { ShoppingBag, TrendingUp, Users, Package } from 'lucide-react'
 import { DashboardRecentOrders } from '@/components/admin/DashboardRecentOrders'
 import { formatPrice, statusLabel } from '@/lib/utils'
-import { normalizeOrderStatus } from '@/lib/orders/status'
+import { COMPLETED_ORDER_STATUSES, normalizeOrderStatus } from '@/lib/orders/status'
 
 const MONTH_LABELS = ['Jan', 'Shk', 'Mar', 'Pri', 'Maj', 'Qer', 'Kor', 'Gus', 'Sht', 'Tet', 'Nën', 'Dhj']
 const STATUS_COLORS: Record<string, string> = {
@@ -57,12 +57,12 @@ async function getDashboardData() {
     supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
-    supabase.from('orders').select('total').in('payment_status', ['approved']),
+    supabase.from('orders').select('total').in('status', [...COMPLETED_ORDER_STATUSES]),
     supabase.from('orders').select('id', { count: 'exact', head: true }).gte('created_at', monthStart),
     supabase.from('orders').select('id', { count: 'exact', head: true }).gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd),
-    supabase.from('orders').select('total').in('payment_status', ['approved']).gte('created_at', monthStart),
-    supabase.from('orders').select('total').in('payment_status', ['approved']).gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd),
-    supabase.from('orders').select('total, created_at, payment_status').gte('created_at', sixMonthsAgo),
+    supabase.from('orders').select('total').in('status', [...COMPLETED_ORDER_STATUSES]).gte('created_at', monthStart),
+    supabase.from('orders').select('total').in('status', [...COMPLETED_ORDER_STATUSES]).gte('created_at', prevMonthStart).lte('created_at', prevMonthEnd),
+    supabase.from('orders').select('total, created_at, status').gte('created_at', sixMonthsAgo),
     supabase.from('orders').select('status'),
     supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(8),
   ])
@@ -84,7 +84,7 @@ async function getDashboardData() {
     if (!monthlyMap.has(key)) continue
     const entry = monthlyMap.get(key)!
     entry.orders += 1
-    if (order.payment_status === 'approved') {
+    if (COMPLETED_ORDER_STATUSES.includes(order.status as typeof COMPLETED_ORDER_STATUSES[number])) {
       entry.revenue += order.total ?? 0
     }
   }

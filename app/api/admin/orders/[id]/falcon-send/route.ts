@@ -6,7 +6,8 @@ function isAdminRole(role: unknown): boolean {
   return typeof role === 'string' && ['admin', 'manager'].includes(role)
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
@@ -23,7 +24,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { data: order } = await supabase.from('orders').select('*').eq('id', params.id).single()
+  const { data: order } = await supabase.from('orders').select('*').eq('id', id).single()
   if (!order) {
     return NextResponse.json({ error: 'Order not found' }, { status: 404 })
   }

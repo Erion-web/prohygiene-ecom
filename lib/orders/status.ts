@@ -2,6 +2,8 @@ import type { OrderStatus } from '@/types'
 
 export const ORDER_STATUSES: OrderStatus[] = ['pending', 'processing', 'completed']
 
+export const COMPLETED_ORDER_STATUSES = ['completed', 'delivered'] as const
+
 export function normalizeOrderStatus(status: string): OrderStatus {
   if (status === 'completed' || status === 'delivered') return 'completed'
   if (status === 'pending' || status === 'cancelled') return 'pending'
