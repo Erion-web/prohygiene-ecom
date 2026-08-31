@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Home, Building2, ChefHat, Check } from 'lucide-react'
+import { MopCleaner } from '@/components/store/MopCleaner'
 import type { HomepagePackage, PackageAudience } from '@/types'
 
 const BUNDLES: {
@@ -53,8 +54,9 @@ export function BundlesSection({ packages = [] }: { packages?: HomepagePackage[]
   const images = Object.fromEntries(packages.map(p => [p.audience, p.image_url])) as Partial<Record<PackageAudience, string>>
 
   return (
-    <section className="section">
-      <div className="container-custom">
+    <section className="section relative">
+      <div className="container-custom relative">
+        <MopCleaner />
         <div className="flex items-center gap-3 mb-6">
           <div className="w-1 h-8 bg-brand-400 rounded-full" />
           <div>

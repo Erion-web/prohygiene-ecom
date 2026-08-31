@@ -26,13 +26,18 @@ export function Navbar({ categories = [], userName: initialUserName = null }: Na
   const [scrolled, setScrolled] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [userName, setUserName] = useState<string | null>(initialUserName)
+  const [cartReady, setCartReady] = useState(false)
   const pathname = usePathname()
   const { lang, setLang } = useLanguageStore()
   const { getItemCount } = useCartStore()
   const tr = t(lang)
-  const itemCount = getItemCount()
+  const itemCount = cartReady ? getItemCount() : 0
   const catRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setCartReady(true)
+  }, [])
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 4)
