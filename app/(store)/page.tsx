@@ -32,6 +32,7 @@ async function getHomeData() {
       bestSellers: mockBestSellers,
       categories: mockCategories,
       banners: [],
+      packages: [],
     }
   }
 }
@@ -44,7 +45,7 @@ const trustItems = [
 ]
 
 export default async function HomePage() {
-  const { featured, bestSellers, categories, banners } = await getHomeData()
+  const { featured, bestSellers, categories, banners, packages } = await getHomeData()
 
   const localBusinessLd = {
     '@context': 'https://schema.org',
@@ -256,7 +257,7 @@ export default async function HomePage() {
       )}
 
       {/* ── BUNDLES ── */}
-      <BundlesSection />
+      <BundlesSection packages={packages} />
 
       {/* ── BUSINESS CTA BANNER ── */}
       <section className="section bg-surface-soft">

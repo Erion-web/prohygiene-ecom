@@ -24,7 +24,7 @@ export type SearchableType = 'clients' | 'devices' | 'materials' | 'contracts' |
 
 interface Props {
   value: string
-  onChange: (value: string) => void
+  onChange: (value: string, option?: SearchableOption) => void
   options: SearchableOption[]
   searchType?: SearchableType
   placeholder?: string
@@ -164,7 +164,7 @@ export function SearchableSelect({
                     key={item.value}
                     value={`${item.label} ${item.value}`}
                     onSelect={() => {
-                      onChange(item.value)
+                      onChange(item.value, item)
                       setOpen(false)
                       setQuery('')
                     }}

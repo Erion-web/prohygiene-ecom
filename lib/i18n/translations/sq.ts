@@ -42,7 +42,6 @@ const sq = {
     viewAll: "Shiko të gjitha",
     shopNow: "Blej Tani",
     learnMore: "Mëso Më Shumë",
-
     // Trust section
     trustTitle: "Pse ProHygiene?",
     trustDelivery: "Dërgim i Shpejtë",

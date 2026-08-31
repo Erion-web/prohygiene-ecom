@@ -1,7 +1,7 @@
 import { unstable_cache } from 'next/cache'
 import { createPublicClient } from '@/lib/supabase/public'
 import { mockBestSellers, mockCategories, mockFeaturedProducts } from '@/lib/data/mock'
-import type { Category, Product } from '@/types'
+import type { Category, HomepagePackage, Product } from '@/types'
 
 export const getActiveCategories = unstable_cache(
   async (): Promise<Category[]> => {
@@ -19,7 +19,7 @@ export const getActiveCategories = unstable_cache(
 export const getHomeCatalog = unstable_cache(
   async () => {
     const supabase = createPublicClient()
-    const [productsRes, categoriesRes, bannersRes] = await Promise.all([
+    const [productsRes, categoriesRes, bannersRes, packagesRes] = await Promise.all([
       supabase
         .from('products')
         .select('*, category:categories(*)')
@@ -37,6 +37,10 @@ export const getHomeCatalog = unstable_cache(
         .select('id, image_url, campaign:campaigns(slug, title_sq, title_en, ends_at)')
         .eq('is_active', true)
         .order('sort_order', { ascending: true }),
+      supabase
+        .from('homepage_packages')
+        .select('id, audience, image_url, is_active, created_at')
+        .eq('is_active', true),
     ])
     const categories = (categoriesRes.data ?? []) as Category[]
 
@@ -52,6 +56,7 @@ export const getHomeCatalog = unstable_cache(
         ...b,
         campaign: Array.isArray(b.campaign) ? (b.campaign[0] ?? null) : (b.campaign ?? null),
       })),
+      packages: ((packagesRes.error ? [] : packagesRes.data) ?? []) as HomepagePackage[],
     }
   },
   ['store-home-catalog'],

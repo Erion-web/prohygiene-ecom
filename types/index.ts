@@ -2,6 +2,8 @@ export type Lang = 'sq' | 'en'
 
 export type AudienceType = 'home' | 'business' | 'both'
 
+export type PackageAudience = 'home' | 'office' | 'horeca'
+
 export type OrderStatus = 'pending' | 'processing' | 'completed'
 
 export type PaymentStatus = 'pending' | 'approved' | 'declined' | 'cancelled' | 'needs_clarification'
@@ -306,6 +308,14 @@ export interface Subscription {
   created_at: string
   updated_at: string
   items?: SubscriptionItem[]
+}
+
+export interface HomepagePackage {
+  id: string
+  audience: PackageAudience
+  image_url: string
+  is_active: boolean
+  created_at: string
 }
 
 export interface Campaign {

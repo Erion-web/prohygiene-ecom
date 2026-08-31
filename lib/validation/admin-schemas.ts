@@ -104,6 +104,11 @@ export const saveCampaignSchema = z.object({
   }
 })
 
+export const saveHomepagePackageSchema = z.object({
+  audience: z.enum(['home', 'office', 'horeca']),
+  image_url: z.string().trim().min(1),
+})
+
 export const recordRefillSchema = z.object({
   deployed_device_id: uuid,
   material_id: uuid,
@@ -126,5 +131,6 @@ export const customerFormSchema = z.object({
 export type SaveProductInput = z.infer<typeof saveProductSchema>
 export type SaveContractInput = z.infer<typeof saveContractSchema>
 export type SaveCampaignInput = z.infer<typeof saveCampaignSchema>
+export type SaveHomepagePackageInput = z.infer<typeof saveHomepagePackageSchema>
 export type RecordRefillInput = z.infer<typeof recordRefillSchema>
 export type CustomerFormInput = z.infer<typeof customerFormSchema>

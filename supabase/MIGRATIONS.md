@@ -22,6 +22,7 @@ Apply on a fresh database:
 18. `simplify-order-status.sql`
 19. `production-security-rls.sql`
 20. `adjust-product-stock.sql`
+21. `add-homepage-packages.sql`
 
 Operational scripts (not for routine deploy):
 
