@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Home, Building2, ChefHat, Check } from 'lucide-react'
-import { MopCleaner } from '@/components/store/MopCleaner'
 import type { HomepagePackage, PackageAudience } from '@/types'
 
 const BUNDLES: {
@@ -56,7 +55,6 @@ export function BundlesSection({ packages = [] }: { packages?: HomepagePackage[]
   return (
     <section className="section relative">
       <div className="container-custom relative">
-        <MopCleaner />
         <div className="flex items-center gap-3 mb-6">
           <div className="w-1 h-8 bg-brand-400 rounded-full" />
           <div>
