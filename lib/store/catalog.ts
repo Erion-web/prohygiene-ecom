@@ -19,14 +19,20 @@ export const getActiveCategories = unstable_cache(
 export const getHomeCatalog = unstable_cache(
   async () => {
     const supabase = createPublicClient()
-    const [productsRes, categoriesRes, bannersRes, packagesRes] = await Promise.all([
+
+    const activeSaleProducts = () =>
       supabase
         .from('products')
         .select('*, category:categories(*)')
         .eq('is_active', true)
         .eq('listing_type', 'sale')
-        .order('created_at', { ascending: false })
-        .limit(24),
+
+    const [featuredRes, bestSellersRes, categoriesRes, bannersRes, packagesRes] = await Promise.all([
+      // Featured/best-seller are queried directly (not sliced from a "24 newest"
+      // batch first) — otherwise an older product flagged as featured could be
+      // silently excluded just for not being among the most recently created.
+      activeSaleProducts().eq('is_featured', true).order('created_at', { ascending: false }).limit(8),
+      activeSaleProducts().eq('is_best_seller', true).order('created_at', { ascending: false }).limit(8),
       supabase
         .from('categories')
         .select('*')
@@ -44,9 +50,8 @@ export const getHomeCatalog = unstable_cache(
     ])
     const categories = (categoriesRes.data ?? []) as Category[]
 
-    const products = (productsRes.data ?? []) as Product[]
-    const featured = products.filter(p => p.is_featured).slice(0, 8)
-    const bestSellers = products.filter(p => p.is_best_seller).slice(0, 8)
+    const featured = (featuredRes.data ?? []) as Product[]
+    const bestSellers = (bestSellersRes.data ?? []) as Product[]
 
     return {
       featured: featured.length > 0 ? featured : mockFeaturedProducts,
