@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Upload, Trash2, ToggleLeft, ToggleRight, ArrowUp, ArrowDown, Loader2, ImagePlus, Tag, ExternalLink } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
+import { deleteStoredImageAction, uploadImageAction } from '@/lib/actions/images'
 import { useRouter } from 'next/navigation'
 
 interface Campaign {
@@ -41,17 +42,17 @@ export function BannersClient({ banners: initial, campaigns }: Props) {
     if (!file.type.startsWith('image/')) { toast.error('Vetëm imazhe'); return }
     setUploading(true)
     try {
-      const ext = file.name.split('.').pop() ?? 'jpg'
-      const path = `${Date.now()}.${ext}`
-      const { error: uploadErr } = await supabase.storage.from('banner-images').upload(path, file, { upsert: false })
-      if (uploadErr) throw uploadErr
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'banners')
+      const uploaded = await uploadImageAction(formData)
+      if (!uploaded.ok) throw new Error(uploaded.error)
 
-      const { data: { publicUrl } } = supabase.storage.from('banner-images').getPublicUrl(path)
       const nextOrder = banners.length > 0 ? Math.max(...banners.map(b => b.sort_order)) + 1 : 0
 
       const { data, error } = await supabase
         .from('banners')
-        .insert({ image_url: publicUrl, is_active: true, sort_order: nextOrder, campaign_id: null })
+        .insert({ image_url: uploaded.data.url, is_active: true, sort_order: nextOrder, campaign_id: null })
         .select('*, campaign:campaigns(id, slug, title_sq)')
         .single()
 
@@ -97,8 +98,7 @@ export function BannersClient({ banners: initial, campaigns }: Props) {
 
   const deleteBanner = async (id: string, imageUrl: string) => {
     if (!confirm('Fshi këtë baner?')) return
-    const path = imageUrl.split('/banner-images/')[1]
-    if (path) await supabase.storage.from('banner-images').remove([path])
+    await deleteStoredImageAction(imageUrl)
     const { error } = await supabase.from('banners').delete().eq('id', id)
     if (error) { toast.error(error.message); return }
     setBanners(prev => prev.filter(b => b.id !== id))

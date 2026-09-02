@@ -1,8 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactCompiler: true,
+  serverExternalPackages: ["cloudinary"],
   images: {
     remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
       {
         protocol: "https",
         hostname: "*.supabase.co",
@@ -17,6 +22,7 @@ const nextConfig = {
   experimental: {
     serverActions: {
       allowedOrigins: ["localhost:3000", "prohygiene.shop"],
+      bodySizeLimit: "8mb",
     },
   },
 };
