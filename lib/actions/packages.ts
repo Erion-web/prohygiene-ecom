@@ -9,7 +9,7 @@ import { actionError, type ActionResult } from '@/lib/actions/types'
 function revalidatePackages() {
   revalidatePath('/admin/banners')
   revalidatePath('/')
-  revalidateTag('catalog')
+  revalidateTag('catalog', 'max')
 }
 
 export async function saveHomepagePackageAction(
