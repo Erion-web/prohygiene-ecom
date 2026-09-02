@@ -149,7 +149,8 @@ async function main() {
       console.log(`[${idx + 1}/${entries.length}] ok ${folder}`)
     } catch (err) {
       failed += 1
-      console.error(`[${idx + 1}/${entries.length}] fail ${folder}: ${err instanceof Error ? err.message : err}`)
+      const message = err instanceof Error ? err.message : JSON.stringify(err)
+      console.error(`[${idx + 1}/${entries.length}] fail ${folder}: ${message} :: ${url}`)
     }
   })
 
