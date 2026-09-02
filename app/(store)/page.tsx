@@ -207,7 +207,7 @@ export default async function HomePage() {
               <div className="flex items-center gap-3">
                 <div className="w-1 h-8 bg-brand-400 rounded-full" />
                 <div>
-                  <h2 className="text-xl font-extrabold text-text-primary">Produktet e Zgjedhura</h2>
+                  <h2 className="text-xl font-extrabold text-text-primary">Të rekomanduara</h2>
                   <p className="text-text-muted text-xs mt-0.5">Të selektuara me kujdes për ju</p>
                 </div>
               </div>
@@ -237,7 +237,7 @@ export default async function HomePage() {
                 <div className="flex items-center gap-2">
                   <Star size={18} className="text-amber-500" fill="currentColor" />
                   <div>
-                    <h2 className="text-xl font-extrabold text-text-primary">Më të Shitur</h2>
+                    <h2 className="text-xl font-extrabold text-text-primary">Më të Shiturat</h2>
                     <p className="text-text-muted text-xs mt-0.5">Zgjedhjet e klientëve tanë</p>
                   </div>
                 </div>
