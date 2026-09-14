@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { X, Loader2, Save, ImagePlus, Star, Home, Building2, Users } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useDropzone } from 'react-dropzone'
-import { createClient } from '@/lib/supabase/client'
+import { deleteStoredImageAction, uploadImageAction } from '@/lib/actions/images'
 import { saveProductAction } from '@/lib/actions/products'
 import { slugify } from '@/lib/utils'
 import { SearchableSelect } from '@/components/ui/searchable-select'
@@ -35,7 +35,6 @@ const MAX_IMAGES = 5
 
 export function ProductForm({ categories, brands, materials = [], initialDeviceMaterials = [], product, defaultForLease, returnTo }: ProductFormProps) {
   const router = useRouter()
-  const supabase = createClient()
   const [loading, setLoading] = useState(false)
 
   // All images in one flat array; index 0 = cover (image_url), rest = gallery_urls
@@ -91,17 +90,13 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
   }
 
   const uploadFile = useCallback(async (file: File): Promise<string> => {
-    const ext = file.name.split('.').pop()
-    const filename = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    const { error } = await supabase.storage
-      .from('product-images')
-      .upload(filename, file, { upsert: true })
-    if (error) throw error
-    const { data: { publicUrl } } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(filename)
-    return publicUrl
-  }, [supabase])
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('folder', 'products')
+    const result = await uploadImageAction(formData)
+    if (!result.ok) throw new Error(result.error)
+    return result.data.url
+  }, [])
 
   const onDrop = useCallback(async (files: File[]) => {
     const slots = MAX_IMAGES - images.length
@@ -131,7 +126,9 @@ export function ProductForm({ categories, brands, materials = [], initialDeviceM
   })
 
   const removeImage = (idx: number) => {
+    const url = images[idx]
     setImages(prev => prev.filter((_, i) => i !== idx))
+    if (url) void deleteStoredImageAction(url)
   }
 
   const setCover = (idx: number) => {

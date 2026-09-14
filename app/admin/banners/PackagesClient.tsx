@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { Home, Building2, ChefHat, ImagePlus, Loader2, Trash2, Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { createClient } from '@/lib/supabase/client'
+import { deleteStoredImageAction, uploadImageAction } from '@/lib/actions/images'
 import { deleteHomepagePackageAction, saveHomepagePackageAction } from '@/lib/actions/packages'
 import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 import type { HomepagePackage, PackageAudience } from '@/types'
@@ -21,7 +21,6 @@ interface Props {
 
 export function PackagesClient({ packages }: Props) {
   const refresh = useScrollPreservingRefresh()
-  const supabase = createClient()
   const [uploading, setUploading] = useState<PackageAudience | null>(null)
   const fileRefs = useRef<Partial<Record<PackageAudience, HTMLInputElement | null>>>({})
 
@@ -34,19 +33,18 @@ export function PackagesClient({ packages }: Props) {
     }
     setUploading(audience)
     try {
-      const ext = file.name.split('.').pop() ?? 'jpg'
-      const path = `packages/${audience}-${Date.now()}.${ext}`
-      const { error: uploadErr } = await supabase.storage.from('banner-images').upload(path, file, { upsert: false })
-      if (uploadErr) throw uploadErr
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'packages')
+      const uploaded = await uploadImageAction(formData)
+      if (!uploaded.ok) throw new Error(uploaded.error)
 
-      const { data: { publicUrl } } = supabase.storage.from('banner-images').getPublicUrl(path)
       const existing = byAudience(audience)
-      const result = await saveHomepagePackageAction({ audience, image_url: publicUrl })
+      const result = await saveHomepagePackageAction({ audience, image_url: uploaded.data.url })
       if (!result.ok) throw new Error(result.error)
 
       if (existing?.image_url) {
-        const oldPath = existing.image_url.split('/banner-images/')[1]
-        if (oldPath) await supabase.storage.from('banner-images').remove([oldPath])
+        await deleteStoredImageAction(existing.image_url)
       }
 
       toast.success('Imazhi u ngarkua')
@@ -60,8 +58,7 @@ export function PackagesClient({ packages }: Props) {
 
   const handleDelete = async (pkg: HomepagePackage) => {
     if (!confirm('Hiq imazhin e kësaj pakete?')) return
-    const path = pkg.image_url.split('/banner-images/')[1]
-    if (path) await supabase.storage.from('banner-images').remove([path])
+    await deleteStoredImageAction(pkg.image_url)
     const result = await deleteHomepagePackageAction(pkg.id)
     if (!result.ok) toast.error(result.error)
     else {
