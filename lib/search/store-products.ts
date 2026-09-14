@@ -7,7 +7,7 @@ export type StoreSearchProductRow = {
   sku: string
   name_sq: string
   name_en: string
-  price: number
+  price: number | null
   sale_price: number | null
   stock: number
   unit: string
@@ -18,10 +18,12 @@ export type StoreSearchProductRow = {
   is_featured: boolean
   is_best_seller: boolean
   vat_rate: number
+  brand_id: string | null
   category_id: string | null
   category_slug: string | null
   category_name_sq: string | null
   category_name_en: string | null
+  price_hidden: boolean
 }
 
 export function sanitizeStoreSearch(q: string) {
@@ -38,12 +40,13 @@ export function mapStoreSearchRowToProduct(row: StoreSearchProductRow): Product 
     description_sq: null,
     description_en: null,
     category_id: row.category_id,
-    brand_id: null,
+    brand_id: row.brand_id,
     audience_type: row.audience_type,
     listing_type: row.listing_type,
     available_for_lease: row.available_for_lease,
-    price: Number(row.price),
+    price: row.price != null ? Number(row.price) : 0,
     sale_price: row.sale_price != null ? Number(row.sale_price) : null,
+    price_hidden: row.price_hidden,
     stock: row.stock,
     unit: row.unit,
     image_url: row.image_url,

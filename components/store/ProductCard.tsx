@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingCart, Star, ArrowRight } from 'lucide-react'
+import { ShoppingCart, Star, ArrowRight, Lock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
@@ -98,25 +98,44 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </h3>
 
           <div className="flex items-center justify-between gap-2 mt-1">
-            <div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-extrabold text-base text-text-primary">
-                  {formatPrice(effectivePrice)}
-                </span>
-                {isOnSale && discountPercent && (
-                  <span className="text-[10px] font-extrabold bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded-md">
-                    -{discountPercent}%
+            {product.price_hidden ? (
+              <Link
+                href="/auth/login"
+                onClick={e => e.stopPropagation()}
+                className="text-xs font-bold text-brand-600 hover:text-brand-700 hover:underline flex items-center gap-1"
+              >
+                <Lock size={11} />
+                {lang === 'sq' ? 'Kyçu për çmimin' : 'Log in for price'}
+              </Link>
+            ) : (
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-extrabold text-base text-text-primary">
+                    {formatPrice(effectivePrice)}
+                  </span>
+                  {isOnSale && discountPercent && (
+                    <span className="text-[10px] font-extrabold bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded-md">
+                      -{discountPercent}%
+                    </span>
+                  )}
+                </div>
+                {isOnSale && (
+                  <span className="text-xs text-text-muted line-through">
+                    {formatPrice(product.price)}
                   </span>
                 )}
               </div>
-              {isOnSale && (
-                <span className="text-xs text-text-muted line-through">
-                  {formatPrice(product.price)}
-                </span>
-              )}
-            </div>
+            )}
 
-            {!forSale ? (
+            {product.price_hidden ? (
+              <Link
+                href="/auth/login"
+                onClick={e => e.stopPropagation()}
+                className="p-2 rounded-xl bg-surface-muted text-text-muted flex-shrink-0"
+              >
+                <Lock size={14} />
+              </Link>
+            ) : !forSale ? (
               <span className="p-2 rounded-xl bg-brand-50 text-brand-700 border border-brand-100 flex-shrink-0">
                 <ArrowRight size={14} />
               </span>

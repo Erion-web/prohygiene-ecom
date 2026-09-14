@@ -4,6 +4,8 @@ import { CategoryCard } from '@/components/store/CategoryCard'
 import { Home } from 'lucide-react'
 import { fetchShopProductsPage } from '@/lib/shop/products'
 import { SHOP_PAGE_SIZE, type ShopListFilters } from '@/lib/shop/query'
+import { applyPriceGate, getGatedBrandIds } from '@/lib/store/price-gate'
+import { getAuthUser } from '@/lib/supabase/auth'
 import { HomeProductsClient } from './HomeProductsClient'
 
 export const metadata: Metadata = { title: 'Produktet Shtëpiake | ProHygiene' }
@@ -20,7 +22,7 @@ const HOME_FILTERS: ShopListFilters = {
 export default async function HomeProductsPage() {
   const supabase = createPublicClient()
 
-  const [productsResult, categoriesRes] = await Promise.all([
+  const [productsResult, categoriesRes, user, gatedBrandIds] = await Promise.all([
     fetchShopProductsPage(supabase, HOME_FILTERS, SHOP_PAGE_SIZE),
     supabase
       .from('categories')
@@ -28,9 +30,12 @@ export default async function HomeProductsPage() {
       .eq('is_active', true)
       .in('audience_type', ['home', 'both'])
       .order('sort_order'),
+    getAuthUser(),
+    getGatedBrandIds(),
   ])
 
   const categories = categoriesRes.data ?? []
+  const gatedProducts = applyPriceGate(productsResult.products, gatedBrandIds, !!user)
 
   return (
     <div className="animate-fade-in">
@@ -64,7 +69,7 @@ export default async function HomeProductsPage() {
         )}
 
         <HomeProductsClient
-          initialProducts={productsResult.products}
+          initialProducts={gatedProducts}
           total={productsResult.total}
           pageSize={SHOP_PAGE_SIZE}
           filters={HOME_FILTERS}

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ShoppingCart, ChevronRight, Package, Tag, Users, Star, CheckCircle, AlertCircle, Clock, ArrowRight, ArrowLeft } from 'lucide-react'
+import { ShoppingCart, ChevronRight, Package, Tag, Users, Star, CheckCircle, AlertCircle, Clock, ArrowRight, ArrowLeft, Lock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
@@ -195,28 +195,47 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               </div>
             )}
 
-            <div className="flex items-end gap-3 mb-2">
-              <span className={cn(
-                'font-black tracking-tight text-text-primary',
-                !forSale ? 'text-3xl sm:text-4xl' : 'text-4xl'
-              )}>
-                {formatPrice(effectivePrice)}
-              </span>
-              {isOnSale && (
-                <div className="flex flex-col">
-                  <span className="text-lg text-text-muted line-through font-medium">
-                    {formatPrice(product.price)}
+            {product.price_hidden ? (
+              <div className="mb-6 p-5 rounded-2xl bg-brand-50 border border-brand-100">
+                <p className="text-sm font-bold text-brand-800 mb-1 flex items-center gap-1.5">
+                  <Lock size={14} />
+                  {lang === 'sq' ? 'Çmimi shfaqet vetëm për klientë të regjistruar' : 'Price shown only to registered customers'}
+                </p>
+                <p className="text-xs text-brand-700 mb-3">
+                  {lang === 'sq'
+                    ? 'Krijoni një llogari falas për të parë çmimet me shumicë.'
+                    : 'Create a free account to see wholesale prices.'}
+                </p>
+                <Link href={`/auth/login?redirect=/product/${product.slug}`} className="btn-primary py-2.5 px-5 text-sm inline-flex">
+                  {lang === 'sq' ? 'Kyçu / Krijo Llogari' : 'Log In / Sign Up'}
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-end gap-3 mb-2">
+                  <span className={cn(
+                    'font-black tracking-tight text-text-primary',
+                    !forSale ? 'text-3xl sm:text-4xl' : 'text-4xl'
+                  )}>
+                    {formatPrice(effectivePrice)}
                   </span>
-                  <span className="text-xs text-red-600 font-semibold">
-                    {lang === 'sq' ? 'Kurseni' : 'Save'} {formatPrice(product.price - effectivePrice)}
-                  </span>
+                  {isOnSale && (
+                    <div className="flex flex-col">
+                      <span className="text-lg text-text-muted line-through font-medium">
+                        {formatPrice(product.price)}
+                      </span>
+                      <span className="text-xs text-red-600 font-semibold">
+                        {lang === 'sq' ? 'Kurseni' : 'Save'} {formatPrice(product.price - effectivePrice)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <p className={cn('text-xs mb-6', !forSale ? 'text-text-secondary font-medium' : 'text-text-muted')}>
-              {forSale ? `${tr.product.priceIncludesVat} (${product.vat_rate}%)` : tr.lease.priceInfo}
-            </p>
+                <p className={cn('text-xs mb-6', !forSale ? 'text-text-secondary font-medium' : 'text-text-muted')}>
+                  {forSale ? `${tr.product.priceIncludesVat} (${product.vat_rate}%)` : tr.lease.priceInfo}
+                </p>
+              </>
+            )}
 
             <p className="text-text-secondary leading-relaxed mb-6">
               {description || (lang === 'sq'
@@ -225,7 +244,7 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
               )}
             </p>
 
-            {forSale && (
+            {forSale && !product.price_hidden && (
               <>
                 {!isOutOfStock && (
                   <div className="hidden sm:flex items-stretch gap-3 mb-6">
@@ -283,7 +302,16 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
         </div>
 
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-surface-border px-4 pt-3 safe-bottom flex items-stretch gap-3 shadow-elevated">
-          {forSale && (
+          {forSale && product.price_hidden && (
+            <Link
+              href={`/auth/login?redirect=/product/${product.slug}`}
+              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-2xl text-sm font-bold bg-brand-600 hover:bg-brand-700 text-white active:scale-95"
+            >
+              <Lock size={16} />
+              {lang === 'sq' ? 'Kyçu për çmimin' : 'Log in for price'}
+            </Link>
+          )}
+          {forSale && !product.price_hidden && (
             <>
               <div className="flex items-center gap-2">
                 <button

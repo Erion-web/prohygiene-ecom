@@ -79,6 +79,7 @@ export interface Brand {
   description: string | null
   is_active: boolean
   sort_order: number
+  hide_price_unless_authenticated: boolean
   created_at: string
   updated_at: string
 }
@@ -122,6 +123,7 @@ export interface Product {
   discount_type?: DiscountType | null
   discount_value?: number | null
   effective_price?: number | null
+  price_hidden?: boolean
 }
 
 export interface Material {

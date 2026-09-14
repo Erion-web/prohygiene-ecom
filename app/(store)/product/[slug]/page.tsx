@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { mockProducts } from '@/lib/data/mock'
 import { createPublicClient } from '@/lib/supabase/public'
 import { getProductBySlug } from '@/lib/store/catalog'
+import { applyPriceGate, getGatedBrandIds } from '@/lib/store/price-gate'
+import { getAuthUser } from '@/lib/supabase/auth'
 import { ProductPageClient } from './ProductPageClient'
 import type { Product } from '@/types'
 
@@ -10,15 +12,25 @@ interface Props {
   params: Promise<{ slug: string }>
 }
 
+// getAuthUser is React.cache()-wrapped and getProductBySlug/getGatedBrandIds
+// are unstable_cache-wrapped, so calling this from both generateMetadata and
+// the page component costs nothing extra — but the gating itself must happen
+// out here, per-request, never inside those caches (which are shared across
+// all visitors regardless of who's logged in).
 async function getProduct(slug: string): Promise<Product | null> {
+  let product: Product | null = null
   try {
-    const product = await getProductBySlug(slug)
-    if (product) return product
+    product = await getProductBySlug(slug)
   } catch {}
-  return mockProducts.find(p => p.slug === slug) ?? null
+  if (!product) product = mockProducts.find(p => p.slug === slug) ?? null
+  if (!product) return null
+
+  const [user, gatedBrandIds] = await Promise.all([getAuthUser(), getGatedBrandIds()])
+  return applyPriceGate([product], gatedBrandIds, !!user)[0]
 }
 
 async function getRelatedProducts(product: Product): Promise<Product[]> {
+  let related: Product[] = []
   try {
     const { data } = await createPublicClient()
       .from('products')
@@ -28,9 +40,14 @@ async function getRelatedProducts(product: Product): Promise<Product[]> {
       .neq('id', product.id)
       .eq('listing_type', (product.listing_type ?? 'sale') === 'sale' ? 'sale' : 'lease')
       .limit(4)
-    if (data && data.length > 0) return data as Product[]
+    if (data && data.length > 0) related = data as Product[]
   } catch {}
-  return mockProducts.filter(p => p.category_id === product.category_id && p.id !== product.id).slice(0, 4)
+  if (related.length === 0) {
+    related = mockProducts.filter(p => p.category_id === product.category_id && p.id !== product.id).slice(0, 4)
+  }
+
+  const [user, gatedBrandIds] = await Promise.all([getAuthUser(), getGatedBrandIds()])
+  return applyPriceGate(related, gatedBrandIds, !!user)
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -42,7 +59,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${product.name_sq} — Bli Online | ProHygiene`
   const description = product.description_sq
     ? product.description_sq.slice(0, 155)
-    : `Bli ${product.name_sq} online — dërgim 24h në tërë Kosovën. ${product.sale_price ? `Çmimi special: €${product.sale_price}` : `Çmimi: €${product.price}`}. Produkte origjinale, cilësi e garantuar.`
+    : product.price_hidden
+      ? `${product.name_sq} — dërgim 24h në tërë Kosovën. Kyçuni për të parë çmimin. Produkte origjinale, cilësi e garantuar.`
+      : `Bli ${product.name_sq} online — dërgim 24h në tërë Kosovën. ${product.sale_price ? `Çmimi special: €${product.sale_price}` : `Çmimi: €${product.price}`}. Produkte origjinale, cilësi e garantuar.`
 
   return {
     title,
@@ -79,7 +98,9 @@ export default async function ProductPage({ params }: Props) {
     image: product.image_url ?? undefined,
     sku: product.sku,
     brand: product.brand ? { '@type': 'Brand', name: (product.brand as { name: string }).name } : undefined,
-    offers: {
+    // Omit pricing entirely from structured data for gated products — a price
+    // shouldn't leak into Google rich snippets when the page itself won't show one.
+    offers: product.price_hidden ? undefined : {
       '@type': 'Offer',
       url: `https://prohygiene.shop/product/${product.slug}`,
       priceCurrency: 'EUR',

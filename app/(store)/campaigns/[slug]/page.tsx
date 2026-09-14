@@ -4,6 +4,8 @@ import { createPublicClient } from '@/lib/supabase/public'
 import { ProductCard } from '@/components/store/ProductCard'
 import { Badge } from '@/components/ui/Badge'
 import { Clock, Tag } from 'lucide-react'
+import { applyPriceGate, getGatedBrandIds } from '@/lib/store/price-gate'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 interface Props { params: Promise<{ slug: string }> }
 
@@ -37,7 +39,13 @@ export default async function CampaignPage({ params }: Props) {
   const { slug } = await params
   const data = await getCampaign(slug)
   if (!data) notFound()
-  const { campaign, products } = data
+  const { campaign } = data
+  const [user, gatedBrandIds] = await Promise.all([getAuthUser(), getGatedBrandIds()])
+  const products = applyPriceGate(
+    data.products as unknown as { id: string; brand_id: string | null; price: number; sale_price: number | null }[],
+    gatedBrandIds,
+    !!user
+  )
 
   const endsAt = new Date(campaign.ends_at)
   const now = new Date()

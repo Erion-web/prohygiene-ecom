@@ -26,6 +26,7 @@ export function BrandForm({ brand }: Props) {
     description: brand?.description ?? '',
     sort_order:  brand?.sort_order?.toString() ?? '0',
     is_active:   brand?.is_active ?? true,
+    hide_price_unless_authenticated: brand?.hide_price_unless_authenticated ?? false,
   })
 
   const update = (key: string, value: string | boolean) => {
@@ -51,6 +52,7 @@ export function BrandForm({ brand }: Props) {
       description: form.description || null,
       sort_order:  parseInt(form.sort_order) || 0,
       is_active:   form.is_active,
+      hide_price_unless_authenticated: form.hide_price_unless_authenticated,
     }
 
     let error
@@ -138,6 +140,19 @@ export function BrandForm({ brand }: Props) {
             className={`w-10 h-5 rounded-full transition-colors duration-200 relative ${form.is_active ? 'bg-brand-600' : 'bg-surface-muted'}`}
           >
             <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-soft transition-transform duration-200 ${form.is_active ? 'translate-x-5' : 'translate-x-0.5'}`} />
+          </div>
+        </label>
+
+        <label className="flex items-center justify-between cursor-pointer">
+          <div>
+            <span className="text-sm text-text-secondary block">Fshih çmimin pa u kyçur</span>
+            <span className="text-xs text-text-muted">Klientët shohin produktet e këtij brendi, por çmimin vetëm pasi krijojnë llogari</span>
+          </div>
+          <div
+            onClick={() => update('hide_price_unless_authenticated', !form.hide_price_unless_authenticated)}
+            className={`w-10 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0 ml-3 ${form.hide_price_unless_authenticated ? 'bg-brand-600' : 'bg-surface-muted'}`}
+          >
+            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-soft transition-transform duration-200 ${form.hide_price_unless_authenticated ? 'translate-x-5' : 'translate-x-0.5'}`} />
           </div>
         </label>
       </div>

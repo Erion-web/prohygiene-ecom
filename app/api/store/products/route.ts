@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { fetchShopProductsPage } from '@/lib/shop/products'
 import { parseShopListParams, SHOP_PAGE_SIZE } from '@/lib/shop/query'
+import { applyPriceGate, getGatedBrandIds } from '@/lib/store/price-gate'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 export async function GET(request: NextRequest) {
   const sp = Object.fromEntries(request.nextUrl.searchParams.entries())
@@ -12,14 +14,18 @@ export async function GET(request: NextRequest) {
   )
 
   const supabase = await createClient()
-  const { products, total, error } = await fetchShopProductsPage(supabase, filters, pageSize)
+  const [{ products, total, error }, user, gatedBrandIds] = await Promise.all([
+    fetchShopProductsPage(supabase, filters, pageSize),
+    getAuthUser(),
+    getGatedBrandIds(),
+  ])
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({
-    products,
+    products: applyPriceGate(products, gatedBrandIds, !!user),
     total,
     page: filters.page,
     pageSize,

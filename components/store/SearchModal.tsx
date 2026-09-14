@@ -148,7 +148,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   <div className="space-y-0.5">
                     {results.map(product => {
                       const name = getProductName(product, lang)
-                      const price = product.sale_price != null ? Number(product.sale_price) : Number(product.price)
+                      const price = product.sale_price != null ? Number(product.sale_price) : Number(product.price ?? 0)
 
                       return (
                         <button
@@ -178,8 +178,8 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                             </p>
                             <p className="text-xs text-white/45 font-mono truncate">{product.sku}</p>
                           </div>
-                          <span className="text-sm font-semibold text-brand-300 flex-shrink-0">
-                            {formatPrice(price)}
+                          <span className="text-xs font-semibold text-brand-300 flex-shrink-0">
+                            {product.price_hidden ? (lang === 'sq' ? 'Kyçu' : 'Log in') : formatPrice(price)}
                           </span>
                         </button>
                       )

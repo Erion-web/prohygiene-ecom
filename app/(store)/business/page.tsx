@@ -5,6 +5,8 @@ import { ProductCard } from '@/components/store/ProductCard'
 import { CategoryCard } from '@/components/store/CategoryCard'
 import { Building2, ArrowRight, Phone, CheckCircle } from 'lucide-react'
 import { HotelIcon, RestaurantIcon, ClinicIcon, OfficeIcon } from '@/components/store/HorecaSegmentIcons'
+import { applyPriceGate, getGatedBrandIds } from '@/lib/store/price-gate'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 export const metadata: Metadata = {
   title: 'Furnizim HORECA & Biznes — Kimikate Profesionale Kosovë',
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
 export default async function BusinessPage() {
   const supabase = createPublicClient()
 
-  const [productsRes, categoriesRes] = await Promise.all([
+  const [productsRes, categoriesRes, user, gatedBrandIds] = await Promise.all([
     supabase
       .from('products')
       .select('*, category:categories(*)')
@@ -31,9 +33,11 @@ export default async function BusinessPage() {
       .eq('is_active', true)
       .in('audience_type', ['business', 'both'])
       .order('sort_order'),
+    getAuthUser(),
+    getGatedBrandIds(),
   ])
 
-  const products = productsRes.data ?? []
+  const products = applyPriceGate(productsRes.data ?? [], gatedBrandIds, !!user)
   const categories = categoriesRes.data ?? []
 
   const benefits = [

@@ -8,6 +8,8 @@ import { HeroCarousel } from '@/components/store/HeroCarousel'
 import { BundlesSection } from '@/components/store/BundlesSection'
 import { ProductGridSkeleton } from '@/components/ui/Skeleton'
 import { getHomeCatalog } from '@/lib/store/catalog'
+import { applyPriceGate, getGatedBrandIds } from '@/lib/store/price-gate'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 export const metadata: Metadata = {
   title: 'Detergjente & Produkte Higjiene Online | Dërgim 24h Kosovë',
@@ -45,7 +47,12 @@ const trustItems = [
 ]
 
 export default async function HomePage() {
-  const { featured, bestSellers, categories, banners, packages } = await getHomeData()
+  const homeData = await getHomeData()
+  const [user, gatedBrandIds] = await Promise.all([getAuthUser(), getGatedBrandIds()])
+  const isAuthenticated = !!user
+  const featured = applyPriceGate(homeData.featured, gatedBrandIds, isAuthenticated)
+  const bestSellers = applyPriceGate(homeData.bestSellers, gatedBrandIds, isAuthenticated)
+  const { categories, banners, packages } = homeData
 
   const localBusinessLd = {
     '@context': 'https://schema.org',
