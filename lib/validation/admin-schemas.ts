@@ -45,6 +45,18 @@ export const saveProductSchema = z.object({
   }
 })
 
+export const bulkUpdateProductsSchema = z.object({
+  productIds: z.array(uuid).min(1, 'Zgjidhni të paktën një produkt').max(500),
+  patch: z.object({
+    category_id: z.string().uuid().nullable().optional(),
+    brand_id: z.string().uuid().nullable().optional(),
+    audience_type: z.enum(['home', 'business', 'both']).optional(),
+  }).refine(
+    p => p.category_id !== undefined || p.brand_id !== undefined || p.audience_type !== undefined,
+    { message: 'Zgjidhni të paktën një fushë për ndryshim' }
+  ),
+})
+
 export const contractDeviceRowSchema = z.object({
   product_id: uuid,
   quantity: z.number().int().min(1),

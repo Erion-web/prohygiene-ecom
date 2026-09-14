@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Sheet, SheetBody, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DeleteProductButton } from "./DeleteProductButton";
+import { BulkEditBar } from "./BulkEditBar";
 import {
   hasProductListFilters,
   productListSearchParams,
@@ -89,6 +90,7 @@ export function ProductsClient({
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState(filters.q);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
 
@@ -194,6 +196,31 @@ export function ProductsClient({
       "admin-products-scroll",
       String(el ? el.scrollTop : window.scrollY)
     );
+  };
+
+  const pageIds = products.map((p) => p.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+  const somePageSelected = pageIds.some((id) => selected.has(id));
+
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const togglePage = () => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allPageSelected) {
+        for (const id of pageIds) next.delete(id);
+      } else {
+        for (const id of pageIds) next.add(id);
+      }
+      return next;
+    });
   };
 
   const statCards = [
@@ -459,6 +486,15 @@ export function ProductsClient({
         </SheetContent>
       </Sheet>
 
+      {selected.size > 0 && (
+        <BulkEditBar
+          selectedIds={Array.from(selected)}
+          categories={categories}
+          brands={brands}
+          onDone={() => setSelected(new Set())}
+        />
+      )}
+
       {/* ── MOBILE CARDS (< md) ── */}
       <div className={`md:hidden space-y-2 ${isPending ? "opacity-50" : ""}`}>
         {matched === 0 ? (
@@ -482,6 +518,13 @@ export function ProductsClient({
               key={product.id}
               className="bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3 active:bg-gray-50 transition-colors"
             >
+              <input
+                type="checkbox"
+                checked={selected.has(product.id)}
+                onChange={() => toggleOne(product.id)}
+                className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-400 flex-shrink-0"
+              />
+
               {/* Image */}
               <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
                 {product.image_url ? (
@@ -574,6 +617,17 @@ export function ProductsClient({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/80">
+                <th className="px-3 py-2.5 w-8">
+                  <input
+                    type="checkbox"
+                    checked={allPageSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = somePageSelected && !allPageSelected;
+                    }}
+                    onChange={togglePage}
+                    className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
+                  />
+                </th>
                 {[
                   "Foto",
                   "Produkti",
@@ -602,6 +656,14 @@ export function ProductsClient({
                   key={product.id}
                   className="hover:bg-gray-50/60 transition-colors group"
                 >
+                  <td className="px-3 py-2 w-8">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(product.id)}
+                      onChange={() => toggleOne(product.id)}
+                      className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-400"
+                    />
+                  </td>
                   <td className="px-3 py-2 w-10">
                     <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                       {product.image_url ? (
@@ -731,7 +793,7 @@ export function ProductsClient({
               ))}
               {matched === 0 && (
                 <tr>
-                  <td colSpan={9} className="text-center py-12 text-gray-400">
+                  <td colSpan={10} className="text-center py-12 text-gray-400">
                     <Package size={28} className="mx-auto mb-2 opacity-30" />
                     <p className="text-sm font-medium">
                       {hasFilters
