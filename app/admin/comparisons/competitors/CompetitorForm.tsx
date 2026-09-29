@@ -5,18 +5,29 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
-import type { Competitor } from '@/types'
+import type { Competitor, JsonCatalogConfig } from '@/types'
 
 interface Props {
   competitor?: Competitor
 }
 
+type DataSource = 'catalog_html' | 'json_api'
+
+function initialDataSource(c?: Competitor): DataSource {
+  return c?.products_api_url?.trim() ? 'json_api' : 'catalog_html'
+}
+
 export function CompetitorForm({ competitor }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [dataSource, setDataSource] = useState<DataSource>(() => initialDataSource(competitor))
+  const cfg = competitor?.json_catalog_config ?? {}
   const [form, setForm] = useState({
     name: competitor?.name ?? '',
     catalog_url: competitor?.catalog_url ?? '',
+    products_api_url: competitor?.products_api_url ?? '',
+    json_items_path: cfg.itemsPath ?? '',
+    json_url_template: cfg.urlTemplate ?? '',
     is_active: competitor?.is_active ?? true,
     selector_card: competitor?.selector_card ?? '',
     selector_name: competitor?.selector_name ?? '',
@@ -36,11 +47,34 @@ export function CompetitorForm({ competitor }: Props) {
       toast.error('Emri dhe URL e katalogut janë të detyrueshme')
       return
     }
+    if (dataSource === 'json_api') {
+      if (!form.products_api_url.trim()) {
+        toast.error('URL e API për produkte është e detyrueshme për burimin JSON')
+        return
+      }
+      if (!form.json_url_template.trim()) {
+        toast.error('Shabloni i linkut të produktit është i detyrueshëm kur API nuk jep URL')
+        return
+      }
+    }
+
     setLoading(true)
     const supabase = createClient()
+
+    const json_catalog_config: JsonCatalogConfig = {}
+    if (form.json_items_path.trim()) {
+      json_catalog_config.itemsPath = form.json_items_path.trim()
+    }
+    if (form.json_url_template.trim()) {
+      json_catalog_config.urlTemplate = form.json_url_template.trim()
+    }
+
     const payload = {
       name: form.name.trim(),
       catalog_url: form.catalog_url.trim(),
+      products_api_url:
+        dataSource === 'json_api' ? form.products_api_url.trim() : null,
+      json_catalog_config,
       is_active: form.is_active,
       selector_card: form.selector_card.trim() || null,
       selector_name: form.selector_name.trim() || null,
@@ -82,7 +116,10 @@ export function CompetitorForm({ competitor }: Props) {
             required
             placeholder="https://..."
           />
-          <p className="text-xs text-text-muted mt-1">Faqja publike e listimit të produkteve.</p>
+          <p className="text-xs text-text-muted mt-1">
+            Faqja publike e listimit. Për dyqane SPA, API e produkteve zbul-ohet automatikisht gjatë scraping
+            kur është e mundur.
+          </p>
         </div>
         <div>
           <label className="label">Intervali i scraping (orë)</label>
@@ -107,31 +144,102 @@ export function CompetitorForm({ competitor }: Props) {
         </label>
       </div>
 
-      <div className="admin-card space-y-3">
-        <h3 className="font-semibold text-text-primary text-sm">Selektorët CSS (opsionale)</h3>
+      <div className="admin-card space-y-4">
+        <h3 className="font-semibold text-text-primary text-sm">Burimi i produkteve</h3>
         <p className="text-xs text-text-muted">
-          Përdoren vetëm kur JSON-LD nuk gjen produkte. Lër bosh nëse faqja ka structured data.
+          Faqet me HTML (WooCommerce, JSON-LD, selektorë) ose API JSON kur faqja është vetëm aplikacion
+          (SPA).
         </p>
-        {(
-          [
-            ['selector_card', 'Karta e produktit'],
-            ['selector_name', 'Emri'],
-            ['selector_price', 'Çmimi'],
-            ['selector_link', 'Linku'],
-            ['selector_next_page', 'Faqja tjetër'],
-          ] as const
-        ).map(([key, label]) => (
-          <div key={key}>
-            <label className="label">{label}</label>
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-6">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input
-              className="input font-mono text-xs"
-              value={form[key]}
-              onChange={e => update(key, e.target.value)}
-              placeholder=".product-card"
+              type="radio"
+              name="dataSource"
+              checked={dataSource === 'catalog_html'}
+              onChange={() => setDataSource('catalog_html')}
             />
+            Faqja e katalogut (HTML)
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="radio"
+              name="dataSource"
+              checked={dataSource === 'json_api'}
+              onChange={() => setDataSource('json_api')}
+            />
+            API JSON
+          </label>
+        </div>
+
+        {dataSource === 'json_api' && (
+          <div className="space-y-3 pt-2 border-t border-surface-border">
+            <div>
+              <label className="label">URL e API për produkte *</label>
+              <input
+                type="url"
+                className="input font-mono text-xs"
+                value={form.products_api_url}
+                onChange={e => update('products_api_url', e.target.value)}
+                placeholder="https://api.example.com/products"
+              />
+              <p className="text-xs text-text-muted mt-1">
+                GET që kthen JSON: listë produktesh ose objekt me listë brenda (p.sh. data.items).
+              </p>
+            </div>
+            <div>
+              <label className="label">Rruga te lista (opsionale)</label>
+              <input
+                className="input font-mono text-xs"
+                value={form.json_items_path}
+                onChange={e => update('json_items_path', e.target.value)}
+                placeholder="data.items"
+              />
+              <p className="text-xs text-text-muted mt-1">Lëre bosh nëse përgjigja është vetë listë.</p>
+            </div>
+            <div>
+              <label className="label">Shablon i linkut të produktit *</label>
+              <input
+                className="input font-mono text-xs"
+                value={form.json_url_template}
+                onChange={e => update('json_url_template', e.target.value)}
+                placeholder="https://dyqani.com/produkti/{id}"
+              />
+              <p className="text-xs text-text-muted mt-1">
+                Përdor fushat nga JSON, p.sh. {'{id}'}, {'{barcode}'}. Emri, çmimi dhe SKU lexohen automatikisht
+                nga fushat e zakonshme (name, price, barcode, …).
+              </p>
+            </div>
           </div>
-        ))}
+        )}
       </div>
+
+      {dataSource === 'catalog_html' && (
+        <div className="admin-card space-y-3">
+          <h3 className="font-semibold text-text-primary text-sm">Selektorët CSS (opsionale)</h3>
+          <p className="text-xs text-text-muted">
+            Përdoren kur JSON-LD dhe WooCommerce nuk gjejnë produkte. Lër bosh nëse faqja ka structured data.
+          </p>
+          {(
+            [
+              ['selector_card', 'Karta e produktit'],
+              ['selector_name', 'Emri'],
+              ['selector_price', 'Çmimi'],
+              ['selector_link', 'Linku'],
+              ['selector_next_page', 'Faqja tjetër'],
+            ] as const
+          ).map(([key, label]) => (
+            <div key={key}>
+              <label className="label">{label}</label>
+              <input
+                className="input font-mono text-xs"
+                value={form[key]}
+                onChange={e => update(key, e.target.value)}
+                placeholder=".product-card"
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex gap-3">
         <button type="submit" disabled={loading} className="btn-primary gap-2">

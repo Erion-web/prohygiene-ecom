@@ -539,10 +539,24 @@ export interface ImportResult {
 
 export type ScrapeRunStatus = 'pending' | 'running' | 'completed' | 'failed'
 
+/** Optional mapping when `products_api_url` returns JSON (not HTML). */
+export interface JsonCatalogConfig {
+  /** Dot path to the products array, e.g. `data.items`. Empty = root array. */
+  itemsPath?: string
+  /** Product page URL pattern, e.g. `https://shop.com/p/{id}` */
+  urlTemplate?: string
+  nameFields?: string[]
+  priceFields?: string[]
+  skuFields?: string[]
+  urlFields?: string[]
+}
+
 export interface Competitor {
   id: string
   name: string
   catalog_url: string
+  products_api_url: string | null
+  json_catalog_config: JsonCatalogConfig | null
   is_active: boolean
   selector_card: string | null
   selector_name: string | null

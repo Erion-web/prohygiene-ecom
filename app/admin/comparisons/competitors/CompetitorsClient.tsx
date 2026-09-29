@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ExternalLink, Loader2, Pencil, Package, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { formatAdminDateTime } from '@/lib/comparisons/format-datetime'
 import type { Competitor, ScrapeRun } from '@/types'
 
 interface Props {
@@ -169,7 +170,7 @@ export function CompetitorsClient({ competitors, initialActiveRuns }: Props) {
                   </td>
                   <td className="py-3 pr-4 text-xs text-text-muted whitespace-nowrap">
                     {c.last_success_at
-                      ? new Date(c.last_success_at).toLocaleString('sq-AL')
+                      ? formatAdminDateTime(c.last_success_at)
                       : 'End nuk është bërë'}
                   </td>
                   <td className="py-3 pr-4">

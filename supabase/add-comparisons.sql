@@ -7,6 +7,8 @@ create table if not exists public.competitors (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   catalog_url text not null,
+  products_api_url text,
+  json_catalog_config jsonb not null default '{}'::jsonb,
   is_active boolean not null default true,
   selector_card text,
   selector_name text,

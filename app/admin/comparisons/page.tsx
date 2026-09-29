@@ -1,4 +1,5 @@
 import { AdminHeader } from '@/components/admin/AdminHeader'
+import { formatAdminDateTime } from '@/lib/comparisons/format-datetime'
 import { loadComparisonTable, formatComparisonPrice } from '@/lib/comparisons/query-table'
 import { formatPrice } from '@/lib/utils'
 
@@ -73,7 +74,7 @@ export default async function ComparisonsPage() {
                         )}
                       </td>
                       <td className="py-3 text-xs text-text-muted whitespace-nowrap">
-                        {latestScrape ? new Date(latestScrape).toLocaleString('sq-AL') : '—'}
+                        {latestScrape ? formatAdminDateTime(latestScrape) : '—'}
                       </td>
                     </tr>
                   )

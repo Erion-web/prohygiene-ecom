@@ -1,15 +1,21 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { extractProductsFromHtml, fetchPageHtml, findNextPageUrl } from '@/lib/comparisons/extract-products'
+import {
+  fetchJsonCatalogProducts,
+  JSON_CATALOG_BATCH_SIZE,
+  usesJsonCatalog,
+} from '@/lib/comparisons/json-api-catalog'
+import { discoverJsonCatalogFromCatalogUrl } from '@/lib/comparisons/discover-json-catalog'
+import {
+  initialScrapeCursor,
+  scrapeSourceKind,
+  type ScrapeCursor,
+} from '@/lib/comparisons/scrape-source'
 import { findBestProductMatch, type OurProductRow } from '@/lib/comparisons/match-products'
 import type { Competitor, ScrapeRun } from '@/types'
 
 export const MAX_PAGES_PER_BATCH = 1
 export const MAX_PAGES_PER_RUN = 40
-
-interface ScrapeCursor {
-  nextUrl?: string
-  pageCount?: number
-}
 
 export interface BatchResult {
   run: ScrapeRun
@@ -79,6 +85,46 @@ async function upsertCompetitorProduct(
   return true
 }
 
+async function ensureCompetitorJsonCatalog(
+  supabase: Awaited<ReturnType<typeof createServiceClient>>,
+  competitor: Competitor
+): Promise<{ competitor: Competitor; discovered: boolean }> {
+  if (usesJsonCatalog(competitor)) {
+    return { competitor, discovered: false }
+  }
+
+  const discovered = await discoverJsonCatalogFromCatalogUrl(competitor.catalog_url)
+  if (!discovered) {
+    return { competitor, discovered: false }
+  }
+
+  const { data: updated, error } = await supabase
+    .from('competitors')
+    .update({
+      products_api_url: discovered.products_api_url,
+      json_catalog_config: discovered.json_catalog_config,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', competitor.id)
+    .select('*')
+    .single()
+
+  if (error || !updated) {
+    return { competitor, discovered: false }
+  }
+
+  return { competitor: updated as Competitor, discovered: true }
+}
+
+function batchMessage(done: boolean, totalUpserted: number, source: ReturnType<typeof scrapeSourceKind>): string {
+  if (!done) return 'Batch u përpunua'
+  if (totalUpserted > 0) return 'Scraping u përfundua'
+  if (source === 'html') {
+    return 'Scraping u përfundua por nuk u gjetën produkte. Kontrollo selektorët CSS ose shto URL të API JSON.'
+  }
+  return 'Scraping u përfundua por nuk u importuan produkte. Kontrollo URL e API dhe shablonin e linkut.'
+}
+
 export async function processScrapeBatch(runId: string): Promise<BatchResult> {
   const supabase = await createServiceClient()
 
@@ -110,10 +156,24 @@ export async function processScrapeBatch(runId: string): Promise<BatchResult> {
     throw new Error('Konkurrenti nuk u gjet')
   }
 
-  const competitor = competitorRow as Competitor
-  const cursor = (run.cursor ?? {}) as ScrapeCursor
+  let competitor = competitorRow as Competitor
+  const { competitor: withCatalog, discovered } = await ensureCompetitorJsonCatalog(supabase, competitor)
+  competitor = withCatalog
+
+  let source = scrapeSourceKind(competitor)
+  let cursor = (run.cursor ?? {}) as ScrapeCursor
+
+  if (discovered || (source === 'json_api' && cursor.source !== 'json_api')) {
+    cursor = initialScrapeCursor(competitor)
+  }
+
   let pageCount = cursor.pageCount ?? 0
-  let nextUrl: string | null = cursor.nextUrl ?? competitor.catalog_url
+  let nextUrl: string | null =
+    cursor.nextUrl !== undefined
+      ? cursor.nextUrl
+      : source === 'json_api'
+        ? 'json_api'
+        : competitor.catalog_url
 
   if (run.status === 'pending') {
     await supabase.from('scrape_runs').update({ status: 'running' }).eq('id', runId)
@@ -121,31 +181,90 @@ export async function processScrapeBatch(runId: string): Promise<BatchResult> {
 
   const ourProducts = await loadOurProducts()
   let upsertedThisBatch = 0
+  let productOffset = cursor.productOffset ?? 0
 
   try {
-    for (let i = 0; i < MAX_PAGES_PER_BATCH; i++) {
-      if (!nextUrl || pageCount >= MAX_PAGES_PER_RUN) break
+    if (source === 'json_api') {
+      if (!usesJsonCatalog(competitor)) {
+        throw new Error('Konkurrenti nuk ka URL të API për produkte')
+      }
+      if (nextUrl && pageCount < MAX_PAGES_PER_RUN) {
+        const all = await fetchJsonCatalogProducts(competitor)
+        const slice = all.slice(productOffset, productOffset + JSON_CATALOG_BATCH_SIZE)
+        for (const item of slice) {
+          const ok = await upsertCompetitorProduct(competitor.id, item, ourProducts)
+          if (ok) upsertedThisBatch++
+        }
+        productOffset += slice.length
+        pageCount++
+        nextUrl = productOffset >= all.length ? null : 'json_api'
+      }
+    } else {
+      for (let i = 0; i < MAX_PAGES_PER_BATCH; i++) {
+        if (!nextUrl || pageCount >= MAX_PAGES_PER_RUN) break
 
-      const html = await fetchPageHtml(nextUrl)
-      const extracted = extractProductsFromHtml(html, nextUrl, competitor)
+        const html = await fetchPageHtml(nextUrl)
+        let extracted = extractProductsFromHtml(html, nextUrl, competitor)
 
-      for (const item of extracted) {
-        const ok = await upsertCompetitorProduct(competitor.id, item, ourProducts)
-        if (ok) upsertedThisBatch++
+        if (
+          extracted.length === 0 &&
+          pageCount === 0 &&
+          nextUrl === competitor.catalog_url
+        ) {
+          const again = await ensureCompetitorJsonCatalog(supabase, competitor)
+          if (again.discovered || usesJsonCatalog(again.competitor)) {
+            competitor = again.competitor
+            source = scrapeSourceKind(competitor)
+            if (source === 'json_api') {
+              cursor = initialScrapeCursor(competitor)
+              pageCount = 0
+              productOffset = 0
+              nextUrl = 'json_api'
+              break
+            }
+          }
+        }
+
+        for (const item of extracted) {
+          const ok = await upsertCompetitorProduct(competitor.id, item, ourProducts)
+          if (ok) upsertedThisBatch++
+        }
+
+        pageCount++
+        const currentUrl: string = nextUrl
+        const foundNext = findNextPageUrl(html, currentUrl, competitor)
+        nextUrl =
+          foundNext && foundNext !== competitor.catalog_url && foundNext !== currentUrl
+            ? foundNext
+            : null
       }
 
-      pageCount++
-      const currentUrl: string = nextUrl
-      const foundNext = findNextPageUrl(html, currentUrl, competitor)
-      nextUrl =
-        foundNext && foundNext !== competitor.catalog_url && foundNext !== currentUrl
-          ? foundNext
-          : null
+      if (source === 'json_api' && nextUrl === 'json_api' && pageCount === 0) {
+        const all = await fetchJsonCatalogProducts(competitor)
+        const slice = all.slice(productOffset, productOffset + JSON_CATALOG_BATCH_SIZE)
+        for (const item of slice) {
+          const ok = await upsertCompetitorProduct(competitor.id, item, ourProducts)
+          if (ok) upsertedThisBatch++
+        }
+        productOffset += slice.length
+        pageCount++
+        nextUrl = productOffset >= all.length ? null : 'json_api'
+      }
     }
 
     const done = !nextUrl || pageCount >= MAX_PAGES_PER_RUN
     const totalUpserted = run.products_upserted + upsertedThisBatch
     const now = new Date().toISOString()
+
+    const nextCursor: ScrapeCursor =
+      source === 'json_api'
+        ? {
+            source: 'json_api',
+            nextUrl: done ? null : nextUrl,
+            pageCount,
+            productOffset,
+          }
+        : { source: 'html', nextUrl: done ? null : nextUrl, pageCount }
 
     const { data: updatedRun } = await supabase
       .from('scrape_runs')
@@ -153,7 +272,7 @@ export async function processScrapeBatch(runId: string): Promise<BatchResult> {
         status: done ? 'completed' : 'running',
         pages_processed: pageCount,
         products_upserted: totalUpserted,
-        cursor: { nextUrl: done ? null : nextUrl, pageCount },
+        cursor: nextCursor,
         finished_at: done ? now : null,
         error_message: null,
       })
@@ -163,14 +282,14 @@ export async function processScrapeBatch(runId: string): Promise<BatchResult> {
 
     await supabase.from('competitors').update({
       last_scraped_at: now,
-      last_success_at: done ? now : competitor.last_success_at,
+      last_success_at: done && totalUpserted > 0 ? now : competitor.last_success_at,
       updated_at: now,
     }).eq('id', competitor.id)
 
     return {
       run: (updatedRun ?? run) as ScrapeRun,
       done,
-      message: done ? 'Scraping u përfundua' : 'Batch u përpunua',
+      message: batchMessage(done, totalUpserted, source),
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Gabim gjatë scraping'
@@ -202,18 +321,23 @@ export async function startScrapeRun(competitorId: string): Promise<ScrapeRun> {
 
   const { data: competitor } = await supabase
     .from('competitors')
-    .select('catalog_url')
+    .select('*')
     .eq('id', competitorId)
     .single()
 
   if (!competitor) throw new Error('Konkurrenti nuk u gjet')
+
+  const { competitor: ready } = await ensureCompetitorJsonCatalog(
+    supabase,
+    competitor as Competitor
+  )
 
   const { data: run, error } = await supabase
     .from('scrape_runs')
     .insert({
       competitor_id: competitorId,
       status: 'pending',
-      cursor: { nextUrl: competitor.catalog_url, pageCount: 0 },
+      cursor: initialScrapeCursor(ready),
     })
     .select('*')
     .single()

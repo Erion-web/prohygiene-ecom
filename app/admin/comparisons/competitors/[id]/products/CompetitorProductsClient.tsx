@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { formatAdminDateTime } from '@/lib/comparisons/format-datetime'
 import { formatPrice } from '@/lib/utils'
 import type { CompetitorProduct, Product } from '@/types'
 
@@ -172,7 +173,7 @@ export function CompetitorProductsClient({
                     </select>
                   </td>
                   <td className="py-3 px-4 text-xs text-text-muted whitespace-nowrap">
-                    {new Date(p.scraped_at).toLocaleString('sq-AL')}
+                    {formatAdminDateTime(p.scraped_at)}
                   </td>
                 </tr>
               ))}
