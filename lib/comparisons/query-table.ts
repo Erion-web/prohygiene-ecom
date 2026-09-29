@@ -1,5 +1,30 @@
+import { sanitizeSearch } from '@/lib/admin/sanitize-search'
 import { createClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
+
+export const COMPARISON_TABLE_PAGE_SIZE = 25
+
+export function parseComparisonTableParams(
+  searchParams: Record<string, string | string[] | undefined>
+) {
+  const rawPage = typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1
+  const q = typeof searchParams.q === 'string' ? sanitizeSearch(searchParams.q) : ''
+  const skip = (page - 1) * COMPARISON_TABLE_PAGE_SIZE
+  const take = COMPARISON_TABLE_PAGE_SIZE
+  return { page, q, skip, take }
+}
+
+export function filterComparisonRows(rows: ComparisonTableRow[], q: string): ComparisonTableRow[] {
+  if (!q) return rows
+  const needle = q.toLowerCase()
+  return rows.filter(
+    row =>
+      row.name_sq.toLowerCase().includes(needle) ||
+      row.sku.toLowerCase().includes(needle) ||
+      row.competitors.some(c => c.competitorName.toLowerCase().includes(needle))
+  )
+}
 
 export interface ComparisonTableRow {
   ourProductId: string
@@ -92,6 +117,19 @@ export async function loadComparisonTable(): Promise<ComparisonTableRow[]> {
   }
 
   return [...byProduct.values()].sort((a, b) => a.name_sq.localeCompare(b.name_sq))
+}
+
+export async function loadComparisonTablePage(options: {
+  q: string
+  skip: number
+  take: number
+}): Promise<{ rows: ComparisonTableRow[]; total: number }> {
+  const all = await loadComparisonTable()
+  const filtered = filterComparisonRows(all, options.q)
+  return {
+    rows: filtered.slice(options.skip, options.skip + options.take),
+    total: filtered.length,
+  }
 }
 
 export function formatComparisonPrice(n: number | null) {

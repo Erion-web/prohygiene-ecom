@@ -6,6 +6,8 @@ import { z } from 'zod'
 
 const bodySchema = z.object({ runId: z.string().uuid() })
 
+export const maxDuration = 60
+
 export async function POST(req: Request) {
   const { authorized } = await requireAdmin()
   if (!authorized) return apiError('Forbidden', 403)

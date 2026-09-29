@@ -6,7 +6,9 @@ import {
   usesJsonCatalog,
 } from '@/lib/comparisons/json-api-catalog'
 import { discoverJsonCatalogFromCatalogUrl } from '@/lib/comparisons/discover-json-catalog'
+import type { DiscoveredJsonCatalog } from '@/lib/comparisons/discover-json-catalog'
 import {
+  competitorWithCursorJsonApi,
   initialScrapeCursor,
   scrapeSourceKind,
   type ScrapeCursor,
@@ -85,18 +87,28 @@ async function upsertCompetitorProduct(
   return true
 }
 
+function mergeDiscoveredCatalog(competitor: Competitor, discovered: DiscoveredJsonCatalog): Competitor {
+  return {
+    ...competitor,
+    products_api_url: discovered.products_api_url,
+    json_catalog_config: discovered.json_catalog_config,
+  }
+}
+
 async function ensureCompetitorJsonCatalog(
   supabase: Awaited<ReturnType<typeof createServiceClient>>,
   competitor: Competitor
-): Promise<{ competitor: Competitor; discovered: boolean }> {
+): Promise<{ competitor: Competitor; discovered: DiscoveredJsonCatalog | null; persistError?: string }> {
   if (usesJsonCatalog(competitor)) {
-    return { competitor, discovered: false }
+    return { competitor, discovered: null }
   }
 
   const discovered = await discoverJsonCatalogFromCatalogUrl(competitor.catalog_url)
   if (!discovered) {
-    return { competitor, discovered: false }
+    return { competitor, discovered: null }
   }
+
+  const merged = mergeDiscoveredCatalog(competitor, discovered)
 
   const { data: updated, error } = await supabase
     .from('competitors')
@@ -110,15 +122,28 @@ async function ensureCompetitorJsonCatalog(
     .single()
 
   if (error || !updated) {
-    return { competitor, discovered: false }
+    return {
+      competitor: merged,
+      discovered,
+      persistError: error?.message ?? 'Nuk u ruajt konfigurimi i API',
+    }
   }
 
-  return { competitor: updated as Competitor, discovered: true }
+  return { competitor: updated as Competitor, discovered }
 }
 
-function batchMessage(done: boolean, totalUpserted: number, source: ReturnType<typeof scrapeSourceKind>): string {
+function batchMessage(
+  done: boolean,
+  totalUpserted: number,
+  source: ReturnType<typeof scrapeSourceKind>,
+  extras?: { persistError?: string }
+): string {
   if (!done) return 'Batch u përpunua'
-  if (totalUpserted > 0) return 'Scraping u përfundua'
+  if (totalUpserted > 0) {
+    return extras?.persistError
+      ? `Scraping u përfundua. API u zbulua por nuk u ruajt në konkurrent: ${extras.persistError}`
+      : 'Scraping u përfundua'
+  }
   if (source === 'html') {
     return 'Scraping u përfundua por nuk u gjetën produkte. Kontrollo selektorët CSS ose shto URL të API JSON.'
   }
@@ -157,14 +182,33 @@ export async function processScrapeBatch(runId: string): Promise<BatchResult> {
   }
 
   let competitor = competitorRow as Competitor
-  const { competitor: withCatalog, discovered } = await ensureCompetitorJsonCatalog(supabase, competitor)
-  competitor = withCatalog
+  let cursor = (run.cursor ?? {}) as ScrapeCursor
+  competitor = competitorWithCursorJsonApi(competitor, cursor)
+
+  let persistError: string | undefined
+
+  if (!usesJsonCatalog(competitor)) {
+    const ensured = await ensureCompetitorJsonCatalog(supabase, competitor)
+    competitor = ensured.competitor
+    persistError = ensured.persistError
+    if (ensured.discovered) {
+      cursor = {
+        ...initialScrapeCursor(competitor),
+        jsonApi: {
+          products_api_url: ensured.discovered.products_api_url,
+          json_catalog_config: ensured.discovered.json_catalog_config,
+        },
+      }
+    }
+  }
 
   let source = scrapeSourceKind(competitor)
-  let cursor = (run.cursor ?? {}) as ScrapeCursor
 
-  if (discovered || (source === 'json_api' && cursor.source !== 'json_api')) {
-    cursor = initialScrapeCursor(competitor)
+  if (source === 'json_api' && cursor.source !== 'json_api') {
+    cursor = {
+      ...initialScrapeCursor(competitor),
+      jsonApi: cursor.jsonApi,
+    }
   }
 
   let pageCount = cursor.pageCount ?? 0
@@ -212,16 +256,25 @@ export async function processScrapeBatch(runId: string): Promise<BatchResult> {
           nextUrl === competitor.catalog_url
         ) {
           const again = await ensureCompetitorJsonCatalog(supabase, competitor)
-          if (again.discovered || usesJsonCatalog(again.competitor)) {
-            competitor = again.competitor
-            source = scrapeSourceKind(competitor)
-            if (source === 'json_api') {
-              cursor = initialScrapeCursor(competitor)
-              pageCount = 0
-              productOffset = 0
-              nextUrl = 'json_api'
-              break
+          competitor = again.competitor
+          if (again.persistError) persistError = again.persistError
+          if (usesJsonCatalog(competitor)) {
+            source = 'json_api'
+            cursor = {
+              ...initialScrapeCursor(competitor),
+              ...(again.discovered
+                ? {
+                    jsonApi: {
+                      products_api_url: again.discovered.products_api_url,
+                      json_catalog_config: again.discovered.json_catalog_config,
+                    },
+                  }
+                : { jsonApi: cursor.jsonApi }),
             }
+            pageCount = 0
+            productOffset = 0
+            nextUrl = 'json_api'
+            break
           }
         }
 
@@ -263,8 +316,9 @@ export async function processScrapeBatch(runId: string): Promise<BatchResult> {
             nextUrl: done ? null : nextUrl,
             pageCount,
             productOffset,
+            jsonApi: cursor.jsonApi,
           }
-        : { source: 'html', nextUrl: done ? null : nextUrl, pageCount }
+        : { source: 'html', nextUrl: done ? null : nextUrl, pageCount, jsonApi: cursor.jsonApi }
 
     const { data: updatedRun } = await supabase
       .from('scrape_runs')
@@ -289,7 +343,7 @@ export async function processScrapeBatch(runId: string): Promise<BatchResult> {
     return {
       run: (updatedRun ?? run) as ScrapeRun,
       done,
-      message: batchMessage(done, totalUpserted, source),
+      message: batchMessage(done, totalUpserted, source, { persistError }),
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Gabim gjatë scraping'
@@ -327,17 +381,22 @@ export async function startScrapeRun(competitorId: string): Promise<ScrapeRun> {
 
   if (!competitor) throw new Error('Konkurrenti nuk u gjet')
 
-  const { competitor: ready } = await ensureCompetitorJsonCatalog(
-    supabase,
-    competitor as Competitor
-  )
+  const ensured = await ensureCompetitorJsonCatalog(supabase, competitor as Competitor)
+  const ready = ensured.competitor
+  const startCursor: ScrapeCursor = initialScrapeCursor(ready)
+  if (ensured.discovered) {
+    startCursor.jsonApi = {
+      products_api_url: ensured.discovered.products_api_url,
+      json_catalog_config: ensured.discovered.json_catalog_config,
+    }
+  }
 
   const { data: run, error } = await supabase
     .from('scrape_runs')
     .insert({
       competitor_id: competitorId,
       status: 'pending',
-      cursor: initialScrapeCursor(ready),
+      cursor: startCursor,
     })
     .select('*')
     .single()

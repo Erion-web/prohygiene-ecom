@@ -120,8 +120,13 @@ async function probeProductsApi(apiUrl: string): Promise<boolean> {
 async function fetchMainBundleText(scriptUrl: string): Promise<string | null> {
   try {
     const res = await fetch(scriptUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (compatible; ProHygieneComparison/1.0; +https://prohygiene.shop)',
+        Accept: '*/*',
+      },
       cache: 'no-store',
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(25000),
     })
     if (!res.ok) return null
     const text = await res.text()
