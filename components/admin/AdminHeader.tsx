@@ -22,10 +22,15 @@ const BACK_MAP: Record<string, string> = {
   '/admin/subscriptions':   '/admin',
   '/admin/newsletter':      '/admin',
   '/admin/settings':        '/admin',
+  '/admin/comparisons/competitors/new': '/admin/comparisons/competitors',
 }
 
 function getBackHref(pathname: string): string | null {
   if (BACK_MAP[pathname]) return BACK_MAP[pathname]
+  if (/\/admin\/comparisons\/competitors\/[^/]+\/(edit|products)/.test(pathname)) {
+    return '/admin/comparisons/competitors'
+  }
+
   if (/\/admin\/products\/[^/]+\/edit/.test(pathname)) return '/admin/products'
   if (/\/admin\/brands\/[^/]+\/edit/.test(pathname)) return '/admin/brands'
   if (/\/admin\/orders\/[^/]+/.test(pathname)) return '/admin/orders'

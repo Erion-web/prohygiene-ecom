@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactCompiler: true,
-  serverExternalPackages: ["cloudinary"],
+  serverExternalPackages: ["cloudinary", "cheerio"],
   images: {
     loader: "custom",
     loaderFile: "./lib/image-loader.ts",

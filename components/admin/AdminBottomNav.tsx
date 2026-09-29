@@ -6,7 +6,7 @@ import { useState } from 'react'
 import {
   LayoutDashboard, Package, ShoppingBag, Users, X, LogOut,
   FolderOpen, Tag, Award, PercentCircle, RefreshCw, Image,
-  Settings, LayoutGrid, Mail, Handshake,
+  Settings, LayoutGrid, Mail, Handshake, Scale,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { isNavActive, shouldStartNav, useAdminNav } from '@/components/admin/AdminNavContext'
@@ -27,6 +27,7 @@ const allNav = [
   { href: '/admin/lease/inquiries', label: 'Kërkesat',  icon: Handshake },
   { href: '/admin/lease/contracts', label: 'Kontrata',  icon: Handshake },
   { href: '/admin/lease/devices', label: 'Pajisjet',    icon: Package },
+  { href: '/admin/comparisons',   label: 'Krahasimet',  icon: Scale },
   { href: '/admin/categories',    label: 'Kategoritë',  icon: FolderOpen },
   { href: '/admin/brands',        label: 'Brendet',     icon: Award },
   { href: '/admin/campaigns',     label: 'Kampanjat',   icon: Tag },

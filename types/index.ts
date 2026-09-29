@@ -534,6 +534,78 @@ export interface ImportResult {
 }
 
 // ============================================================
+// COMPARISON TYPES
+// ============================================================
+
+export type ScrapeRunStatus = 'pending' | 'running' | 'completed' | 'failed'
+
+export interface Competitor {
+  id: string
+  name: string
+  catalog_url: string
+  is_active: boolean
+  selector_card: string | null
+  selector_name: string | null
+  selector_price: string | null
+  selector_link: string | null
+  selector_next_page: string | null
+  scrape_interval_hours: number
+  last_scraped_at: string | null
+  last_success_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ScrapeRun {
+  id: string
+  competitor_id: string
+  status: ScrapeRunStatus
+  cursor: Record<string, unknown>
+  pages_processed: number
+  products_upserted: number
+  error_message: string | null
+  started_at: string
+  finished_at: string | null
+}
+
+export interface CompetitorProduct {
+  id: string
+  competitor_id: string
+  external_sku: string | null
+  name: string
+  price: number | null
+  currency: string
+  product_url: string
+  price_raw: string | null
+  scraped_at: string
+  matched_product_id: string | null
+  match_confidence: number | null
+  competitor?: Pick<Competitor, 'id' | 'name'> | null
+  matched_product?: Pick<Product, 'id' | 'sku' | 'name_sq' | 'price' | 'sale_price'> | null
+}
+
+export interface ComparisonThread {
+  id: string
+  user_id: string
+  title: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ComparisonMessage {
+  id: string
+  thread_id: string
+  role: 'user' | 'assistant' | 'tool'
+  content: string
+  created_at: string
+}
+
+export interface ComparisonAiSettings {
+  model: string
+  temperature: number
+}
+
+// ============================================================
 // PAYMENT TYPES
 // ============================================================
 

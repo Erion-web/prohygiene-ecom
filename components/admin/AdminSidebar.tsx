@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Package, FolderOpen, Tag, ShoppingBag,
   Users, Settings, LogOut, ChevronLeft, Menu, Award, PercentCircle,
-  RefreshCw, Image, Mail, Handshake, ChevronDown,
+  RefreshCw, Image, Mail, Handshake, ChevronDown, Scale,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -36,6 +36,7 @@ const navItems: Array<{
   { href: '/admin/orders',     label: 'Porositë',    icon: ShoppingBag },
   { href: '/admin/customers',  label: 'Klientët',    icon: Users },
   { href: '/admin/lease',      label: 'Shfrytëzimi', icon: Handshake, children: leaseChildren },
+  { href: '/admin/comparisons', label: 'Krahasimet', icon: Scale },
   { href: '/admin/subscriptions', label: 'Abonimi',  icon: RefreshCw },
   { href: '/admin/newsletter', label: 'Newsletter',  icon: Mail },
   { href: '/admin/settings',   label: 'Cilësimet',   icon: Settings },
