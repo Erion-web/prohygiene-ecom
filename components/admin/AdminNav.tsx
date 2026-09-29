@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
 import { AdminBottomNav } from '@/components/admin/AdminBottomNav'
 import { AdminPageSkeleton } from '@/components/admin/AdminPageSkeleton'
@@ -23,6 +24,11 @@ function AdminChrome({ children }: { children: ReactNode }) {
 }
 
 export function AdminShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname()
+  if (pathname.includes('/print')) {
+    return <div className="min-h-screen bg-white">{children}</div>
+  }
+
   return (
     <AdminNavProvider>
       <div className="flex h-screen overflow-hidden bg-surface-soft print:h-auto print:overflow-visible print:bg-white">

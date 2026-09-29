@@ -9,9 +9,10 @@ function Val({ children }: { children?: string | number | null }) {
   return <strong className="underline decoration-slate-400 underline-offset-2 font-semibold">{text}</strong>
 }
 
-function formatSqDate(iso: string) {
-  const [year, month, day] = iso.split('-')
-  if (!year || !month || !day) return iso
+function formatSqDate(iso?: string | null) {
+  const datePart = iso?.slice(0, 10) ?? ''
+  const [year, month, day] = datePart.split('-')
+  if (!year || !month || !day) return iso ?? ''
   return `${day}/${month}/${year}`
 }
 
@@ -41,7 +42,7 @@ export function ContractPrintDocument({
     const price = d.product?.price ?? 0
     return sum + price * (d.quantity || 1)
   }, 0)
-  const paymentDay = Number(contract.starts_at.split('-')[2] || '') || null
+  const paymentDay = Number((contract.starts_at ?? '').slice(0, 10).split('-')[2] || '') || null
 
   return (
     <article className="mx-auto max-w-[210mm] bg-white px-8 py-10 text-[13px] leading-relaxed text-slate-800 print:max-w-none print:px-[16mm] print:py-[16mm]">

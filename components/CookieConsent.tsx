@@ -54,7 +54,7 @@ export function CookieConsent() {
       )}
 
       {hydrated && consent === null && (
-        <div className="fixed bottom-0 inset-x-0 z-[100] p-4 sm:p-6 animate-slide-up">
+        <div className="fixed bottom-0 inset-x-0 z-[100] p-4 sm:p-6 animate-slide-up print:hidden">
           <div className="max-w-3xl mx-auto bg-slate-950 text-white rounded-2xl shadow-elevated p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 border border-slate-800">
             <p className="text-sm text-slate-300 flex-1 leading-relaxed">
               {lang === 'sq'

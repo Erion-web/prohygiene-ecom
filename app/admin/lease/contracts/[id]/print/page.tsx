@@ -1,7 +1,10 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { loadContract } from '@/lib/lease/contract-form-data'
+import { ContractPrintActions } from '../../ContractPrintActions'
 import { ContractPrintDocument } from '../../ContractPrintDocument'
+
+export const dynamic = 'force-dynamic'
 
 export default async function PrintContractPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -19,5 +22,10 @@ export default async function PrintContractPage({ params }: { params: Promise<{ 
     fiscalNumber = data?.fiscal_number ?? null
   }
 
-  return <ContractPrintDocument contract={contract} fiscalNumber={fiscalNumber} />
+  return (
+    <>
+      <ContractPrintActions />
+      <ContractPrintDocument contract={contract} fiscalNumber={fiscalNumber} />
+    </>
+  )
 }
