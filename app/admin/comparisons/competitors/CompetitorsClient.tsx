@@ -121,10 +121,6 @@ export function CompetitorsClient({ competitors, initialActiveRuns }: Props) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-text-muted">
-        Scrape përditëson çmimet menjëherë. Progresi ruhet në server: mund të rifreskoni faqen gjatë
-        scraping. Përditësimi automatik: një herë në ditë (04:00 UTC).
-      </p>
 
       {scrapingId && activeRun && (
         <div className="admin-card p-4 flex flex-col sm:flex-row sm:items-center gap-3 border-brand-200 bg-brand-50/40">

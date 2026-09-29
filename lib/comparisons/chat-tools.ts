@@ -39,8 +39,7 @@ export async function toolSearchCompetitorProducts(args: {
   const { data, error } = await query
   if (error) return { error: error.message, items: [] }
 
-  return {
-    items: (data ?? []).map(row => ({
+  const items = (data ?? []).map(row => ({
       id: row.id,
       name: row.name,
       price: row.price,
@@ -50,8 +49,38 @@ export async function toolSearchCompetitorProducts(args: {
       external_sku: row.external_sku,
       competitor: row.competitor,
       matched_product: row.matched_product,
-    })),
+    }))
+
+  if (items.length === 0) {
+    let competitorMeta: { name: string; last_success_at: string | null } | null = null
+    if (competitorId) {
+      const { data: comp } = await supabase
+        .from('competitors')
+        .select('name, last_success_at')
+        .eq('id', competitorId)
+        .maybeSingle()
+      if (comp) competitorMeta = comp
+    } else if (args.competitorName?.trim()) {
+      const name = sanitizeSearch(args.competitorName)
+      const { data: comp } = await supabase
+        .from('competitors')
+        .select('name, last_success_at')
+        .ilike('name', `%${name}%`)
+        .limit(1)
+        .maybeSingle()
+      if (comp) competitorMeta = comp
+    }
+
+    return {
+      items: [],
+      query: q,
+      competitor_filter: args.competitorName?.trim() || null,
+      competitor: competitorMeta,
+      status: 'no_match_in_stored_catalog',
+    }
   }
+
+  return { items }
 }
 
 export async function toolCompareWithOurProduct(args: { ourProductId?: string; query?: string }) {
@@ -70,7 +99,14 @@ export async function toolCompareWithOurProduct(args: { ourProductId?: string; q
     product = searchOurProducts(args.query, ours, 1)[0]?.product
   }
 
-  if (!product) return { error: 'Produkti ynë nuk u gjet', comparisons: [] }
+  if (!product) {
+    return {
+      error: 'our_product_not_found',
+      query: args.query ?? null,
+      comparisons: [],
+      status: 'no_our_product',
+    }
+  }
 
   const effective = product.sale_price != null && product.sale_price < product.price
     ? product.sale_price
@@ -100,6 +136,21 @@ export async function toolCompareWithOurProduct(args: { ourProductId?: string; q
     }
   })
 
+  if (comparisons.length === 0) {
+    return {
+      our_product: {
+        id: product.id,
+        sku: product.sku,
+        name_sq: product.name_sq,
+        price: product.price,
+        sale_price: product.sale_price,
+        effective_price: effective,
+      },
+      comparisons: [],
+      status: 'no_competitor_prices_linked',
+    }
+  }
+
   return {
     our_product: {
       id: product.id,
@@ -118,7 +169,8 @@ export const COMPARISON_TOOL_DEFINITIONS = [
     type: 'function' as const,
     function: {
       name: 'search_competitor_products',
-      description: 'Search stored competitor catalog rows by product name or SKU. Never scrape.',
+      description:
+        'Search stored competitor catalog by name or SKU. Returns status no_match_in_stored_catalog when empty; may include competitor.last_success_at.',
       parameters: {
         type: 'object',
         properties: {
@@ -134,7 +186,8 @@ export const COMPARISON_TOOL_DEFINITIONS = [
     type: 'function' as const,
     function: {
       name: 'compare_with_our_product',
-      description: 'Compare our product price to matched competitor rows already in the database.',
+      description:
+        'Compare our product to linked competitor rows in the database. Empty comparisons use status no_competitor_prices_linked.',
       parameters: {
         type: 'object',
         properties: {

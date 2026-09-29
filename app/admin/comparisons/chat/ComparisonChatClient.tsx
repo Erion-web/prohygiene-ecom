@@ -6,6 +6,7 @@ import { Send } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
 import type { ComparisonMessage, ComparisonThread } from '@/types'
+import { AssistantMessageContent } from './AssistantMessageContent'
 
 interface Props {
   threads: ComparisonThread[]
@@ -55,17 +56,19 @@ function TypingIndicator() {
 
 function MessageBubble({ role, content }: { role: 'user' | 'assistant'; content: string }) {
   const isUser = role === 'user'
+  const hasTable = !isUser && /^\|.+\|$/m.test(content)
   return (
     <div className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap',
+          'rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
+          hasTable ? 'max-w-full sm:max-w-[min(100%,56rem)]' : 'max-w-[85%] sm:max-w-[75%]',
           isUser
-            ? 'rounded-br-md bg-brand-600 text-white'
+            ? 'rounded-br-md bg-brand-600 text-white whitespace-pre-wrap'
             : 'rounded-bl-md border border-surface-border bg-white text-text-primary shadow-soft'
         )}
       >
-        {content}
+        {isUser ? content : <AssistantMessageContent content={content} />}
       </div>
     </div>
   )
