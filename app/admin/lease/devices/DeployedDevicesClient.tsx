@@ -16,6 +16,7 @@ const defaultForm = {
   client_id: '',
   product_id: '',
   location_label: '',
+  serial_number: '',
   city: '',
   address: '',
   installed_at: new Date().toISOString().slice(0, 10),
@@ -44,6 +45,7 @@ export function DeployedDevicesClient({ initialDevices }: { initialDevices: Depl
       client_id: d.client_id,
       product_id: d.product_id,
       location_label: d.location_label,
+      serial_number: d.serial_number ?? '',
       city: d.city ?? '',
       address: d.address ?? '',
       installed_at: d.installed_at,
@@ -62,6 +64,7 @@ export function DeployedDevicesClient({ initialDevices }: { initialDevices: Depl
     const supabase = createClient()
     const { error } = await supabase.from('deployed_devices').update({
       location_label: form.location_label,
+      serial_number: form.serial_number.trim() || null,
       city: form.city || null,
       address: form.address || null,
       installed_at: form.installed_at,
@@ -102,6 +105,15 @@ export function DeployedDevicesClient({ initialDevices }: { initialDevices: Depl
             <div>
               <label className="label">Lokacioni *</label>
               <input value={form.location_label} onChange={e => update('location_label', e.target.value)} className="input" placeholder="p.sh. Hyrja kryesore" required />
+            </div>
+            <div>
+              <label className="label">Numri serial</label>
+              <input
+                value={form.serial_number}
+                onChange={e => update('serial_number', e.target.value)}
+                className="input font-mono text-sm"
+                placeholder="p.sh. SN-2024-001"
+              />
             </div>
             <div>
               <label className="label">Qyteti</label>

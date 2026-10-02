@@ -58,7 +58,8 @@ export async function loadContract(id: string): Promise<LeaseContract | null> {
       *,
       client:lease_clients(*),
       contract_devices(*, product:products(id, name_sq, sku, price)),
-      contract_materials(*, material:materials(id, name_sq, unit))
+      contract_materials(*, material:materials(id, name_sq, unit)),
+      deployed_devices(*, product:products(id, name_sq, sku, price))
     `)
     .eq('id', id)
     .maybeSingle()

@@ -1,5 +1,27 @@
 import { formatClientAddress, primaryClientAddress } from '@/lib/lease/addresses'
-import type { LeaseContract } from '@/types'
+import type { DeployedDevice, LeaseContract } from '@/types'
+
+function formatDeployedDeviceLine(d: DeployedDevice): string {
+  const name = d.product?.name_sq ?? 'Pajisje'
+  const serial = d.serial_number?.trim()
+  if (serial) return `Pajisja ${name} me numër serial ${serial}`
+  return `Pajisja ${name}`
+}
+
+function contractDevicesText(contract: LeaseContract): string {
+  const deployed = (contract.deployed_devices ?? [])
+    .filter(d => d.status !== 'retired')
+    .sort((a, b) => (a.product?.name_sq ?? '').localeCompare(b.product?.name_sq ?? ''))
+  if (deployed.length > 0) {
+    return deployed.map(formatDeployedDeviceLine).join('; ')
+  }
+  return (contract.contract_devices ?? [])
+    .map(d => {
+      const name = d.product?.name_sq ?? 'Pajisje'
+      return d.quantity > 1 ? `Pajisja ${name} × ${d.quantity}` : `Pajisja ${name}`
+    })
+    .join('; ')
+}
 
 function Val({ children }: { children?: string | number | null }) {
   const text = children === null || children === undefined || String(children).trim() === ''
@@ -28,12 +50,7 @@ export function ContractPrintDocument({
   const location = address
     ? formatClientAddress(address).replace(/^.*? — /, '')
     : [client?.address, client?.city].filter(Boolean).join(', ')
-  const devices = (contract.contract_devices ?? [])
-    .map(d => {
-      const name = d.product?.name_sq ?? 'Pajisje'
-      return d.quantity > 1 ? `${name} × ${d.quantity}` : name
-    })
-    .join(', ')
+  const devices = contractDevicesText(contract)
   const aromas = (contract.contract_materials ?? [])
     .map(m => m.material?.name_sq)
     .filter(Boolean)
@@ -78,7 +95,7 @@ export function ContractPrintDocument({
       <section className="mb-4">
         <h2 className="font-bold text-slate-900 mb-1">Neni 3: Pronësia e Pajisjes</h2>
         <p>
-          Pajisja e vendosur në ambientin e Klientit (Modeli: <Val>{devices}</Val>) mbetet pronë e plotë dhe e patjetërsueshme e Pro Hygiene sh.p.k. Klienti nuk ka të drejtë ta shesë, ta transferojë ose ta dëmtojë pajisjen. Në rast të ndërprerjes së kontratës, pajisja duhet t&apos;i kthehet Ofruesit brenda 48 orëve.
+          Pajisja e vendosur në ambientin e Klientit (<Val>{devices}</Val>) mbetet pronë e plotë dhe e patjetërsueshme e Pro Hygiene sh.p.k. Klienti nuk ka të drejtë ta shesë, ta transferojë ose ta dëmtojë pajisjen. Në rast të ndërprerjes së kontratës, pajisja duhet t&apos;i kthehet Ofruesit brenda 48 orëve.
         </p>
       </section>
 

@@ -36,6 +36,18 @@ export function DeployedDevicesTable({
         ),
       },
       {
+        id: 'serial_number',
+        header: 'Nr. serial',
+        cell: ({ row }) => (
+          <p
+            className="text-sm font-mono text-text-secondary max-w-[140px] truncate"
+            title={row.original.serial_number ?? undefined}
+          >
+            {row.original.serial_number?.trim() || '—'}
+          </p>
+        ),
+      },
+      {
         id: 'contract',
         header: 'Kontrata',
         cell: ({ row }) => (

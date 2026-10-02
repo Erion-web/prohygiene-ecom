@@ -95,6 +95,8 @@ export function CompetitorsClient({ competitors, initialActiveRuns }: Props) {
     [router]
   )
 
+
+
   useEffect(() => {
     const run = initialActiveRuns[0]
     if (!isActiveRun(run)) return

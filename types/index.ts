@@ -200,6 +200,7 @@ export interface LeaseContract {
   client?: LeaseClient | null
   contract_devices?: ContractDevice[]
   contract_materials?: ContractMaterial[]
+  deployed_devices?: DeployedDevice[]
 }
 
 export interface ContractDevice {
@@ -226,6 +227,7 @@ export interface DeployedDevice {
   client_id: string
   product_id: string
   location_label: string
+  serial_number: string | null
   city: string | null
   address: string | null
   installed_at: string

@@ -188,6 +188,7 @@ create table if not exists public.deployed_devices (
   client_id uuid not null references public.lease_clients(id) on delete restrict,
   product_id uuid not null references public.products(id) on delete restrict,
   location_label text not null,
+  serial_number text,
   city text,
   address text,
   installed_at date not null default current_date,
