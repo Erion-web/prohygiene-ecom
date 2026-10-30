@@ -12,6 +12,7 @@ import { t } from '@/lib/i18n'
 import { formatPrice, getProductName } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { CITIES, isCity } from '@/lib/cities'
+import { trackPurchase } from '@/lib/meta-pixel'
 import type { CheckoutFormData, CustomerType, PaymentMethod } from '@/types'
 
 type RepeatFreq = 'weekly' | 'biweekly' | 'monthly' | 'custom'
@@ -363,6 +364,7 @@ export default function CheckoutPage() {
         productName: i.product.name_sq,
         quantity: i.quantity,
       }))
+      trackPurchase(items, finalTotal)
       clearCart()
 
       // Always offer a repeat/periodic order — guests get an inline account

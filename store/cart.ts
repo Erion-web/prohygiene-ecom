@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { CartItem, CartState, Product } from '@/types'
 import { getEffectivePrice, isForSale } from '@/lib/utils'
+import { trackAddToCart } from '@/lib/meta-pixel'
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -12,6 +13,7 @@ export const useCartStore = create<CartState>()(
 
       addItem: (product: Product, quantity = 1) => {
         if (!isForSale(product)) return
+        trackAddToCart(product, quantity)
         const { items } = get()
         const existing = items.find(item => item.product.id === product.id)
         const effectivePrice = getEffectivePrice(product)

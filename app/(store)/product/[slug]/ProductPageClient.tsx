@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -16,6 +16,7 @@ import { ProductCard } from '@/components/store/ProductCard'
 import { LeaseInquiryModal } from '@/components/store/LeaseInquiryModal'
 import { LeaseReservePanel } from '@/components/store/lease/LeaseReservePanel'
 import { cn } from '@/lib/utils'
+import { trackViewContent } from '@/lib/meta-pixel'
 import type { Product } from '@/types'
 
 interface ProductPageClientProps {
@@ -46,6 +47,10 @@ export function ProductPageClient({ product, relatedProducts }: ProductPageClien
     product.image_url,
     ...product.gallery_urls,
   ].filter(Boolean) as string[]
+
+  useEffect(() => {
+    if (!product.price_hidden) trackViewContent(product)
+  }, [product])
 
   const handleAddToCart = () => {
     if (isOutOfStock || !forSale) return
