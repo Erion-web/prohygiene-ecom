@@ -146,3 +146,22 @@ export type SaveCampaignInput = z.infer<typeof saveCampaignSchema>
 export type SaveHomepagePackageInput = z.infer<typeof saveHomepagePackageSchema>
 export type RecordRefillInput = z.infer<typeof recordRefillSchema>
 export type CustomerFormInput = z.infer<typeof customerFormSchema>
+
+export const adminCreateOrderSchema = z.object({
+  customer_name: z.string().trim().min(1).max(200),
+  customer_email: z.string().trim().email().max(320),
+  customer_phone: z.string().trim().min(3).max(40),
+  customer_type: z.enum(['individual', 'business']),
+  business_name: z.string().trim().max(200).optional().nullable(),
+  fiscal_number: z.string().trim().max(50).optional().nullable(),
+  city: z.string().trim().min(1).max(100),
+  address: z.string().trim().min(1).max(500),
+  notes: z.string().trim().max(2000).optional().nullable(),
+  payment_method: z.enum(['card', 'cash_on_delivery']),
+  payment_status: z.enum(['pending', 'approved', 'declined', 'cancelled', 'needs_clarification']),
+  shipping_cost: z.number().min(0).max(1000),
+  items: z
+    .array(z.object({ product_id: uuid, quantity: z.number().int().min(1).max(999) }))
+    .min(1)
+    .max(100),
+})

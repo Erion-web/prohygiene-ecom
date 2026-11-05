@@ -95,7 +95,6 @@ export function NewOrderForm() {
   const discountAmount = Math.max(0, listSubtotal - effectiveSubtotal)
   const shippingCost = Number(form.shipping_cost) || 0
   const total = effectiveSubtotal + shippingCost
-  const vatAmount = total * 0.18
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -110,8 +109,7 @@ export function NewOrderForm() {
 
     setLoading(true)
     try {
-      const orderPayload = {
-        user_id: null,
+      const payload = {
         customer_name: form.customer_name.trim(),
         customer_email: form.customer_email.trim(),
         customer_phone: form.customer_phone.trim(),
@@ -121,32 +119,16 @@ export function NewOrderForm() {
         city: form.city,
         address: form.address.trim(),
         notes: form.notes.trim() || null,
-        subtotal: listSubtotal,
-        discount_amount: discountAmount,
-        shipping_cost: shippingCost,
-        vat_amount: vatAmount,
-        total,
-        status: 'pending',
         payment_method: form.payment_method,
         payment_status: form.payment_status,
+        shipping_cost: shippingCost,
+        items: lines.map(l => ({ product_id: l.productId, quantity: l.quantity })),
       }
 
-      const orderItems = lines.map(l => ({
-        product_id: l.productId,
-        product_name_sq: l.nameSq,
-        product_name_en: l.nameEn,
-        product_sku: l.sku,
-        product_image_url: l.imageUrl,
-        unit_price: l.listPrice,
-        sale_price: l.effectivePrice < l.listPrice ? l.effectivePrice : null,
-        quantity: l.quantity,
-        subtotal: l.effectivePrice * l.quantity,
-      }))
-
-      const res = await fetch('/api/orders/create', {
+      const res = await fetch('/api/admin/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: orderPayload, items: orderItems }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error ?? 'Krijimi i porosisë dështoi')
