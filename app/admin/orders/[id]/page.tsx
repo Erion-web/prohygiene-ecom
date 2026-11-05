@@ -122,7 +122,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <div className="space-y-1.5">
               <DetailRow label="Emri">{order.customer_name}</DetailRow>
               <DetailRow label="Email">
-                <a href={`mailto:${order.customer_email}`} className="text-brand-600">{order.customer_email}</a>
+                {order.customer_email
+                  ? <a href={`mailto:${order.customer_email}`} className="text-brand-600">{order.customer_email}</a>
+                  : <span className="text-text-muted">—</span>}
               </DetailRow>
               <DetailRow label="Tel">
                 <a href={`tel:${order.customer_phone}`} className="text-brand-600">{order.customer_phone}</a>

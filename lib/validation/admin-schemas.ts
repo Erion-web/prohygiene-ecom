@@ -149,7 +149,8 @@ export type CustomerFormInput = z.infer<typeof customerFormSchema>
 
 export const adminCreateOrderSchema = z.object({
   customer_name: z.string().trim().min(1).max(200),
-  customer_email: z.string().trim().email().max(320),
+  // Optional for manual/phone orders; the DB column is NOT NULL so '' means "no email".
+  customer_email: z.union([z.literal(''), z.string().trim().email().max(320)]).default(''),
   customer_phone: z.string().trim().min(3).max(40),
   customer_type: z.enum(['individual', 'business']),
   business_name: z.string().trim().max(200).optional().nullable(),

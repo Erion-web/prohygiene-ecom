@@ -35,7 +35,7 @@ export function OrderForm({ order }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.customer_name.trim() || !form.customer_email.trim() || !form.customer_phone.trim() || !form.city || !form.address.trim()) {
+    if (!form.customer_name.trim() || !form.customer_phone.trim() || !form.city || !form.address.trim()) {
       toast.error('Plotësoni fushat e detyrueshme')
       return
     }
@@ -77,8 +77,8 @@ export function OrderForm({ order }: Props) {
             <input value={form.customer_name} onChange={e => update('customer_name', e.target.value)} className="input" required />
           </div>
           <div>
-            <label className="label">Email *</label>
-            <input type="email" value={form.customer_email} onChange={e => update('customer_email', e.target.value)} className="input" required />
+            <label className="label">Email</label>
+            <input type="email" value={form.customer_email} onChange={e => update('customer_email', e.target.value)} className="input" />
           </div>
           <div>
             <label className="label">Telefoni *</label>
