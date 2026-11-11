@@ -3,6 +3,7 @@ const nextConfig = {
   reactCompiler: true,
   serverExternalPackages: ["cloudinary", "cheerio"],
   images: {
+    qualities: [75, 90],
     loader: "custom",
     loaderFile: "./lib/image-loader.ts",
     remotePatterns: [
