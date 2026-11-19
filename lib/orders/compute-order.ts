@@ -1,8 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OrderItemInput } from '@/lib/validation/schemas'
+import { calcShipping, parseShippingSettings, type ShippingSettings } from '@/lib/settings/shipping'
 
-export const SHIPPING_FREE_THRESHOLD = 30
-export const SHIPPING_COST = 3
 export const COUPON_THRESHOLD = 50
 export const COUPON_DISCOUNT = 5
 export const VAT_RATE = 0.18
@@ -53,8 +52,8 @@ function effectivePrice(product: Pick<ProductRow, 'price' | 'sale_price'>): numb
   return product.price
 }
 
-export function computeShipping(subtotalAfterDiscounts: number): number {
-  return subtotalAfterDiscounts >= SHIPPING_FREE_THRESHOLD ? 0 : SHIPPING_COST
+export function computeShipping(subtotalAfterDiscounts: number, settings: ShippingSettings): number {
+  return calcShipping(subtotalAfterDiscounts, settings)
 }
 
 export function computeCouponDiscount(subtotalAfterDiscounts: number): number {
@@ -77,6 +76,13 @@ export async function buildOrderFromItems(
     .in('id', productIds)
 
   if (error) return { totals: null, error: 'Failed to load products' }
+
+  const { data: shippingRow } = await supabase
+    .from('app_settings')
+    .select('value')
+    .eq('key', 'shipping')
+    .maybeSingle()
+  const shippingSettings = parseShippingSettings(shippingRow?.value)
 
   const byId = new Map((products ?? []).map(p => [p.id, p as ProductRow]))
   const lines: ComputedOrderLine[] = []
@@ -114,7 +120,7 @@ export async function buildOrderFromItems(
   const merchandiseTotal = roundMoney(lines.reduce((sum, line) => sum + line.subtotal, 0))
   const productDiscount = roundMoney(merchandiseSubtotal - merchandiseTotal)
   const couponDiscount = computeCouponDiscount(merchandiseTotal)
-  const shippingCost = computeShipping(merchandiseTotal)
+  const shippingCost = computeShipping(merchandiseTotal, shippingSettings)
   const discountAmount = roundMoney(productDiscount + couponDiscount)
   const preVatTotal = roundMoney(merchandiseTotal + shippingCost - couponDiscount)
   const vatAmount = roundMoney(preVatTotal * VAT_RATE)

@@ -9,6 +9,8 @@ import toast from 'react-hot-toast'
 import { useCartStore } from '@/store/cart'
 import { useLanguageStore } from '@/store/language'
 import { t } from '@/lib/i18n'
+import { calcShipping } from '@/lib/settings/shipping'
+import { useShippingSettings } from '@/lib/settings/use-shipping-settings'
 import { formatPrice, getProductName } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { CITIES, isCity } from '@/lib/cities'
@@ -269,9 +271,10 @@ export default function CheckoutPage() {
     })
   }, [])
 
+  const shippingSettings = useShippingSettings()
   const total = getTotal()
   const discount = getDiscount()
-  const shipping = total >= 30 ? 0 : 3
+  const shipping = calcShipping(total, shippingSettings)
   const couponDiscount = total >= 50 ? 5 : 0
   const finalTotal = total + shipping - couponDiscount
 

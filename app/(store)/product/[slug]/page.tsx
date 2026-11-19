@@ -6,6 +6,7 @@ import { getProductBySlug } from '@/lib/store/catalog'
 import { applyPriceGate, getGatedBrandIds } from '@/lib/store/price-gate'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { ProductPageClient } from './ProductPageClient'
+import { parseShippingSettings, calcShipping, type ShippingSettings } from '@/lib/settings/shipping'
 import type { Product } from '@/types'
 
 interface Props {
@@ -90,6 +91,12 @@ export default async function ProductPage({ params }: Props) {
 
   const related = await getRelatedProducts(product)
 
+  let shipping: ShippingSettings = parseShippingSettings(null)
+  try {
+    const { data } = await createPublicClient().from('app_settings').select('value').eq('key', 'shipping').maybeSingle()
+    shipping = parseShippingSettings(data?.value)
+  } catch {}
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -109,7 +116,7 @@ export default async function ProductPage({ params }: Props) {
       seller: { '@type': 'Organization', name: 'ProHygiene' },
       shippingDetails: {
         '@type': 'OfferShippingDetails',
-        shippingRate: { '@type': 'MonetaryAmount', value: product.price >= 30 ? '0' : '3', currency: 'EUR' },
+        shippingRate: { '@type': 'MonetaryAmount', value: String(calcShipping(product.price, shipping)), currency: 'EUR' },
         deliveryTime: { '@type': 'ShippingDeliveryTime', businessDays: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2 } },
         shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'XK' },
       },

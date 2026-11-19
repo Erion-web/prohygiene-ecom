@@ -9,6 +9,7 @@ import { useLanguageStore } from '@/store/language'
 import { t } from '@/lib/i18n'
 import { formatPrice, getProductName, getEffectivePrice } from '@/lib/utils'
 import { QuantitySelector } from '@/components/ui/QuantitySelector'
+import { useShippingSettings } from '@/lib/settings/use-shipping-settings'
 import { EmptyState } from '@/components/ui/EmptyState'
 
 export default function CartPage() {
@@ -20,9 +21,10 @@ export default function CartPage() {
   const discount = getDiscount()
   const total = getTotal()
   const itemCount = getItemCount()
-  const freeShippingThreshold = 30
+  const shippingSettings = useShippingSettings()
+  const freeShippingThreshold = shippingSettings.free_threshold
   const couponThreshold = 50
-  const shippingCost = total >= freeShippingThreshold ? 0 : 3
+  const shippingCost = total >= freeShippingThreshold ? 0 : shippingSettings.cost
   const couponDiscount = total >= couponThreshold ? 5 : 0
   const finalTotal = total + shippingCost - couponDiscount
 

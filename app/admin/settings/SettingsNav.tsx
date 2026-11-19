@@ -8,12 +8,14 @@ import {
   CreditCard,
   Globe,
   Shield,
+  Truck,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const items: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: '/admin/settings/payments', label: 'Pagesa', icon: CreditCard },
+  { href: '/admin/settings/shipping', label: 'Transporti', icon: Truck },
   { href: '/admin/settings/language', label: 'Gjuha', icon: Globe },
   { href: '/admin/settings/notifications', label: 'Njoftimet', icon: Bell },
   { href: '/admin/settings/security', label: 'Siguria', icon: Shield },

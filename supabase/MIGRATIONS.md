@@ -23,6 +23,7 @@ Apply on a fresh database:
 19. `production-security-rls.sql`
 20. `adjust-product-stock.sql`
 21. `add-homepage-packages.sql`
+22. `add-shipping-settings.sql`
 
 Operational scripts (not for routine deploy):
 
