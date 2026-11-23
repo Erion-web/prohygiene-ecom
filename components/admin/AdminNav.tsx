@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
 import { AdminBottomNav } from '@/components/admin/AdminBottomNav'
 import { AdminPageSkeleton } from '@/components/admin/AdminPageSkeleton'
+import { OrderAttentionPopup } from '@/components/admin/OrderAttentionPopup'
 import { AdminNavProvider, useAdminNav } from '@/components/admin/AdminNavContext'
 
 function AdminChrome({ children }: { children: ReactNode }) {
@@ -19,6 +20,7 @@ function AdminChrome({ children }: { children: ReactNode }) {
         </div>
       </div>
       <AdminBottomNav />
+      <OrderAttentionPopup />
     </>
   )
 }
