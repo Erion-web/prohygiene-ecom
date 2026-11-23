@@ -40,6 +40,7 @@ function RepeatModal({ items, userId, customerName, customerEmail, redirectUrl, 
   const [freq, setFreq] = useState<RepeatFreq | null>(null)
   const [customDate, setCustomDate] = useState('')
   const [password, setPassword] = useState('')
+  const [accountEmail, setAccountEmail] = useState(customerEmail)
   const [saving, setSaving] = useState(false)
 
   const freqOptions: { key: RepeatFreq; label: string; desc: string }[] = [
@@ -52,6 +53,7 @@ function RepeatModal({ items, userId, customerName, customerEmail, redirectUrl, 
   const handleRepeat = async () => {
     if (!freq) return
     if (freq === 'custom' && !customDate) { toast.error('Zgjedh datën'); return }
+    if (!userId && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountEmail.trim())) { toast.error('Vendosni një email të vlefshëm për llogarinë'); return }
     if (!userId && password.length < 6) { toast.error('Fjalëkalimi duhet të ketë të paktën 6 shkronja'); return }
     setSaving(true)
 
@@ -62,7 +64,7 @@ function RepeatModal({ items, userId, customerName, customerEmail, redirectUrl, 
     if (!uid) {
       const supabase = createClient()
       const { data, error } = await supabase.auth.signUp({
-        email: customerEmail,
+        email: accountEmail.trim(),
         password,
         options: { data: { full_name: customerName } },
       })
@@ -82,7 +84,7 @@ function RepeatModal({ items, userId, customerName, customerEmail, redirectUrl, 
         return
       }
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: customerEmail,
+        email: accountEmail.trim(),
         password,
       })
       if (signInError) {
@@ -171,8 +173,22 @@ function RepeatModal({ items, userId, customerName, customerEmail, redirectUrl, 
         {!userId && freq && (
           <div className="mb-4 p-3.5 rounded-2xl bg-surface-soft border border-surface-border">
             <p className="text-xs text-text-secondary mb-2.5">
-              Për t&apos;i aktivizuar porositë periodike duhet një llogari — po e krijojmë me <strong>{customerEmail}</strong>, ju vetëm zgjidhni fjalëkalimin.
+              {customerEmail
+                ? <>Për t&apos;i aktivizuar porositë periodike duhet një llogari — po e krijojmë me <strong>{customerEmail}</strong>, ju vetëm zgjidhni fjalëkalimin.</>
+                : <>Për t&apos;i aktivizuar porositë periodike duhet një llogari. Vendosni emailin dhe zgjidhni fjalëkalimin.</>}
             </p>
+            {!customerEmail && (
+              <>
+                <label className="label text-xs">Email</label>
+                <input
+                  type="email"
+                  value={accountEmail}
+                  onChange={e => setAccountEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  className="input mb-2.5"
+                />
+              </>
+            )}
             <label className="label text-xs">Fjalëkalimi</label>
             <input
               type="password"
@@ -194,7 +210,7 @@ function RepeatModal({ items, userId, customerName, customerEmail, redirectUrl, 
           </button>
           <button
             onClick={handleRepeat}
-            disabled={!freq || saving || (freq === 'custom' && !customDate) || (!userId && password.length < 6)}
+            disabled={!freq || saving || (freq === 'custom' && !customDate) || (!userId && (password.length < 6 || !accountEmail.trim()))}
             className="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {saving ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
@@ -285,7 +301,7 @@ export default function CheckoutPage() {
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof CheckoutFormData, string>> = {}
-    const required: (keyof CheckoutFormData)[] = ['customer_name', 'customer_email', 'customer_phone', 'city', 'address']
+    const required: (keyof CheckoutFormData)[] = ['customer_name', 'customer_phone', 'city', 'address']
     for (const field of required) {
       if (!form[field]) newErrors[field] = tr.checkout.requiredField
     }
@@ -351,7 +367,7 @@ export default function CheckoutPage() {
           body: JSON.stringify({
             order_id: order.id,
             order_number: order.order_number,
-            email: form.customer_email,
+            email: form.customer_email || undefined,
             lang,
             customer_name: form.customer_name,
           }),
@@ -459,7 +475,7 @@ export default function CheckoutPage() {
                     {errors.customer_phone && <p className="text-red-500 text-xs mt-1">{errors.customer_phone}</p>}
                   </div>
                   <div>
-                    <label className="label">{tr.checkout.email} *</label>
+                    <label className="label">{tr.checkout.email} ({tr.common.optional})</label>
                     <input
                       type="email"
                       value={form.customer_email}

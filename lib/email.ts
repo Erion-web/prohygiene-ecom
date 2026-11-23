@@ -94,6 +94,8 @@ function orderItemsHtml(items: OrderItemInput[]) {
 }
 
 export async function sendOrderConfirmationEmail(order: OrderInput, items: OrderItemInput[]) {
+  // Guest orders placed with only a phone number have no email to confirm to.
+  if (!order.customer_email?.trim()) return
   const resend = getClient()
   if (!resend) return
 
@@ -135,7 +137,7 @@ export async function sendOrderNotificationEmail(order: OrderInput, items: Order
     <h1 style="margin:16px 0 16px;font-size:20px;color:#0b3346;">${escapeHtml(order.customer_name)}</h1>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:12px;margin-bottom:20px;">
       <tr><td style="padding:16px 18px;font-size:13px;color:#475569;line-height:1.8;">
-        <strong style="color:#1e293b;">Email:</strong> ${escapeHtml(order.customer_email)}<br/>
+        <strong style="color:#1e293b;">Email:</strong> ${order.customer_email ? escapeHtml(order.customer_email) : '— (pa email)'}<br/>
         <strong style="color:#1e293b;">Telefoni:</strong> ${escapeHtml(order.customer_phone)}<br/>
         <strong style="color:#1e293b;">Dërgesa:</strong> ${escapeHtml(order.address)}, ${escapeHtml(order.city)}<br/>
         <strong style="color:#1e293b;">Pagesa:</strong> ${escapeHtml(order.payment_method)}
