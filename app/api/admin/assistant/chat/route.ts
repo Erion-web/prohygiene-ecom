@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin/require-admin'
 import { runAssistant } from '@/lib/assistant/groq'
-import { compactPostaExport } from '@/lib/assistant/compact-posta'
+import { compactPostaExport, parsePostaExport } from '@/lib/assistant/compact-posta'
+import { buildPostaPlan } from '@/lib/assistant/posta-plan'
 import { apiError, handleApiError } from '@/lib/api/errors'
 
 const bodySchema = z.object({
@@ -18,6 +19,11 @@ export async function POST(req: Request) {
 
   try {
     const { messages } = bodySchema.parse(await req.json())
+    // A pasted Falcon list is handled deterministically (no AI): faster and no extraction mistakes.
+    const last = messages[messages.length - 1]
+    const postaRows = last.role === 'user' ? parsePostaExport(last.content) : null
+    if (postaRows) return NextResponse.json(await buildPostaPlan(supabase, postaRows))
+
     const compacted = messages.map(m => (m.role === 'user' ? { ...m, content: compactPostaExport(m.content).slice(0, 12000) } : m))
     const { reply, plan } = await runAssistant(supabase, compacted)
     return NextResponse.json({ reply, plan })
