@@ -26,6 +26,13 @@ function describe(item: PlanItem): string {
       item.is_active ? null : 'jo aktiv',
     ].filter(Boolean).join(' · ')
   }
+  if (item.type === 'update_order') {
+    const parts = [
+      item.status ? `statusi=${item.status}` : null,
+      item.payment_status ? `pagesa=${item.payment_status}` : null,
+    ].filter(Boolean)
+    return `~ ${item.order_number}: ${parts.join(', ')}`
+  }
   const { type: _t, sku, ...rest } = item
   void _t
   const changes = Object.entries(rest).map(([k, v]) => `${k}=${v === null ? 'null' : String(v)}`)
@@ -109,7 +116,7 @@ export function AssistantClient() {
           {messages.length === 0 && (
             <p className="text-sm text-text-muted">
               Shembull: “Shto këto 12 produkte: Sapun duarsh 5L, çmimi 6.50, stok 20, kategoria Sapunë...” ose
-              “Ngrit çmimin e të gjitha produkteve me SKU PH-123 në 4.90”.
+              “Ngrit çmimin e produktit me SKU PH-123 në 4.90”, ose “Shëno si të paguara dhe të përfunduara porositë e Besnikut”.
             </p>
           )}
           {messages.map((m, i) => (

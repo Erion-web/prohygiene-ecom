@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { PlanItem } from './schemas'
+import { applyOrderStockChange } from '@/lib/orders/apply-stock'
 
 export type ItemResult = { label: string; ok: boolean; message: string }
 
@@ -33,6 +34,10 @@ export async function executePlan(supabase: SupabaseClient, plan: PlanItem[]): P
   const results: ItemResult[] = []
 
   for (const item of plan) {
+    if (item.type === 'update_order') {
+      results.push(await updateOrder(supabase, item))
+      continue
+    }
     const label = item.type === 'create_product' ? item.name_sq : item.sku
     try {
       let categoryId: string | null | undefined
@@ -120,4 +125,39 @@ export async function executePlan(supabase: SupabaseClient, plan: PlanItem[]): P
     }
   }
   return results
+}
+
+async function updateOrder(
+  supabase: SupabaseClient,
+  item: Extract<PlanItem, { type: 'update_order' }>,
+): Promise<ItemResult> {
+  const label = item.order_number
+  try {
+    const { data: order } = await supabase
+      .from('orders')
+      .select('id, status')
+      .eq('order_number', item.order_number)
+      .maybeSingle()
+    if (!order) return { label, ok: false, message: 'Porosia nuk u gjet' }
+
+    const patch: Record<string, unknown> = {}
+    if (item.payment_status) patch.payment_status = item.payment_status
+    let stockChanged = false
+    if (item.status && item.status !== order.status) {
+      const stock = await applyOrderStockChange(supabase, order.id, order.status, item.status)
+      if (stock.error) return { label, ok: false, message: stock.error }
+      patch.status = item.status
+      stockChanged = true
+    }
+    if (Object.keys(patch).length === 0) return { label, ok: true, message: 'Pa ndryshim (tashmë e njëjtë)' }
+
+    const { error } = await supabase.from('orders').update(patch).eq('id', order.id)
+    if (error) {
+      if (stockChanged) await applyOrderStockChange(supabase, order.id, item.status!, order.status)
+      return { label, ok: false, message: error.message }
+    }
+    return { label, ok: true, message: 'U përditësua' }
+  } catch (e) {
+    return { label, ok: false, message: e instanceof Error ? e.message : 'Gabim' }
+  }
 }

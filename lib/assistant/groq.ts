@@ -1,23 +1,31 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createProductItem, updateProductItem, type PlanItem } from './schemas'
+import { createProductItem, updateProductItem, updateOrderItem, type PlanItem } from './schemas'
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b'
 
 export type ChatTurn = { role: 'user' | 'assistant'; content: string }
 
-const SYSTEM_PROMPT = `Ti je asistent i brendshëm për adminin e dyqanit ProHygiene (produkte higjiene, Kosovë). Ndihmon për të shtuar dhe ndryshuar produkte pa punë manuale.
+const SYSTEM_PROMPT = `Ti je asistent i brendshëm për adminin e dyqanit ProHygiene (produkte higjiene, Kosovë). Ndihmon adminin të shtojë e ndryshojë produkte dhe të përditësojë statuset e porosive pa punë manuale.
 
-Rregulla:
-- Përgjigju shqip, shkurt, pa emoji.
-- Nuk ekzekuton ndryshime vetë. Ti vetëm PROPOZON me mjetet propose_create_products dhe propose_update_products; admini i shikon dhe i konfirmon.
-- Para se të propozosh produkte me kategori ose brend, thirr list_categories / list_brands dhe përdor emrat e saktë. Nëse kategoria nuk ekziston, lëre category_name bosh dhe thuaje në përgjigje.
-- Para se të ndryshosh produkt ekzistues, gjeje me search_products dhe përdor SKU e saktë. Mos shpik SKU për produkte ekzistuese.
-- Për produkte të reja, nëse përdoruesi nuk jep SKU, lëre bosh (sistemi e gjeneron).
-- Çmimet janë në euro (me TVSH). Mos shpik çmime, sasi apo përshkrime që përdoruesi nuk i ka dhënë. Nëse mungon çmimi i një produkti, pyet përdoruesin para se ta propozosh.
-- Përshkrim (description_sq) shkruaj vetëm nëse kërkohet ose përdoruesi jep informacion; mos shpik specifika teknike.
-- Pas propozimit, përmbledh shkurt çfarë u propozua dhe kujtoje që duhet konfirmuar.
-- Nuk fshin produkte. Për ta fshehur një produkt, vendos is_active=false.`
+Çfarë mund të bësh:
+- Produkte: krijim, ndryshim i çmimit/ofertës/stokut/kategorisë/brendit/përshkrimit, aktivizim ose çaktivizim.
+- Porosi: ndryshim i statusit të porosisë (pending = Në pritje, processing = Në përpunim, completed = Përfunduar) dhe i statusit të pagesës (pending, approved = Aprovuar/paguar, declined, cancelled, needs_clarification).
+- Nuk fshin asgjë. Produkt: is_active=false. Porosi: nuk mund të fshihet.
+
+Si punon:
+- Përgjigju shqip, shkurt, natyrshëm, pa emoji. Kupton kërkesa të lira, shkrim me gabime, dhe lista të ngjitura nga Excel ose mesazhe.
+- Nuk ekzekuton ndryshime vetë. Vetëm PROPOZON me mjetet propose_*; admini i shikon dhe i konfirmon.
+- Mos pyet kot. Nëse kërkesa është e qartë, propozo direkt. Pyet vetëm kur mungon diçka që nuk mund ta gjesh me mjetet (p.sh. çmimi i një produkti të ri).
+- Për porosi: thirr search_orders për ta gjetur porosinë (sipas numrit, emrit të klientit, telefonit, ose filtrit të statusit). Përdor order_number të saktë nga rezultati. Kërkesa si "të gjitha porositë e dorëzuara pa pagesë të shënuar" zgjidhen me filtra, jo me hamendje.
+- Nëse një kërkesë përputhet me disa porosi ose produkte dhe nuk është e qartë cila, listoji dhe pyet.
+- Kur një porosi shënohet "completed", sistemi zbret stokun automatikisht; përmende këtë shkurt kur propozon.
+- Për pagesë me para në dorëzim që është dorëzuar, statusi i pagesës i duhur është approved.
+- Para se të propozosh produkte me kategori ose brend, thirr list_categories / list_brands dhe përdor emrat e saktë. Nëse kategoria nuk ekziston, lëre bosh dhe thuaje.
+- Për produkte ekzistuese gjeji me search_products dhe përdor SKU e saktë; mos shpik SKU.
+- Për produkte të reja pa SKU, lëre bosh (gjenerohet vetë). Çmimet janë në euro me TVSH. Mos shpik çmime, sasi apo përshkrime.
+- Pas propozimit, përmbledh në një a dy fjali çfarë u propozua dhe kujtoje që duhet konfirmuar.
+- Nëse kërkesa është jashtë këtyre mundësive (p.sh. fshirje, banera, kampanja, klientë), thuaje shkurt që nuk e bën dhe sugjero ku ta bëjë adminin.`
 
 const tools = [
   {
@@ -45,6 +53,48 @@ const tools = [
         type: 'object',
         properties: { query: { type: 'string' } },
         required: ['query'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'search_orders',
+      description: 'Kërkon porosi. Të gjitha filtrat janë opsionalë. Kthen deri në 25, më të rejat së pari.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Numri i porosisë, emri ose telefoni i klientit' },
+          status: { type: 'string', enum: ['pending', 'processing', 'completed'] },
+          payment_status: { type: 'string', enum: ['pending', 'approved', 'declined', 'cancelled', 'needs_clarification'] },
+          payment_method: { type: 'string', enum: ['card', 'cash_on_delivery'] },
+          older_than_hours: { type: 'number', description: 'Vetëm porosi më të vjetra se kaq orë' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'propose_update_orders',
+      description: 'Propozon ndryshim të statusit të porosisë dhe/ose të pagesës (pret konfirmim).',
+      parameters: {
+        type: 'object',
+        properties: {
+          updates: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                order_number: { type: 'string' },
+                status: { type: 'string', enum: ['pending', 'processing', 'completed'] },
+                payment_status: { type: 'string', enum: ['pending', 'approved', 'declined', 'cancelled', 'needs_clarification'] },
+              },
+              required: ['order_number'],
+            },
+          },
+        },
+        required: ['updates'],
       },
     },
   },
@@ -221,6 +271,33 @@ async function runTool(
         const parsed = updateProductItem.safeParse(clean({ ...(raw as object), type: 'update_product' }))
         if (parsed.success) plan.push(parsed.data)
         else errors.push(`${(raw as { sku?: string }).sku ?? '?'}: ${parsed.error.issues[0]?.message}`)
+      }
+      return { queued: items.length - errors.length, errors }
+    }
+    case 'search_orders': {
+      let q = supabase
+        .from('orders')
+        .select('order_number, customer_name, customer_phone, total, status, payment_status, payment_method, created_at, falcon_status_name')
+        .order('created_at', { ascending: false })
+        .limit(25)
+      const text = String(args.query ?? '').replace(/[%,()*\\]/g, ' ').trim().slice(0, 80)
+      if (text) q = q.or(`order_number.ilike.%${text}%,customer_name.ilike.%${text}%,customer_phone.ilike.%${text}%`)
+      if (typeof args.status === 'string') q = q.eq('status', args.status)
+      if (typeof args.payment_status === 'string') q = q.eq('payment_status', args.payment_status)
+      if (typeof args.payment_method === 'string') q = q.eq('payment_method', args.payment_method)
+      if (typeof args.older_than_hours === 'number') {
+        q = q.lt('created_at', new Date(Date.now() - args.older_than_hours * 3600_000).toISOString())
+      }
+      const { data } = await q
+      return { orders: data ?? [] }
+    }
+    case 'propose_update_orders': {
+      const items = Array.isArray(args.updates) ? args.updates : []
+      const errors: string[] = []
+      for (const raw of items) {
+        const parsed = updateOrderItem.safeParse(clean({ ...(raw as object), type: 'update_order' }))
+        if (parsed.success) plan.push(parsed.data)
+        else errors.push(`${(raw as { order_number?: string }).order_number ?? '?'}: ${parsed.error.issues[0]?.message}`)
       }
       return { queued: items.length - errors.length, errors }
     }

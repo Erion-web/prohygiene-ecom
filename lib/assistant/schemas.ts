@@ -37,9 +37,17 @@ export const updateProductItem = z.object({
   is_best_seller: z.boolean().optional(),
 })
 
-export const planItem = z.discriminatedUnion('type', [createProductItem, updateProductItem])
+export const updateOrderItem = z.object({
+  type: z.literal('update_order'),
+  order_number: z.string().trim().min(1).max(80),
+  status: z.enum(['pending', 'processing', 'completed']).optional(),
+  payment_status: z.enum(['pending', 'approved', 'declined', 'cancelled', 'needs_clarification']).optional(),
+}).refine(o => o.status !== undefined || o.payment_status !== undefined, { message: 'Asnjë ndryshim' })
+
+export const planItem = z.discriminatedUnion('type', [createProductItem, updateProductItem, updateOrderItem])
 export const planSchema = z.array(planItem).min(1).max(100)
 
 export type PlanItem = z.infer<typeof planItem>
 export type CreateProductItem = z.infer<typeof createProductItem>
+export type UpdateOrderItem = z.infer<typeof updateOrderItem>
 export type UpdateProductItem = z.infer<typeof updateProductItem>

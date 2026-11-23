@@ -5,8 +5,8 @@ export default function AssistantPage() {
   return (
     <div>
       <AdminHeader
-        title="Asistenti i produkteve"
-        subtitle="Shkruaj çfarë të shtohet ose ndryshohet. Ti e konfirmon para se të ruhet."
+        title="Asistenti AI"
+        subtitle="Produkte dhe porosi: shkruaj çfarë duhet bërë. Ti e konfirmon para se të ruhet."
       />
       <AssistantClient />
     </div>
