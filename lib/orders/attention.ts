@@ -26,7 +26,7 @@ export type AttentionGroup = {
 
 // Falcon status names are free text; "delivered" is matched heuristically.
 export function isFalconDelivered(name: string | null): boolean {
-  return !!name && /dor[eë]z|deliver/i.test(name) && !/pa dor[eë]z|jo dor[eë]z|undeliver/i.test(name)
+  return !!name && /dor[eë]z|deliver|^\s*sukses/i.test(name) && !/pa dor[eë]z|jo dor[eë]z|undeliver/i.test(name)
 }
 
 export function computeAttention(orders: AttentionOrder[], now = Date.now()): AttentionGroup[] {

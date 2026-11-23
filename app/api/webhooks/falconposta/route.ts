@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { verifyFalconSignature } from '@/lib/falcon'
+import { applyOrderStockChange } from '@/lib/orders/apply-stock'
+import { normalizeOrderStatus } from '@/lib/orders/status'
+import { targetOrderStatus } from '@/lib/orders/falcon-status-map'
 
 interface FalconStatus {
   id: number
@@ -56,7 +59,34 @@ export async function POST(req: Request) {
           })
           .eq('order_number', payload.custom_order_id)
 
-        if (error) console.error('[falcon webhook] Order update failed:', error)
+        if (error) {
+          console.error('[falcon webhook] Order update failed:', error)
+          break
+        }
+
+        // Keep our own order status in sync with the courier (stock is adjusted
+        // exactly like the manual "Ruaj Statusin" button does).
+        const { data: order } = await supabase
+          .from('orders')
+          .select('id, status')
+          .eq('order_number', payload.custom_order_id)
+          .maybeSingle()
+        if (!order) break
+
+        const current = normalizeOrderStatus(order.status)
+        const next = targetOrderStatus(payload.new_status.name, current)
+        if (!next || next === current) break
+
+        const stock = await applyOrderStockChange(supabase, order.id, current, next)
+        if (stock.error) {
+          console.error('[falcon webhook] Stock change failed, status not synced:', payload.custom_order_id, stock.error)
+          break
+        }
+        const { error: statusError } = await supabase.from('orders').update({ status: next }).eq('id', order.id)
+        if (statusError) {
+          console.error('[falcon webhook] Status sync failed:', statusError)
+          await applyOrderStockChange(supabase, order.id, next, current)
+        }
         break
       }
 
