@@ -10,14 +10,17 @@ import { OrderStatusUpdater } from './OrderStatusUpdater'
 import { FalconSendButton } from './FalconSendButton'
 import { DeleteOrderButton } from '../DeleteOrderButton'
 
+type HistoryRow = { id: string; actor_label: string; summary: string; created_at: string; changes: Array<{ field: string; from: string; to: string }> }
+
 async function getOrder(id: string) {
   const supabase = await createClient()
-  const [orderRes, itemsRes] = await Promise.all([
+  const [orderRes, itemsRes, historyRes] = await Promise.all([
     supabase.from('orders').select('*').eq('id', id).single(),
     supabase.from('order_items').select('*').eq('order_id', id),
+    supabase.from('order_history').select('*').eq('order_id', id).order('created_at', { ascending: false }).limit(50),
   ])
   if (!orderRes.data) return null
-  return { ...orderRes.data, items: itemsRes.data ?? [] }
+  return { ...orderRes.data, items: itemsRes.data ?? [], history: (historyRes.data ?? []) as Array<{ id: string; actor_label: string; summary: string; created_at: string; changes: Array<{ field: string; from: string; to: string }> }> }
 }
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
@@ -60,6 +63,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       />
 
       <div className="admin-page grid lg:grid-cols-[minmax(0,1fr)_17.5rem] gap-4 items-start">
+        <div className="space-y-4 min-w-0">
         <div className="admin-card p-5">
           <h3 className="admin-card-title mb-4">Artikujt e Porosisë</h3>
           <div className="space-y-3">
@@ -104,6 +108,32 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <span>{formatPrice(order.total)}</span>
             </div>
           </div>
+        </div>
+
+        <div className="admin-card p-5">
+          <h3 className="admin-card-title mb-4">Historia</h3>
+          {order.history.length === 0 ? (
+            <p className="text-sm text-text-muted">Asnjë ndryshim i regjistruar ende.</p>
+          ) : (
+            <ul className="space-y-3">
+              {(order.history as HistoryRow[]).map((h: HistoryRow) => (
+                <li key={h.id} className="text-sm border-l-2 border-surface-border pl-3">
+                  <p className="font-medium text-text-primary">{h.summary}</p>
+                  <p className="text-xs text-text-muted">
+                    {h.actor_label} · {new Date(h.created_at).toLocaleString('sq-AL')}
+                  </p>
+                  {h.changes.length > 0 && (
+                    <ul className="mt-1 space-y-0.5 text-xs text-text-secondary">
+                      {h.changes.map((c: { field: string; from: string; to: string }, k: number) => (
+                        <li key={k}>{c.field}: <span className="line-through">{c.from}</span> → <strong>{c.to}</strong></li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         </div>
 
         <aside className="admin-card space-y-4 p-4">

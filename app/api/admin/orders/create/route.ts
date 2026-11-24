@@ -4,11 +4,12 @@ import { requireAdmin } from '@/lib/admin/require-admin'
 import { adminCreateOrderSchema } from '@/lib/validation/admin-schemas'
 import { buildOrderFromItems, VAT_RATE } from '@/lib/orders/compute-order'
 import { saveCustomerAddressFromOrder } from '@/lib/orders/save-customer-address'
+import { logOrderHistory } from '@/lib/orders/history'
 import { apiError, handleApiError } from '@/lib/api/errors'
 
 export async function POST(req: Request) {
-  const { authorized } = await requireAdmin()
-  if (!authorized) return apiError('Forbidden', 403)
+  const { authorized, user } = await requireAdmin()
+  if (!authorized || !user) return apiError('Forbidden', 403)
 
   try {
     const input = adminCreateOrderSchema.parse(await req.json())
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
       .from('orders')
       .insert({
         user_id: null,
+        source: 'admin',
         customer_name: input.customer_name,
         customer_email: input.customer_email,
         customer_phone: input.customer_phone,
@@ -73,6 +75,13 @@ export async function POST(req: Request) {
       console.error('[admin order create] items error:', itemsError)
       return apiError('Krijimi i porosisë dështoi', 500)
     }
+
+    await logOrderHistory(supabase, {
+      orderId: created.id,
+      actorId: user.id,
+      actorLabel: user.email ?? 'Admin',
+      summary: 'Porosia u krijua manualisht',
+    })
 
     saveCustomerAddressFromOrder(supabase, created).catch(err =>
       console.error('[admin order create] address persist failed:', err),

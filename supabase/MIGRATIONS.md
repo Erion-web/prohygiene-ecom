@@ -24,6 +24,7 @@ Apply on a fresh database:
 20. `adjust-product-stock.sql`
 21. `add-homepage-packages.sql`
 22. `add-shipping-settings.sql`
+23. `add-order-history.sql`
 
 Operational scripts (not for routine deploy):
 

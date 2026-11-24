@@ -8,6 +8,7 @@ import { useScrollPreservingRefresh } from '@/hooks/useScrollPreservingRefresh'
 import { applyOrderStockChange } from '@/lib/orders/apply-stock'
 import { ORDER_STATUSES, normalizeOrderStatus } from '@/lib/orders/status'
 import { statusLabel } from '@/lib/utils'
+import { currentActor, logOrderHistory } from '@/lib/orders/history'
 import type { OrderStatus } from '@/types'
 
 export function OrderStatusUpdater({ orderId, currentStatus }: { orderId: string; currentStatus: string }) {
@@ -37,6 +38,14 @@ export function OrderStatusUpdater({ orderId, currentStatus }: { orderId: string
       await applyOrderStockChange(supabase, orderId, status, previous)
       toast.error('Ndodhi një gabim')
     } else {
+      const actor = await currentActor(supabase)
+      await logOrderHistory(supabase, {
+        orderId,
+        actorId: actor.id,
+        actorLabel: actor.label,
+        summary: 'Statusi i porosisë u ndryshua',
+        changes: [{ field: 'Statusi i porosisë', from: statusLabel(previous, 'sq'), to: statusLabel(status, 'sq') }],
+      })
       toast.success(status === 'completed' ? 'Statusi u përditësua. Stoku u zbrit.' : 'Statusi u përditësua')
       refresh()
     }

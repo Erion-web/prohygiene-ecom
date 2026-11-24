@@ -6,6 +6,7 @@ import { Loader2, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { CITIES, isCity } from '@/lib/cities'
+import { currentActor, diffOrder, logOrderHistory } from '@/lib/orders/history'
 import type { CustomerType, Order, PaymentMethod, PaymentStatus } from '@/types'
 
 interface Props {
@@ -41,25 +42,34 @@ export function OrderForm({ order }: Props) {
     }
     setLoading(true)
     const supabase = createClient()
-    const { error } = await supabase
-      .from('orders')
-      .update({
-        customer_name: form.customer_name.trim(),
-        customer_email: form.customer_email.trim(),
-        customer_phone: form.customer_phone.trim(),
-        customer_type: form.customer_type,
-        business_name: form.customer_type === 'business' ? form.business_name.trim() || null : null,
-        fiscal_number: form.customer_type === 'business' ? form.fiscal_number.trim() || null : null,
-        city: form.city,
-        address: form.address.trim(),
-        notes: form.notes.trim() || null,
-        payment_method: form.payment_method,
-        payment_status: form.payment_status,
-      })
-      .eq('id', order.id)
+    const patch = {
+      customer_name: form.customer_name.trim(),
+      customer_email: form.customer_email.trim(),
+      customer_phone: form.customer_phone.trim(),
+      customer_type: form.customer_type,
+      business_name: form.customer_type === 'business' ? form.business_name.trim() || null : null,
+      fiscal_number: form.customer_type === 'business' ? form.fiscal_number.trim() || null : null,
+      city: form.city,
+      address: form.address.trim(),
+      notes: form.notes.trim() || null,
+      payment_method: form.payment_method,
+      payment_status: form.payment_status,
+    }
+    const { error } = await supabase.from('orders').update(patch).eq('id', order.id)
 
     if (error) toast.error(error.message)
     else {
+      const changes = diffOrder(order as unknown as Record<string, unknown>, patch)
+      if (changes.length > 0) {
+        const actor = await currentActor(supabase)
+        await logOrderHistory(supabase, {
+          orderId: order.id,
+          actorId: actor.id,
+          actorLabel: actor.label,
+          summary: 'Porosia u modifikua',
+          changes,
+        })
+      }
       toast.success('Porosia u përditësua')
       router.push(`/admin/orders/${order.id}`)
       router.refresh()

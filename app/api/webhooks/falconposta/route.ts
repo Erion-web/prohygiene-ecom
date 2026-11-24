@@ -3,6 +3,8 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { verifyFalconSignature } from '@/lib/falcon'
 import { applyOrderStockChange } from '@/lib/orders/apply-stock'
 import { normalizeOrderStatus } from '@/lib/orders/status'
+import { logOrderHistory } from '@/lib/orders/history'
+import { statusLabel } from '@/lib/utils'
 import { targetOrderStatus } from '@/lib/orders/falcon-status-map'
 
 interface FalconStatus {
@@ -86,6 +88,13 @@ export async function POST(req: Request) {
         if (statusError) {
           console.error('[falcon webhook] Status sync failed:', statusError)
           await applyOrderStockChange(supabase, order.id, next, current)
+        } else {
+          await logOrderHistory(supabase, {
+            orderId: order.id,
+            actorLabel: 'Posta (Falcon)',
+            summary: `Posta: ${payload.new_status.name}`,
+            changes: [{ field: 'Statusi i porosisë', from: statusLabel(current, 'sq'), to: statusLabel(next, 'sq') }],
+          })
         }
         break
       }

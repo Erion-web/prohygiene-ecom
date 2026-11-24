@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { PlanItem } from './schemas'
+import { logOrderHistory, diffOrder } from '@/lib/orders/history'
 import { applyOrderStockChange } from '@/lib/orders/apply-stock'
 
 export type ItemResult = { label: string; ok: boolean; message: string }
@@ -135,7 +136,7 @@ async function updateOrder(
   try {
     const { data: order } = await supabase
       .from('orders')
-      .select('id, status')
+      .select('id, status, payment_status')
       .eq('order_number', item.order_number)
       .maybeSingle()
     if (!order) return { label, ok: false, message: 'Porosia nuk u gjet' }
@@ -156,6 +157,12 @@ async function updateOrder(
       if (stockChanged) await applyOrderStockChange(supabase, order.id, item.status!, order.status)
       return { label, ok: false, message: error.message }
     }
+    await logOrderHistory(supabase, {
+      orderId: order.id,
+      actorLabel: 'Asistenti AI',
+      summary: 'Ndryshim nga Asistenti AI',
+      changes: diffOrder(order as Record<string, unknown>, patch),
+    })
     return { label, ok: true, message: 'U përditësua' }
   } catch (e) {
     return { label, ok: false, message: e instanceof Error ? e.message : 'Gabim' }
